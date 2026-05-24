@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useAudioEngine } from '../hooks/useAudioEngine';
-import { buildLevel, EXERCISE_HASHES, getAnswerChoices, getPreloadMidi } from '../levels';
+import { buildLevel, EXERCISE_HASHES, getAnswerChoices, getPreloadMidi, isQueuedLevel, LevelSetup } from '../levels';
 import { TimelineSlot } from '../types/levels';
 import { PlayedNote, PlayedChord } from '../types/music';
 import { NoteConverter } from '../utils/note_converter';
@@ -15,9 +15,10 @@ import TheoryTab from './TheoryTab';
 interface MidiPlayerDOMProps {
   mode?: 'trainer' | 'sandbox' | 'progress';
   level?: number;
+  onNextLevel?: () => void;
 }
 
-export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlayerDOMProps) {
+export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel }: MidiPlayerDOMProps) {
   const [activeTab, setActiveTab] = useState<'practice' | 'theory'>('practice');
   const [melodyNotes, setMelodyNotes] = useState<PlayedNote[]>([]);
   const [chords, setChords] = useState<PlayedChord[]>([]);
@@ -25,6 +26,10 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlaye
   const [focusedSlotIndex, setFocusedSlotIndex] = useState<number | null>(null);
   const [userNotes, setUserNotes] = useState('');
   
+  // 10-in-a-row queue state
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const [exerciseQueue, setExerciseQueue] = useState<LevelSetup[]>([]);
+
   // Store level configuration to derive the converter
   const [levelConfig, setLevelConfig] = useState({
     bpm: 120,
@@ -50,18 +55,45 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlaye
   const setupExercise = (keepCadence = false) => {
     audio.stopPlayback();
     if (!keepCadence) audio.resetStartFlags();
-    setFocusedSlotIndex(0);
 
-    const setup = buildLevel(mode, level);
-    setMelodyNotes(setup.melody);
-    setChords(setup.chords);
-    setTimelineSlots(setup.slots);
-    setLevelConfig({
-      bpm: setup.bpm,
-      tonic: setup.tonicPitchClass,
-      octave: setup.baseOctave,
-      ticksPerBeat: setup.ticksPerBeat
-    });
+    const isQueued = mode === 'trainer' && isQueuedLevel(level);
+
+    if (isQueued) {
+      // Generate a queue of 10 random sets (each generated dynamically via buildLevel)
+      const queue: LevelSetup[] = [];
+      for (let i = 0; i < 10; i++) {
+        queue.push(buildLevel(mode, level));
+      }
+      setExerciseQueue(queue);
+      setCurrentExerciseIndex(0);
+
+      const first = queue[0];
+      setMelodyNotes(first.melody);
+      setChords(first.chords);
+      setTimelineSlots(first.slots);
+      setFocusedSlotIndex(0);
+      setLevelConfig({
+        bpm: first.bpm,
+        tonic: first.tonicPitchClass,
+        octave: first.baseOctave,
+        ticksPerBeat: first.ticksPerBeat
+      });
+    } else {
+      // Single song/fixed progression level
+      const setup = buildLevel(mode, level);
+      setExerciseQueue([setup]);
+      setCurrentExerciseIndex(0);
+      setMelodyNotes(setup.melody);
+      setChords(setup.chords);
+      setTimelineSlots(setup.slots);
+      setFocusedSlotIndex(0);
+      setLevelConfig({
+        bpm: setup.bpm,
+        tonic: setup.tonicPitchClass,
+        octave: setup.baseOctave,
+        ticksPerBeat: setup.ticksPerBeat
+      });
+    }
   };
 
   useEffect(() => {
@@ -93,6 +125,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlaye
   const handleChoice = (choice: string) => {
     if (focusedSlotIndex === null) return;
     const slot = timelineSlots[focusedSlotIndex];
+    if (slot.answer !== null) return; // Ignore choices if already answered
     
     audio.playChoiceAudio(choice, converter);
 
@@ -104,23 +137,32 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlaye
     };
     setTimelineSlots(newSlots);
 
+    // Update the slots in the current exercise in our queue
+    setExerciseQueue((prevQueue) => {
+      const updated = [...prevQueue];
+      if (updated[currentExerciseIndex]) {
+        updated[currentExerciseIndex] = {
+          ...updated[currentExerciseIndex],
+          slots: newSlots,
+        };
+      }
+      return updated;
+    });
+
     if (focusedSlotIndex < timelineSlots.length - 1) {
       setFocusedSlotIndex(focusedSlotIndex + 1);
-    } else {
-      const correctCount = newSlots.filter(s => s.correct).length;
-      saveProgressStats(correctCount, newSlots.length);
     }
   };
 
   const handleSlotClick = (index: number) => {
     setFocusedSlotIndex(index);
     const slot = timelineSlots[index];
-    const isRevealed = slot.answer !== null && slot.correct;
-    if (slot.chord) {
-      audio.playChoiceAudio(slot.chord, converter, isRevealed);
-    } else {
-      audio.triggerLiveNote(converter.toMidi(slot.note), isRevealed);
-    }
+    const slotTime = converter.ticksToSeconds(slot.beat);
+    
+    // Stop playback, seek to slot's timestamp, and play from there immediately (skipping cadence)
+    audio.stopPlayback();
+    audio.setPlayheadTime(slotTime);
+    audio.startPlayback(melodyNotes, chords, converter, true);
   };
 
   const showTooltip = (text: string, e: React.MouseEvent) => {
@@ -141,6 +183,73 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlaye
     }
     setTooltipText(null);
   };
+
+  // Dynamically compute the correct and wrong counts across the current exercise queue
+  const { correctCount, wrongCount } = useMemo(() => {
+    let correct = 0;
+    let wrong = 0;
+    exerciseQueue.forEach((ex) => {
+      ex.slots.forEach((s) => {
+        if (s.answer !== null) {
+          if (s.correct) {
+            correct++;
+          } else {
+            wrong++;
+          }
+        }
+      });
+    });
+    return { correctCount: correct, wrongCount: wrong };
+  }, [exerciseQueue]);
+
+  const isCurrentExerciseComplete = useMemo(() => {
+    return timelineSlots.length > 0 && timelineSlots.every(s => s.answer !== null);
+  }, [timelineSlots]);
+
+  const handleNextClick = () => {
+    if (!isCurrentExerciseComplete) return;
+
+    if (currentExerciseIndex < exerciseQueue.length - 1) {
+      // Advance to the next queued exercise
+      const nextIdx = currentExerciseIndex + 1;
+      setCurrentExerciseIndex(nextIdx);
+      const nextEx = exerciseQueue[nextIdx];
+      setMelodyNotes(nextEx.melody);
+      setChords(nextEx.chords);
+      setTimelineSlots(nextEx.slots);
+      setFocusedSlotIndex(0);
+      
+      // Stop and reset audio
+      audio.stopPlayback();
+      audio.resetStartFlags();
+    } else {
+      // Completed the entire level/queue!
+      // 1. Calculate and save progress stats to localStorage
+      const totalSlots = exerciseQueue.reduce((acc, ex) => acc + ex.slots.length, 0);
+      const answeredSlots = exerciseQueue.flatMap(ex => ex.slots).filter(s => s.answer !== null);
+      const totalCorrect = answeredSlots.filter(s => s.correct).length;
+      saveProgressStats(totalCorrect, totalSlots);
+
+      // 2. Navigate to the next level
+      if (onNextLevel) {
+        onNextLevel();
+      }
+    }
+  };
+
+  const skipCadence = useMemo(() => {
+    return isQueuedLevel(level) && currentExerciseIndex > 0;
+  }, [level, currentExerciseIndex]);
+
+  // Group choices in rows of up to 4
+  const choiceChunks = useMemo(() => {
+    const choices = getAnswerChoices(level);
+    const chunks: string[][] = [];
+    for (let i = 0; i < choices.length; i += 4) {
+      chunks.push(choices.slice(i, i + 4));
+    }
+    return chunks;
+  }, [level]);
 
   // Tonic button
   const handleTonicClick = () => {
@@ -228,7 +337,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlaye
                   hasStarted={audio.hasStarted}
                   converter={converter}
                   onSlotClick={handleSlotClick}
-                  onPlayPause={audio.isPlaying ? audio.pausePlayback : () => audio.startPlayback(melodyNotes, chords, converter)}
+                  onPlayPause={audio.isPlaying ? audio.pausePlayback : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence)}
                 />
               </div>
             )}
@@ -256,40 +365,150 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlaye
             {mode === 'trainer' && (
               <div style={domStyles.card}>
                 <div style={domStyles.answerContainer}>
-                  <p style={domStyles.metaLabel}>Identify the {level >= 4 ? 'Chord' : 'Scale Degree'}:</p>
-                  <div style={domStyles.answerRow}>
-                    {getAnswerChoices(level).map((choice) => (
-                      <button
-                        key={choice}
-                        style={domStyles.answerBtn}
-                        onClick={() => handleChoice(choice)}
-                      >
-                        {choice}
-                      </button>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
+                    <p style={domStyles.metaLabel}>Identify the {level >= 4 ? 'Chord' : 'Scale Degree'}:</p>
+                    {isQueuedLevel(level) && (
+                      <span style={{
+                        fontSize: '10px',
+                        color: '#A8C7FA',
+                        backgroundColor: 'rgba(168, 199, 250, 0.08)',
+                        padding: '2px 8px',
+                        borderRadius: '8px',
+                        fontWeight: '700',
+                      }}>
+                        Exercise {currentExerciseIndex + 1} of 10
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Choices rows (max 4 per row) */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', marginBottom: '8px' }}>
+                    {choiceChunks.map((chunk, chunkIdx) => (
+                      <div key={chunkIdx} style={{ display: 'flex', flexDirection: 'row', gap: '12px', justifyContent: 'center', width: '100%' }}>
+                        {chunk.map((choice) => {
+                          const isAnswered = focusedSlotIndex !== null && timelineSlots[focusedSlotIndex]?.answer !== null;
+                          return (
+                            <button
+                              key={choice}
+                              disabled={isAnswered}
+                              style={{
+                                ...domStyles.answerBtn,
+                                flex: 1,
+                                maxWidth: '64px',
+                                height: '54px',
+                                borderRadius: '27px',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                opacity: isAnswered ? 0.35 : 1,
+                                cursor: isAnswered ? 'not-allowed' : 'pointer',
+                                transition: 'all 0.2s',
+                              }}
+                              onClick={() => handleChoice(choice)}
+                            >
+                              {choice}
+                            </button>
+                          );
+                        })}
+                      </div>
                     ))}
-                    <button
-                      style={{
-                        ...domStyles.restartBtn,
-                        backgroundColor: audio.hasStarted ? '#25282F' : '#A8C7FA',
-                        color: audio.hasStarted ? '#E2E2E6' : '#0A305F',
-                        border: audio.hasStarted ? '1px solid rgba(255, 255, 255, 0.05)' : 'none',
-                        boxShadow: audio.hasStarted ? 'none' : '0 2px 6px rgba(168, 199, 250, 0.25)',
-                      }}
-                      onClick={audio.hasStarted ? () => setupExercise(true) : () => audio.startPlayback(melodyNotes, chords, converter)}
-                    >
-                      {audio.hasStarted ? (
-                        <>
-                          <IconRestart /> Reset
-                        </>
-                      ) : (
-                        <>
-                          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style={{ marginRight: '6px' }}>
-                            <polygon points="6 4 20 12 6 20 6 4"></polygon>
+                  </div>
+
+                  {/* Last row: Start/Reset (1/3 width), Accuracy (1/3 width), Next (1/3 width) */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    gap: '12px',
+                    marginTop: '8px',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                    paddingTop: '16px',
+                  }}>
+                    {/* Column 1: Start/Reset Button (1/3 of the row) */}
+                    <div style={{ flex: 1, display: 'flex' }}>
+                      <button
+                        style={{
+                          width: '100%',
+                          padding: '12px 0',
+                          borderRadius: '16px',
+                          backgroundColor: audio.hasStarted ? '#25282F' : '#A8C7FA',
+                          color: audio.hasStarted ? '#E2E2E6' : '#0A305F',
+                          border: audio.hasStarted ? '1px solid rgba(255, 255, 255, 0.05)' : 'none',
+                          boxShadow: audio.hasStarted ? 'none' : '0 2px 6px rgba(168, 199, 250, 0.25)',
+                          fontSize: '12px',
+                          fontWeight: '800',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                        }}
+                        onClick={audio.hasStarted ? () => setupExercise(false) : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence)}
+                      >
+                        {audio.hasStarted ? (
+                          <>
+                            <IconRestart /> Restart
+                          </>
+                        ) : (
+                          <>
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style={{ marginRight: '6px' }}>
+                              <polygon points="6 4 20 12 6 20 6 4"></polygon>
+                            </svg>
+                            {skipCadence ? 'Continue' : 'Start'}
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Column 2: Accuracy Counts (1/3 of the row) */}
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                      <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: '800', color: '#81C784' }}>{correctCount}</span>
+                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="#81C784" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
                           </svg>
-                          Start
-                        </>
-                      )}
-                    </button>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: '800', color: '#E57373' }}>{wrongCount}</span>
+                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="#E57373" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Column 3: Next Button (1/3 of the row) */}
+                    <div style={{ flex: 1, display: 'flex' }}>
+                      <button
+                        disabled={!isCurrentExerciseComplete}
+                        style={{
+                          width: '100%',
+                          padding: '12px 0',
+                          borderRadius: '16px',
+                          backgroundColor: isCurrentExerciseComplete ? '#A8C7FA' : '#25282F',
+                          color: isCurrentExerciseComplete ? '#0A305F' : '#53565F',
+                          border: isCurrentExerciseComplete ? 'none' : '1px solid rgba(255, 255, 255, 0.05)',
+                          opacity: isCurrentExerciseComplete ? 1 : 0.4,
+                          fontSize: '12px',
+                          fontWeight: '800',
+                          cursor: isCurrentExerciseComplete ? 'pointer' : 'not-allowed',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          transition: 'all 0.2s',
+                        }}
+                        onClick={handleNextClick}
+                      >
+                        <span>Next</span>
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '4px' }}>
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                          <polyline points="12 5 19 12 12 19" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -25,8 +25,22 @@ export default function TrainerScreen() {
 
         {/* DOM Trainer Component */}
         <View style={styles.playerWrapper}>
-          <MidiPlayerDOM mode="trainer" level={levelNum} />
+          <MidiPlayerDOM 
+            mode="trainer" 
+            level={levelNum} 
+            onNextLevel={() => {
+              if (levelNum < 27) {
+                router.replace({
+                  pathname: '/trainer',
+                  params: { level: levelNum + 1 }
+                });
+              } else {
+                router.replace('/difficulty');
+              }
+            }}
+          />
         </View>
+
       </SafeAreaView>
     </View>
   );
