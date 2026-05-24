@@ -9,6 +9,16 @@ import { LevelSetup } from '../types/levels';
 
 export * from '../types/levels';
 
+/**
+ * Determine if a level should have a 10-exercise queue of sets.
+ * This applies to levels 1, 2, 4, 5 and future 1st & 2nd levels of each group (i.e., not the 3rd level).
+ */
+export function isQueuedLevel(level: number): boolean {
+  return level % 3 !== 0;
+}
+
+
+
 /** Stable content-hash for each level, used as the localStorage key. */
 export const EXERCISE_HASHES: Record<number, string> = {
   1: 'lvl1_do_re_mi_fa',

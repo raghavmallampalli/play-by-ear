@@ -9,37 +9,30 @@ const OCTAVE = 4;
 
 const converter = new NoteConverter(TONIC, OCTAVE, BPM, TICKS_PER_BEAT);
 
-/**
- * Level 3: Melody dictation — placeholder.
- * Uses all 7 scale degrees.
- */
-const CHOICES = [
-  { degree: 0, offset: 0, label: '1' }, // C4
-  { degree: 2, offset: 0, label: '2' }, // D4
-  { degree: 4, offset: 0, label: '3' }, // E4
-  { degree: 5, offset: 0, label: '4' }, // F4
-  { degree: 7, offset: 0, label: '5' }, // G4
-  { degree: 9, offset: 0, label: '6' }, // A4
-  { degree: 11, offset: 0, label: '7' }, // B4
-];
-
 export const LEVEL3_ANSWER_CHOICES = ['1', '2', '3', '4', '5', '6', '7'];
+
+const BIRTHDAY_NOTES = [
+  { degree: 0, offset: 0, label: '1', time: 0.0, duration: 0.25 }, // C4
+  { degree: 0, offset: 0, label: '1', time: 0.4, duration: 0.15 }, // C4
+  { degree: 2, offset: 0, label: '2', time: 0.6, duration: 0.45 }, // D4
+  { degree: 0, offset: 0, label: '1', time: 1.2, duration: 0.45 }, // C4
+  { degree: 5, offset: 0, label: '4', time: 1.8, duration: 0.45 }, // F4
+  { degree: 4, offset: 0, label: '3', time: 2.4, duration: 0.90 }, // E4
+];
 
 export function buildLevel3(): LevelSetup {
   const melody: PlayedNote[] = [];
   const chords: PlayedChord[] = [];
   const slots: TimelineSlot[] = [];
 
-  for (let i = 0; i < 7; i++) {
-    const pick = CHOICES[Math.floor(Math.random() * CHOICES.length)];
-    const timeSeconds = i * 0.6;
-    const beat = converter.secondsToTicks(timeSeconds);
-    const duration = converter.secondsToTicks(0.45);
+  BIRTHDAY_NOTES.forEach((n) => {
+    const beat = converter.secondsToTicks(n.time);
+    const duration = converter.secondsToTicks(n.duration);
     
-    const note = { note: { degree: pick.degree, offset: pick.offset }, beat, duration };
+    const note = { note: { degree: n.degree, offset: n.offset }, beat, duration };
     melody.push(note);
-    slots.push({ note: note.note, beat, answer: null, correct: false, label: pick.label });
-  }
+    slots.push({ note: note.note, beat, answer: null, correct: false, label: n.label });
+  });
 
   return {
     melody,
@@ -49,6 +42,6 @@ export function buildLevel3(): LevelSetup {
     ticksPerBeat: TICKS_PER_BEAT,
     tonicPitchClass: TONIC,
     baseOctave: OCTAVE,
-    preloadMidi: CHOICES.map(c => converter.toMidi({ degree: c.degree, offset: c.offset })),
+    preloadMidi: [60, 62, 64, 65, 67, 69, 71, 72],
   };
 }
