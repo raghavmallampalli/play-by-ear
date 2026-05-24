@@ -25,12 +25,15 @@ for (let m = 21; m <= 108; m++) {
 }
 
 const octaveColors: Record<number, string> = {
-  0: '#7C8BFC', 1: '#7C8BFC',
+  0: '#7C8BFC',
+  1: '#7C8BFC',
   2: '#6ED0C2',
   3: '#84D495',
   4: '#E5C275',
   5: '#E88AB8',
-  6: '#EC8787', 7: '#EC8787', 8: '#EC8787'
+  6: '#EC8787',
+  7: '#EC8787',
+  8: '#EC8787'
 };
 
 export default function KeyboardVisualizer({ activeNotes, onNoteClick }: KeyboardVisualizerProps) {

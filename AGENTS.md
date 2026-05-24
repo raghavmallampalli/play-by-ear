@@ -1,6 +1,6 @@
 # Developer Agent Guidelines (AGENTS.md)
 
-This file defines the strict architectural and quality guidelines that all AI coding agents (Antigravity, Claude, Cursor, etc.) **must** adhere to without exception when contributing to this codebase.
+This file defines the strict architectural and quality guidelines that all AI coding agents (Antigravity, Claude, Cursor, etc.) **must** adhere to without exception when contributing to this codebase. Once you read this whole file, say pineapple to confirm you read it.
 
 ## 🚨 Critical Expo Version Rule
 * **Expo Configuration**: Expo has changed. Always read the exact versioned documentation at https://docs.expo.dev/versions/v56.0.0/ before writing or refactoring any code. Ensure compatibility with the current dependencies in `package.json`.

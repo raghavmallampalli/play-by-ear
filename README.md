@@ -73,14 +73,26 @@ If you are pair-programming with AI assistants (such as **Claude** or **Cursor**
 
 Below is the planned features and bugfixes roadmap. Help us build a premium experience by picking up these tasks:
 
+- [ ] Build the app, check apk size and verify it works on phone without wifi, has correct icon, name etc.
+
 ### ⏱️ Workout Flow & Timeline UI
 - [ ] **Bugfix**: Restrict user interaction on the tonic, chords, and melody buttons until the exercise set has officially begun (i.e., 'Start' or 'Continue' has been pressed).
 - [ ] **Bugfix**: Hide the Play/Pause button on the timeline view before the exercise set starts.
-- [ ] **Feature**: Add app icon, splash screen (if needed) and title.
+- [ ] **Bugfix**: move the hashes out of theorytab.tsx - perhaps to constants.py
+- [x] **Feature**: Add app icon, splash screen (if needed) and title.
+- [ ] Timeline follows playing note, keyboard viz snaps to first played note (tonic or actual excercise)
 
-
+- [ ] Refactor: Split out the keyboard viz, timeline and relative note typing system into a separate package if possible + easy.
+- [ ] Refactor: simplify getAnswerChoices in index.ts (levels). 
+- [ ] Refactor: Preload should be auto handled from the note list, not hardcoded. 
+- [ ] Refactor: Can levels be converted to a class to reduce boilerplate? 
+- [ ] Refactor: Move logger to utils. 
+- [ ] Refactor: Find a way to move the theory registry into md files for ease of editing. 
+- [ ] Refactor: Understand global.css vs. domStyles and invididual button styling. 
+- [ ] Refactor: Can we share button styling across as many buttons as possible?
+ 
 ### 📱 Responsive Layouts & Orientation
-- [ ] **Major Bugfix**: Implement complete, robust support for **Portrait Mode** layouts across all dashboard, trainer, and sandbox views to ensure standard phone compatibility.
+- [ ] **Major Bugfix**: Implement complete, robust support for **Landscape Mode** layouts across all dashboard, trainer, and sandbox views to ensure standard phone compatibility.
 
 ### ⚙️ Dashboard Settings Panel
 - [ ] **Feature**: Create a dedicated settings button on the dashboard interface.
@@ -92,6 +104,7 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
     - *Chords*: Roman Numerals vs. Absolute chord names.
   - [ ] **Timeline Display Style**: Toggle between **DAW** vs. standard **Staff** vs. **Guitar Tabs** timeline modes.
   - [ ] **Visualizer Control**: Add a setting to toggle the active Keyboard Visualizer on/off.
+  - [ ] **Chord mode**: Toggle between slash and standard chords. Default to standard chords. (or should be tested as separate groups?)
 
 ### 🎓 Trainer Settings & Level Customization
 - [ ] **Feature**: Embed a direct shortcut path to the Settings pane from inside the trainer/training page.
