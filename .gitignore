@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# Piano Sample Audios (Downloaded via script)
+/assets/audio/**/*.mp3
