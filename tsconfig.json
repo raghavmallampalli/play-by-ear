@@ -2,6 +2,7 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "jsx": "react-native",
     "paths": {
       "@/*": [
         "./src/*"
@@ -16,5 +17,15 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "src/app/explore.tsx",
+    "src/components/animated-icon*",
+    "src/components/app-tabs*",
+    "src/components/web-badge*",
+    "src/components/hint-row*",
+    "src/components/ui/collapsible.tsx",
+    "src/hooks/use-theme.ts"
   ]
 }
