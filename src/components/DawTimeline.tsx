@@ -4,6 +4,8 @@ import React from 'react';
 import { TimelineSlot } from '../types/levels';
 import { NoteConverter } from '../utils/note_converter';
 
+import { isQueuedLevel } from '../levels';
+
 interface DawTimelineProps {
   level: number;
   timelineSlots: TimelineSlot[];
@@ -46,11 +48,15 @@ export default function DawTimeline({
   onPlayPause,
 }: DawTimelineProps) {
   // Derive timeline width from the last slot's time, falling back to a level default
+  const isQueued = isQueuedLevel(level);
   const lastSlotTime = timelineSlots.length > 0 
     ? Math.max(...timelineSlots.map(s => converter.ticksToSeconds(s.beat))) + 2.5 
     : 3.0;
-  const maxDuration = Math.max(lastSlotTime, level === 3 ? 18.0 : (level >= 6 ? 20.0 : (level >= 4 ? 15.0 : 3.0)));
+  const maxDuration = isQueued
+    ? lastSlotTime
+    : Math.max(lastSlotTime, level === 3 ? 18.0 : (level >= 6 ? 20.0 : (level >= 4 ? 15.0 : 3.0)));
   const barCount = Math.ceil(maxDuration);
+
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -151,15 +157,19 @@ export default function DawTimeline({
           boxShadow: isPlaying ? 'inset 0 2px 4px rgba(0,0,0,0.2)' : '0 2px 8px rgba(168, 199, 250, 0.3)',
         }}
       >
-        <div style={{
-          borderLeft: isPlaying ? 'none' : '16px solid #111318',
-          borderTop: isPlaying ? 'none' : '10px solid transparent',
-          borderBottom: isPlaying ? 'none' : '10px solid transparent',
-          backgroundColor: isPlaying ? '#111318' : 'transparent',
-          borderRadius: isPlaying ? '2px' : 0,
-          width: isPlaying ? '14px' : 0,
-          height: isPlaying ? '14px' : 0,
-        }} />
+        {isPlaying ? (
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <div style={{ width: '4px', height: '14px', backgroundColor: '#111318', borderRadius: '1px' }} />
+            <div style={{ width: '4px', height: '14px', backgroundColor: '#111318', borderRadius: '1px' }} />
+          </div>
+        ) : (
+          <div style={{
+            borderLeft: '16px solid #111318',
+            borderTop: '10px solid transparent',
+            borderBottom: '10px solid transparent',
+            width: 0, height: 0,
+          }} />
+        )}
       </button>
     </div>
   );
