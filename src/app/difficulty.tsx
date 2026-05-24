@@ -8,21 +8,21 @@ import { log } from '@/services/logger';
 // Definition of the 9 groups of 3 levels (27 levels total)
 const LEVEL_GROUPS = [
   {
-    title: 'Group A: Diatonic Intervals',
-    desc: 'Establish pitch intervals relative to the active root center.',
+    title: 'Group A: Scale Degree Ear Training',
+    desc: 'Identify individual notes by their position in the major scale.',
     levels: [
-      { id: 1, name: 'Level 1: Perfect Unison & Perfect 5th', detail: 'Dynamic Interval Generator (P1 & P5)' },
-      { id: 2, name: 'Level 2: Major & Minor Thirds', detail: 'Dynamic Interval Generator (P1, M3, P5)' },
-      { id: 3, name: 'Level 3: Full Diatonic Intervals', detail: 'All remaining diatonic intervals (M2, P4, M6, M7)' },
+      { id: 1, name: 'Level 1: Do Re Mi Fa (Degrees 1–4)', detail: 'Lower tetrachord — C D E F in C major' },
+      { id: 2, name: 'Level 2: Sol La Ti Do (Degrees 5–8)', detail: 'Upper tetrachord — G A B C, including the leading tone (7th)' },
+      { id: 3, name: 'Level 3: Happy Birthday Melody', detail: 'Full melody dictation — identify each note by scale degree' },
     ]
   },
   {
-    title: 'Group B: Chromatic Intervals',
-    desc: 'Introduce tense intervals outside the major scale.',
+    title: 'Group B: Chord Recognition',
+    desc: 'Identify I, IV, V chords and hear them in musical context.',
     levels: [
-      { id: 4, name: 'Level 4: Minor 2nd & Tritone', detail: 'Tense chromatic intervals' },
-      { id: 5, name: 'Level 5: Minor 6th & Minor 7th', detail: 'Upper chromatic pitches' },
-      { id: 6, name: 'Level 6: Complete 12 Chromatic Range', detail: 'All chromatic intervals' },
+      { id: 4, name: 'Level 4: I · IV · V Chords', detail: 'Pure chord recognition — no melody, root position triads' },
+      { id: 5, name: 'Level 5: Chords With Melody', detail: 'Chord recognition with a diatonic melody note on top' },
+      { id: 6, name: 'Level 6: Happy Birthday + Chords', detail: 'Full harmonization — identify each chord while the melody plays' },
     ]
   },
   {
@@ -36,7 +36,7 @@ const LEVEL_GROUPS = [
   },
   {
     title: 'Group D: Triad Inversions',
-    desc: 'Train your ear to recognize chords regardless of voicing voicing.',
+    desc: 'Train your ear to recognize chords regardless of voicing.',
     levels: [
       { id: 10, name: 'Level 10: First Inversion Chords', detail: 'Root position vs 1st Inversion (6)' },
       { id: 11, name: 'Level 11: Second Inversion Chords', detail: 'Adding 2nd Inversions (6/4)' },
@@ -127,7 +127,7 @@ export default function DifficultyScreen() {
 
               <View style={styles.levelsList}>
                 {group.levels.map((lvl) => {
-                  const isInteractive = lvl.id <= 3; // We explicitly support 1-3 to get started!
+                  const isInteractive = lvl.id <= 6; // Levels 1-6 are implemented
                   return (
                     <Pressable
                       key={lvl.id}
