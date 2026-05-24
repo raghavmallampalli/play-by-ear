@@ -1,56 +1,104 @@
-# Welcome to your Expo app 👋
+# 🎧 Play by Ear
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A modern, highly interactive, and beautiful MIDI-based ear training application built with **React Native**, **Expo**, and **ToneJS**. Designed to train your musical ear through structured levels, interactive keyboard visualizers, dynamic timelines, and comprehensive feedback modes.
 
-## Get started
+---
 
-1. Install dependencies
+## 🏗️ Codebase Architecture
 
-   ```bash
-   npm install
-   ```
+The codebase follows a highly modular, type-safe, and decoupled structure inside the `src` directory to ensure maximum maintainability and testability:
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+src/
+├── app/          # Expo Router file-based screens and navigation pages (dashboard, trainer, sandbox, etc.)
+├── components/   # Reusable presentational components (Timeline, KeyboardVisualizer, Settings, etc.)
+├── constants/    # Fixed constants, default configs, and global definitions
+├── hooks/        # React hooks coordinating stateful systems (useAudioEngine, useTheme, etc.)
+├── levels/       # Level configurations, registries, relative intervals, and generator scripts
+├── services/     # Core services and background integration workers
+├── tests/        # Jest unit and integration test suites
+├── theory/       # Theoretical reference guides and educational material
+├── types/        # Consolidated TypeScript interface, enum, and type declarations
+└── utils/        # Pure utility functions, pitch converters, and mathematical music logic
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-### Other setup steps
+## 🚀 Development Instructions
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+### 1. Prerequisites
+Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
 
-## Learn more
+### 2. Installation
+Clone the repository and install the dependencies:
+```bash
+npm install
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+### 3. Run the Development Server
+To start the Expo development server:
+```bash
+npm run start
+```
+From the interactive terminal output, you can choose where to run your application:
+- Press `w` to run in the **Web Browser**
+- Press `a` to run on an **Android Emulator** or connected device
+- Press `i` to run on an **iOS Simulator**
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+*Note: For direct platform runs, you can also use `npm run web`, `npm run android`, or `npm run ios`.*
 
-## Join the community
+### 4. Run Jest Unit Tests
+To execute the comprehensive unit test suite in the `src/tests` directory:
+```bash
+npm test
+```
 
-Join our community of developers creating universal apps.
+### 5. Lint the Codebase
+To analyze the codebase for potential syntax or styling errors:
+```bash
+npm run lint
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## 🤖 AI Agent Guidelines
+
+This repository includes a dedicated [AGENTS.md](file:///home/raghav/src/play-by-ear/AGENTS.md) file containing strict instructions, architectural requirements, and coding standards. 
+
+If you are pair-programming with AI assistants (such as **Claude** or **Cursor**), ensure they are prompted to read and adhere to [AGENTS.md](file:///home/raghav/src/play-by-ear/AGENTS.md) before writing any code. For **Cursor**, you can copy the contents of `AGENTS.md` directly into your `.cursorrules` file or project system instructions.
+
+---
+
+## 📝 Roadmap & TODO List
+
+Below is the planned features and bugfixes roadmap. Help us build a premium experience by picking up these tasks:
+
+### ⏱️ Workout Flow & Timeline UI
+- [ ] **Bugfix**: Restrict user interaction on the tonic, chords, and melody buttons until the exercise set has officially begun (i.e., 'Start' or 'Continue' has been pressed).
+- [ ] **Bugfix**: Hide the Play/Pause button on the timeline view before the exercise set starts.
+- [ ] **Feature**: Add app icon, splash screen (if needed) and title.
+
+
+### 📱 Responsive Layouts & Orientation
+- [ ] **Major Bugfix**: Implement complete, robust support for **Portrait Mode** layouts across all dashboard, trainer, and sandbox views to ensure standard phone compatibility.
+
+### ⚙️ Dashboard Settings Panel
+- [ ] **Feature**: Create a dedicated settings button on the dashboard interface.
+- [ ] **Feature**: Move the existing export & import data actions inside this dashboard settings pane.
+- [ ] **Feature**: Implement comprehensive custom settings:
+  - [ ] **Instrument Mode**: Toggle between **Guitar** vs. **Piano** synthesis modes.
+  - [ ] **Note Labels**: 
+    - *Melody*: Carnatic vs. Solfege vs. Note Numbers vs. Absolute pitches.
+    - *Chords*: Roman Numerals vs. Absolute chord names.
+  - [ ] **Timeline Display Style**: Toggle between **DAW** vs. standard **Staff** vs. **Guitar Tabs** timeline modes.
+  - [ ] **Visualizer Control**: Add a setting to toggle the active Keyboard Visualizer on/off.
+
+### 🎓 Trainer Settings & Level Customization
+- [ ] **Feature**: Embed a direct shortcut path to the Settings pane from inside the trainer/training page.
+- [ ] **Feature**: Add trainer-specific controls (like **Tempo/BPM**) at the top of this settings pane (only show this trainer settings section when accessed from the training screen).
+- [ ] **Feature**: Persist modified tempo values directly into the active level setup so they remain configured for subsequent runs of that exercise.
+- [ ] **Feature**: Add a "Reset to Default" button to revert the tempo back to the level's standard BPM value.
+
+### 🎹 MIDI Sandbox & Audio Engines
+- [ ] **Feature**: Fully hook up, wire, and integrate the MIDI Sandbox page.
+- [ ] **Feature**: Add a high-fidelity guitar synthesizer voice for audio synthesis.

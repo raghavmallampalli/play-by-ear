@@ -1,0 +1,6 @@
+---
+description: Strict codebase architecture, guidelines, and quality standards for all development tasks.
+globs: *
+alwaysApply: true
+---
+@AGENTS.md
