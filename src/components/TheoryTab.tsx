@@ -5,9 +5,12 @@ import { marked } from 'marked';
 import { EXERCISE_TO_THEORY_MAP, THEORY_REGISTRY } from '../theory/theory_registry';
 
 const EXERCISE_HASHES: Record<number, string> = {
-  1: '8f3a9e2b',
-  2: '5c4a7e9d',
-  3: '3b8d6f1a',
+  1: 'lvl1_do_re_mi_fa',
+  2: 'lvl2_sol_la_ti_do',
+  3: 'lvl3_hb_melody',
+  4: 'lvl4_chord_i_iv_v',
+  5: 'lvl5_chord_melody',
+  6: 'lvl6_hb_chords',
 };
 
 const IconInfo = () => (
@@ -84,7 +87,7 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
       <div style={{ height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.04)', margin: '8px 0' }} />
 
       {/* User notes section */}
-      {!isEditingNotes && userNotes.trim().length === 0 ? (
+      {!isEditingNotes && (userNotes?.trim() ?? '').length === 0 ? (
         <button
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',

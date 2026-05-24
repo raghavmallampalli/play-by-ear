@@ -1,171 +1,16 @@
 'use dom';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { pianoSamples } from '../constants/piano_samples';
-import KeyboardVisualizer from './KeyboardVisualizer';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { useAudioEngine } from '../hooks/useAudioEngine';
+import { buildLevel, EXERCISE_HASHES, getAnswerChoices, getPreloadMidi } from '../levels';
+import { TimelineSlot } from '../types/levels';
+import { PlayedNote, PlayedChord } from '../types/music';
+import { NoteConverter } from '../utils/note_converter';
 import DawTimeline from './DawTimeline';
+import { IconKeyboard, IconMelody, IconRestart, IconTuningFork } from './icons/TrainerIcons';
+import KeyboardVisualizer from './KeyboardVisualizer';
+import { domStyles } from './styles/domStyles';
 import TheoryTab from './TheoryTab';
-
-// Unique hashes for indexing training progress
-const EXERCISE_HASHES = {
-  1: '8f3a9e2b', // Level 1: Root & 5th Interval
-  2: '5c4a7e9d', // Level 2: Dynamic Thirds Interval
-  3: '3b8d6f1a', // Level 3: Happy Birthday Chords
-};
-
-import { marked } from 'marked';
-import { EXERCISE_TO_THEORY_MAP, THEORY_REGISTRY } from '../theory/theory_registry';
-
-// Zero-dependency offline-first Markdown Parser using marked
-const renderMarkdown = (text: string) => {
-  if (!text) return null;
-  try {
-    const rawHtml = marked.parse(text);
-    return (
-      <div className="markdown-body" style={{ width: '100%' }}>
-        <style dangerouslySetInnerHTML={{
-          __html: `
-          .markdown-body h1, .markdown-body h2, .markdown-body h3 {
-            font-size: 17px;
-            font-weight: 800;
-            color: #E2E2E6;
-            margin: 16px 0 8px 0;
-            line-height: 1.3;
-          }
-          .markdown-body h4, .markdown-body h5 {
-            font-size: 14px;
-            font-weight: 700;
-            color: #A8C7FA;
-            margin: 12px 0 6px 0;
-            line-height: 1.3;
-          }
-          .markdown-body p {
-            font-size: 12.5px;
-            color: #C2C7CF;
-            margin: 0 0 10px 0;
-            line-height: 1.5;
-          }
-          .markdown-body ul, .markdown-body ol {
-            margin: 0 0 12px 20px;
-            padding: 0;
-          }
-          .markdown-body li {
-            font-size: 12.5px;
-            color: #C2C7CF;
-            margin-bottom: 4px;
-            line-height: 1.5;
-            list-style-type: disc;
-          }
-          .markdown-body blockquote {
-            border-left: 3px solid #A8C7FA;
-            padding-left: 12px;
-            margin: 12px 0;
-            color: #8A92A6;
-            font-style: italic;
-            font-size: 12.5px;
-          }
-          .markdown-body code {
-            background-color: rgba(255,255,255,0.06);
-            padding: 2px 4px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 11.5px;
-            color: #A8C7FA;
-          }
-          .markdown-body strong {
-            color: #E2E2E6;
-            font-weight: 700;
-          }
-          .markdown-body em {
-            color: #E2E2E6;
-            font-style: italic;
-          }
-        ` }} />
-        <div dangerouslySetInnerHTML={{ __html: rawHtml }} />
-      </div>
-    );
-  } catch (e) {
-    console.error("Error parsing markdown:", e);
-    return <div style={{ whiteSpace: 'pre-wrap', fontSize: '12.5px', color: '#C2C7CF' }}>{text}</div>;
-  }
-};
-
-// Inline SVG Vector Icons for premium M3 feel
-const IconTuningFork = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
-    <path d="M8 4v8a4 4 0 0 0 8 0V4" />
-    <line x1="12" y1="16" x2="12" y2="20" />
-    <circle cx="12" cy="20" r="1.5" fill="currentColor" />
-  </svg>
-);
-
-const IconPlay = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
-    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-  </svg>
-);
-
-const IconPause = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
-    <rect x="6" y="4" width="4" height="16"></rect>
-    <rect x="14" y="4" width="4" height="16"></rect>
-  </svg>
-);
-
-const IconKeyboard = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
-    <rect x="2" y="3" width="20" height="18" rx="2" ry="2"></rect>
-    <line x1="6" y1="3" x2="6" y2="21"></line>
-    <line x1="10" y1="3" x2="10" y2="21"></line>
-    <line x1="14" y1="3" x2="14" y2="21"></line>
-    <line x1="18" y1="3" x2="18" y2="21"></line>
-  </svg>
-);
-
-const IconMelody = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
-    <path d="M9 18V5l12-2v13"></path>
-    <circle cx="6" cy="18" r="3"></circle>
-    <circle cx="18" cy="16" r="3"></circle>
-  </svg>
-);
-
-const IconRestart = () => (
-  <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
-    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
-  </svg>
-);
-
-const IconInfo = () => (
-  <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#A8C7FA', flexShrink: 0 }}>
-    <circle cx="12" cy="12" r="10"></circle>
-    <line x1="12" y1="16" x2="12" y2="12"></line>
-    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-  </svg>
-);
-
-const getActiveExerciseMidiNotes = (mode: 'trainer' | 'sandbox' | 'progress', level: number): number[] => {
-  if (mode === 'sandbox') {
-    return [
-      48, 55, 60, 64, 67, 71, 72, 76, 79, 83,
-      45, 52, 57, 81,
-      41, 48, 53, 69, 77, 84, 88,
-      43, 50, 59, 62, 65, 74
-    ];
-  }
-  if (level === 1) {
-    return [60, 67];
-  } else if (level === 2) {
-    return [60, 64, 67];
-  } else if (level === 3) {
-    return [
-      48, 52, 55, 60, 64,
-      41, 45, 65,
-      43, 47, 50, 67
-    ];
-  }
-  return [];
-};
 
 interface MidiPlayerDOMProps {
   mode?: 'trainer' | 'sandbox' | 'progress';
@@ -173,813 +18,138 @@ interface MidiPlayerDOMProps {
 }
 
 export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlayerDOMProps) {
-  // Navigation tabs inside Trainer screen
   const [activeTab, setActiveTab] = useState<'practice' | 'theory'>('practice');
-
-  // Exercise states
-  const [exerciseNotes, setExerciseNotes] = useState<any[]>([]);
-  const [timelineSlots, setTimelineSlots] = useState<any[]>([]);
+  const [melodyNotes, setMelodyNotes] = useState<PlayedNote[]>([]);
+  const [chords, setChords] = useState<PlayedChord[]>([]);
+  const [timelineSlots, setTimelineSlots] = useState<TimelineSlot[]>([]);
   const [focusedSlotIndex, setFocusedSlotIndex] = useState<number | null>(null);
+  const [userNotes, setUserNotes] = useState('');
+  
+  // Store level configuration to derive the converter
+  const [levelConfig, setLevelConfig] = useState({
+    bpm: 120,
+    tonic: 0,
+    octave: 4,
+    ticksPerBeat: 480
+  });
 
-  // Custom user markdown notes
-  const [userNotes, setUserNotes] = useState<string>('');
-  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const converter = useMemo(() => {
+    return new NoteConverter(levelConfig.tonic, levelConfig.octave, levelConfig.bpm, levelConfig.ticksPerBeat);
+  }, [levelConfig]);
 
-  // Player playback states
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [playheadTime, setPlayheadTime] = useState(0);
-  const [bpm, setBpm] = useState(120);
-  const [activeNotes, setActiveNotes] = useState<number[]>([]);
-  const [progressState, setProgressState] = useState<Record<string, any>>({});
-  const [hasStarted, setHasStarted] = useState(false);
-  const [hasPlayedCadence, setHasPlayedCadence] = useState(false);
-
+  // Tooltip
   const [tooltipText, setTooltipText] = useState<string | null>(null);
-  const [tooltipX, setTooltipX] = useState(0);
-  const [tooltipY, setTooltipY] = useState(0);
-  const tooltipTimeoutRef = useRef<any>(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const tooltipTimer = useRef<any>(null);
 
-  const startTooltipTimer = (text: string, e: React.PointerEvent<HTMLButtonElement>) => {
+  const preloadMidi = useMemo(() => getPreloadMidi(mode, level), [mode, level]);
+  const audio = useAudioEngine({ mode, level, preloadMidi });
+
+  // ─── Setup ─────────────────────────────────────────────────────────────────
+
+  const setupExercise = (keepCadence = false) => {
+    audio.stopPlayback();
+    if (!keepCadence) audio.resetStartFlags();
+    setFocusedSlotIndex(0);
+
+    const setup = buildLevel(mode, level);
+    setMelodyNotes(setup.melody);
+    setChords(setup.chords);
+    setTimelineSlots(setup.slots);
+    setLevelConfig({
+      bpm: setup.bpm,
+      tonic: setup.tonicPitchClass,
+      octave: setup.baseOctave,
+      ticksPerBeat: setup.ticksPerBeat
+    });
+  };
+
+  useEffect(() => {
+    setupExercise();
+  }, [level, mode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── Progress persistence ───────────────────────────────────────────────────
+
+  const saveProgressStats = (correct: number, total: number) => {
+    const hash = EXERCISE_HASHES[level];
+    if (!hash) return;
+    const rate = Math.round((correct / total) * 100);
+    try {
+      const key = `@pbe_progress_${hash}`;
+      const existing = localStorage.getItem(key);
+      let tried = 1, average = rate, best = rate;
+      if (existing) {
+        const d = JSON.parse(existing);
+        tried = (d.timesTried || 0) + 1;
+        best = Math.max(d.bestSuccess || 0, rate);
+        average = Math.round(((d.averageSuccess || 0) * (tried - 1) + rate) / tried);
+      }
+      localStorage.setItem(key, JSON.stringify({ timesTried: tried, averageSuccess: average, bestSuccess: best }));
+    } catch { /* offline */ }
+  };
+
+  // ─── Interaction ───────────────────────────────────────────────────────────
+
+  const handleChoice = (choice: string) => {
+    if (focusedSlotIndex === null) return;
+    const slot = timelineSlots[focusedSlotIndex];
+    
+    audio.playChoiceAudio(choice, converter);
+
+    const newSlots = [...timelineSlots];
+    newSlots[focusedSlotIndex] = {
+      ...slot,
+      answer: choice,
+      correct: choice === slot.label,
+    };
+    setTimelineSlots(newSlots);
+
+    if (focusedSlotIndex < timelineSlots.length - 1) {
+      setFocusedSlotIndex(focusedSlotIndex + 1);
+    } else {
+      const correctCount = newSlots.filter(s => s.correct).length;
+      saveProgressStats(correctCount, newSlots.length);
+    }
+  };
+
+  const handleSlotClick = (index: number) => {
+    setFocusedSlotIndex(index);
+    const slot = timelineSlots[index];
+    const isRevealed = slot.answer !== null && slot.correct;
+    if (slot.chord) {
+      audio.playChoiceAudio(slot.chord, converter, isRevealed);
+    } else {
+      audio.triggerLiveNote(converter.toMidi(slot.note), isRevealed);
+    }
+  };
+
+  const showTooltip = (text: string, e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = rect.left + rect.width / 2;
     const y = rect.top - 8;
-    if (tooltipTimeoutRef.current) {
-      clearTimeout(tooltipTimeoutRef.current);
-    }
-    tooltipTimeoutRef.current = setTimeout(() => {
+    if (tooltipTimer.current) clearTimeout(tooltipTimer.current);
+    tooltipTimer.current = setTimeout(() => {
       setTooltipText(text);
-      setTooltipX(x);
-      setTooltipY(y);
+      setTooltipPos({ x, y });
     }, 450);
   };
 
-  const cancelTooltipTimer = () => {
-    if (tooltipTimeoutRef.current) {
-      clearTimeout(tooltipTimeoutRef.current);
-      tooltipTimeoutRef.current = null;
+  const hideTooltip = () => {
+    if (tooltipTimer.current) {
+      clearTimeout(tooltipTimer.current);
+      tooltipTimer.current = null;
     }
     setTooltipText(null);
   };
 
-  useEffect(() => {
-    try {
-      const json = getProgressJSON();
-      const parsed = JSON.parse(json);
-      setProgressState(parsed);
-      console.log("[PBE Debug] Loaded progressState:", parsed);
-    } catch (e) {
-      console.error("[PBE Debug] Error parsing progress in useEffect:", e);
-    }
-  }, [mode, level]);
-
-  // Web Audio Context & Caching state
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const mainGainRef = useRef<GainNode | null>(null);
-  const audioBuffersRef = useRef<Map<number, AudioBuffer>>(new Map());
-
-  // Scheduler timing refs
-  const schedulerTimerRef = useRef<any>(null);
-  const startTimeoutRef = useRef<any>(null);
-  const lastTickTimeRef = useRef<number>(0);
-  const nextNoteIndexRef = useRef<number>(0);
-  const notesRef = useRef<any[]>(exerciseNotes);
-  const playheadRef = useRef<number>(0);
-
-
-  // Sync parameters
-  useEffect(() => {
-    notesRef.current = exerciseNotes;
-  }, [exerciseNotes]);
-
-  useEffect(() => {
-    playheadRef.current = playheadTime;
-  }, [playheadTime]);
-
-  // Load level configurations or dynamic generators upon startup
-  useEffect(() => {
-    setupExercise();
-    loadUserNotes();
-
-    // Preload active exercise notes immediately if audio context has been initialized
-    if (audioCtxRef.current) {
-      const activeNotes = getActiveExerciseMidiNotes(mode, level);
-      activeNotes.forEach(preloadSample);
-    }
-  }, [level, mode]);
-
-  // Auto-initialize audio context and start preloading grand piano samples on mount
-  useEffect(() => {
-    initAudio();
-    return () => {
-      if (schedulerTimerRef.current) {
-        clearInterval(schedulerTimerRef.current);
-      }
-    };
-  }, []);
-
-  // Dynamically resolve theory markdown from the current active level
-  const getCurrentLevelTheory = () => {
-    const exerciseHash = EXERCISE_HASHES[level as keyof typeof EXERCISE_HASHES];
-    const theoryHash = EXERCISE_TO_THEORY_MAP[exerciseHash];
-    return THEORY_REGISTRY[theoryHash] || "### Under Construction\n\nThere is no theory guide mapped for this level yet.";
-  };
-
-  // Load custom markdown notes from storage
-  const loadUserNotes = () => {
-    try {
-      const stored = localStorage.getItem(`@pbe_notes_lvl_${level}`);
-      if (stored) {
-        setUserNotes(stored);
-      } else {
-        setUserNotes('');
-      }
-    } catch (e) {
-      console.error(`[PBE Error] Failed to read user notes for level ${level} from localStorage:`, e);
-    }
-  };
-
-  // Save custom markdown notes to storage
-  const handleSaveNotes = (val: string) => {
-    setUserNotes(val);
-    try {
-      localStorage.setItem(`@pbe_notes_lvl_${level}`, val);
-      console.info(`[PBE Info] Memory notes updated for level ${level}. Length: ${val.length} characters.`);
-    } catch (e) {
-      console.error(`[PBE Error] Failed to write memory notes for level ${level} to localStorage:`, e);
-    }
-  };
-
-  // Audio Context Setup
-  const initAudio = async () => {
-    if (!audioCtxRef.current) {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx = new AudioContextClass();
-
-      // Hardware Gain Booster (1.6x volume increase, no sliders)
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(1.6, ctx.currentTime);
-      gain.connect(ctx.destination);
-
-      audioCtxRef.current = ctx;
-      mainGainRef.current = gain;
-
-      // Start preloading all 88 keys asynchronously in background
-      preloadAllSamples();
-
-      if (ctx.state === 'suspended') {
-        await ctx.resume();
-      }
-    } else if (audioCtxRef.current.state === 'suspended') {
-      await audioCtxRef.current.resume();
-    }
-  };
-
-  // Preloads and decodes local Grand Piano require MP3s
-  const preloadSample = async (midi: number) => {
-    if (audioBuffersRef.current.has(midi)) return;
-    const asset = pianoSamples[midi];
-    if (!asset) return;
-
-    try {
-      const res = await fetch(asset);
-      const arrayBuffer = await res.arrayBuffer();
-      if (audioCtxRef.current) {
-        const decoded = await audioCtxRef.current.decodeAudioData(arrayBuffer);
-        audioBuffersRef.current.set(midi, decoded);
-      }
-    } catch (err) {
-      // Fallback fails silently
-    }
-  };
-
-  const preloadAllSamples = () => {
-    // Priority keys loaded immediately for the trainer levels (C4 - B5 range, including black keys)
-    const priorityKeys = [
-      60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71,
-      72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83
-    ];
-
-    // Also append to this list all the notes that are a part of the active exercise
-    const activeExerciseNotes = getActiveExerciseMidiNotes(mode, level);
-    const combinedKeys = Array.from(new Set([...priorityKeys, ...activeExerciseNotes]));
-
-    combinedKeys.forEach(preloadSample);
-
-    // Stagger loading the remaining 88 piano keys to avoid blocking IO/rendering threads
-    setTimeout(() => {
-      Object.keys(pianoSamples).forEach(key => {
-        preloadSample(Number(key));
-      });
-    }, 1500);
-  };
-
-  // Sets up the Trainer score and timeline slots
-  const setupExercise = (keepCadenceFlag = false) => {
-    stopPlayback();
-    setFocusedSlotIndex(0);
-    setHasStarted(false);
-    if (!keepCadenceFlag) {
-      setHasPlayedCadence(false);
-    }
-
-    if (mode === 'sandbox') {
-      setExerciseNotes(getDefaultSandboxNotes());
-      setTimelineSlots([]);
-      return;
-    }
-
-    if (level === 1) {
-      // Level 1: Dynamic Interval Generator (P1 & P5 only)
-      const generated = [];
-      const slots = [];
-      const choices = [60, 67]; // C4 (P1), G4 (P5)
-
-      for (let i = 0; i < 4; i++) {
-        const randMidi = choices[Math.floor(Math.random() * choices.length)];
-        const onsetTime = i * 0.5;
-        generated.push({
-          midi: randMidi,
-          time: onsetTime,
-          duration: 0.35,
-          velocity: 0.85
-        });
-        slots.push({
-          midi: randMidi,
-          time: onsetTime,
-          answer: null,
-          correct: false,
-          label: randMidi === 60 ? 'P1' : 'P5'
-        });
-      }
-      setExerciseNotes(generated);
-      setTimelineSlots(slots);
-      setBpm(120);
-    } else if (level === 2) {
-      // Level 2: Dynamic Interval Generator (P1, M3, & P5)
-      const generated = [];
-      const slots = [];
-      const choices = [60, 64, 67]; // C4 (P1), E4 (M3), G4 (P5)
-
-      for (let i = 0; i < 4; i++) {
-        const randMidi = choices[Math.floor(Math.random() * choices.length)];
-        const onsetTime = i * 0.5;
-        generated.push({
-          midi: randMidi,
-          time: onsetTime,
-          duration: 0.35,
-          velocity: 0.85
-        });
-        slots.push({
-          midi: randMidi,
-          time: onsetTime,
-          answer: null,
-          correct: false,
-          label: randMidi === 60 ? 'P1' : randMidi === 64 ? 'M3' : 'P5'
-        });
-      }
-      setExerciseNotes(generated);
-      setTimelineSlots(slots);
-      setBpm(120);
-    } else if (level === 3) {
-      // Level 3: Song Dictation - Happy Birthday chords in 3/4 time
-      const songNotes: any[] = [];
-      const slots: any[] = [];
-
-      const addChord = (time: number, chordType: 'I' | 'IV' | 'V', duration: number) => {
-        const pitches = chordType === 'I' ? [60, 64, 67, 72] // C4, E4, G4, C5
-          : chordType === 'IV' ? [60, 65, 69, 72] // C4, F4, A4, C5
-            : [59, 62, 67, 71]; // B3, D4, G4, B4 (V)
-
-        pitches.forEach(pitch => {
-          songNotes.push({
-            midi: pitch,
-            time: time,
-            duration: duration,
-            velocity: 0.65,
-            isChord: true
-          });
-        });
-
-        const melodyPitch = chordType === 'I' ? 64 : chordType === 'IV' ? 65 : 67;
-        songNotes.push({
-          midi: melodyPitch,
-          time: time + 0.1,
-          duration: duration * 0.8,
-          velocity: 0.85
-        });
-
-        slots.push({
-          midi: pitches[0],
-          chord: chordType,
-          time: time,
-          answer: null,
-          correct: false,
-          label: chordType
-        });
-      };
-
-      addChord(0.0, 'I', 2.8);
-      addChord(3.0, 'V', 2.8);
-      addChord(6.0, 'I', 2.8);
-      addChord(9.0, 'IV', 2.8);
-      addChord(12.0, 'I', 2.8);
-
-      setExerciseNotes(songNotes);
-      setTimelineSlots(slots);
-      setBpm(110);
-    }
-  };
-
-  const getDefaultSandboxNotes = () => {
-    const notes: any[] = [];
-    const addChordAndMelody = (time: number, chord: number[], melody: number[], duration: number) => {
-      chord.forEach(p => notes.push({ midi: p, time, duration: duration * 0.98, velocity: 0.55 }));
-      const step = duration / melody.length;
-      melody.forEach((p, i) => notes.push({ midi: p, time: time + i * step, duration: step * 0.85, velocity: 0.8 }));
-    };
-    addChordAndMelody(0.0, [48, 55, 60, 64, 67, 71], [72, 76, 79, 83], 3.0);
-    addChordAndMelody(3.0, [45, 52, 57, 60, 64, 67], [81, 79, 76, 72], 3.0);
-    addChordAndMelody(6.0, [41, 48, 53, 57, 60, 64, 69], [77, 81, 84, 88], 3.0);
-    addChordAndMelody(9.0, [43, 50, 55, 59, 62, 65, 67], [79, 77, 74, 71], 3.0);
-    return notes;
-  };
-
-  // Play audio notes inside Scheduler
-  const playSynthNote = (ctx: AudioContext, midi: number, startTime: number, duration: number, velocity: number, showHighlight = true) => {
-    if (!mainGainRef.current) return;
-
-    const cachedBuffer = audioBuffersRef.current.get(midi);
-    if (cachedBuffer) {
-      const source = ctx.createBufferSource();
-      source.buffer = cachedBuffer;
-
-      const voiceGain = ctx.createGain();
-      const volumeCompensation = velocity * 1.45;
-
-      voiceGain.gain.setValueAtTime(0, startTime);
-      voiceGain.gain.linearRampToValueAtTime(volumeCompensation, startTime + 0.005);
-      voiceGain.gain.setValueAtTime(volumeCompensation, startTime + duration);
-      voiceGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration + 0.8);
-
-      source.connect(voiceGain).connect(mainGainRef.current);
-      source.start(startTime);
-      source.stop(startTime + duration + 0.95);
-
-      if (showHighlight) {
-        triggerUiHighlight(midi, startTime, duration);
-      }
-      return;
-    }
-
-    preloadSample(midi);
-
-    const freq = 440 * Math.pow(2, (midi - 69) / 12);
-    const osc1 = ctx.createOscillator();
-    const osc2 = ctx.createOscillator();
-    const voiceGain = ctx.createGain();
-
-    osc1.type = 'triangle';
-    osc1.frequency.setValueAtTime(freq, startTime);
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(freq / 2, startTime);
-
-    const peakVolume = velocity * 0.16;
-    voiceGain.gain.setValueAtTime(0, startTime);
-    voiceGain.gain.linearRampToValueAtTime(peakVolume, startTime + 0.008);
-    voiceGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration + 0.6);
-
-    osc1.connect(voiceGain).connect(mainGainRef.current);
-    osc2.connect(voiceGain).connect(mainGainRef.current);
-
-    osc1.start(startTime);
-    osc2.start(startTime);
-    osc1.stop(startTime + duration + 0.7);
-    osc2.stop(startTime + duration + 0.7);
-
-    if (showHighlight) {
-      triggerUiHighlight(midi, startTime, duration);
-    }
-  };
-
-  const triggerUiHighlight = (midi: number, startTime: number, duration: number) => {
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
-
-    const triggerMs = Math.max(0, (startTime - ctx.currentTime) * 1000);
-    const durationMs = duration * 1000;
-
-    setTimeout(() => {
-      setActiveNotes(prev => [...prev, midi]);
-    }, triggerMs);
-
-    setTimeout(() => {
-      setActiveNotes(prev => prev.filter(n => n !== midi));
-    }, triggerMs + durationMs);
-  };
-
-  const triggerLiveNote = (midi: number) => {
-    initAudio();
-    if (audioCtxRef.current) {
-      playSynthNote(audioCtxRef.current, midi, audioCtxRef.current.currentTime, 0.45, 0.95);
-    }
-  };
-
-  // Tonic single tap & double tap cadet grounding progressions
-  let lastTonicClick = 0;
+  // Tonic button
   const handleTonicClick = () => {
-    const now = Date.now();
-    if (now - lastTonicClick < 320) {
-      playGroundingCadence();
-    } else {
-      playTonicRootChord();
-    }
-    lastTonicClick = now;
+    audio.playGroundingCadence(converter);
   };
-
-  const playTonicRootChord = () => {
-    initAudio();
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
-    const now = ctx.currentTime;
-    playSynthNote(ctx, 60, now, 1.8, 0.8);
-    playSynthNote(ctx, 64, now + 0.02, 1.8, 0.8);
-    playSynthNote(ctx, 67, now + 0.04, 1.8, 0.8);
-    playSynthNote(ctx, 72, now + 0.06, 1.8, 0.8);
-  };
-
-  const playGroundingCadence = () => {
-    initAudio();
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
-    const now = ctx.currentTime;
-
-    const playChordAt = (time: number, pitches: number[], duration: number) => {
-      pitches.forEach((p, idx) => {
-        playSynthNote(ctx, p, now + time + idx * 0.015, duration, 0.7);
-      });
-    };
-
-    playChordAt(0.0, [60, 64, 67, 72], 0.7);
-    playChordAt(0.8, [60, 65, 69, 72], 0.7);
-    playChordAt(1.6, [59, 62, 67, 71], 0.7);
-    playChordAt(2.4, [60, 64, 67, 72], 1.2);
-  };
-
-  // High-precision metric scheduler
-  const runScheduler = () => {
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
-
-    const lookahead = 0.15;
-    const speedFactor = bpm / 120;
-    const now = ctx.currentTime;
-    const elapsedRealTime = now - lastTickTimeRef.current;
-    lastTickTimeRef.current = now;
-
-    let newPlayhead = playheadRef.current + elapsedRealTime * speedFactor;
-
-    const maxDuration = level === 3 ? 15.0 : 2.0;
-    if (newPlayhead >= maxDuration) {
-      stopPlayback();
-      return;
-    }
-    setPlayheadTime(newPlayhead);
-
-    const scheduleWindowEnd = newPlayhead + lookahead;
-    const notes = notesRef.current;
-
-    while (
-      nextNoteIndexRef.current < notes.length &&
-      notes[nextNoteIndexRef.current].time < scheduleWindowEnd
-    ) {
-      const note = notes[nextNoteIndexRef.current];
-      const prevPlayhead = playheadRef.current;
-      if (note.time >= prevPlayhead) {
-        const offsetMidiSeconds = note.time - prevPlayhead;
-        const realWorldOffset = offsetMidiSeconds / speedFactor;
-        const scheduleTime = now + realWorldOffset;
-
-        playSynthNote(ctx, note.midi, scheduleTime, note.duration, note.velocity || 0.8, false);
-      }
-      nextNoteIndexRef.current++;
-    }
-  };
-
-  const startPlayback = async () => {
-    await initAudio();
-    if (isPlaying) return;
-
-    setIsPlaying(true);
-    setHasStarted(true);
-
-    const ctx = audioCtxRef.current!;
-    const now = ctx.currentTime;
-
-    if (playheadTime === 0 && !hasPlayedCadence) {
-      // Play the beautiful I-IV-V-I grounding cadence sequence
-      playGroundingCadence();
-      setHasPlayedCadence(true);
-
-      startTimeoutRef.current = setTimeout(() => {
-        lastTickTimeRef.current = ctx.currentTime;
-        let startIndex = 0;
-        while (startIndex < exerciseNotes.length && exerciseNotes[startIndex].time < playheadTime) {
-          startIndex++;
-        }
-        nextNoteIndexRef.current = startIndex;
-        schedulerTimerRef.current = setInterval(runScheduler, 25);
-      }, 3700);
-    } else {
-      lastTickTimeRef.current = now;
-      let startIndex = 0;
-      while (startIndex < exerciseNotes.length && exerciseNotes[startIndex].time < playheadTime) {
-        startIndex++;
-      }
-      nextNoteIndexRef.current = startIndex;
-      schedulerTimerRef.current = setInterval(runScheduler, 25);
-    }
-  };
-
-  const pausePlayback = () => {
-    if (startTimeoutRef.current) {
-      clearTimeout(startTimeoutRef.current);
-      startTimeoutRef.current = null;
-    }
-    if (schedulerTimerRef.current) {
-      clearInterval(schedulerTimerRef.current);
-      schedulerTimerRef.current = null;
-    }
-    setIsPlaying(false);
-  };
-
-  const stopPlayback = () => {
-    pausePlayback();
-    setPlayheadTime(0);
-    setActiveNotes([]);
-    nextNoteIndexRef.current = 0;
-  };
-
-  const playBackingChordsOnly = () => {
-    initAudio();
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
-    const now = ctx.currentTime;
-
-    exerciseNotes.forEach(note => {
-      if (note.isChord || note.midi < 60) {
-        playSynthNote(ctx, note.midi, now + note.time, note.duration, 0.75, false);
-      }
-    });
-  };
-
-  const playMelodyOnly = () => {
-    initAudio();
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
-    const now = ctx.currentTime;
-
-    exerciseNotes.forEach(note => {
-      if (!note.isChord && note.midi >= 60) {
-        playSynthNote(ctx, note.midi, now + note.time, note.duration, 0.85, false);
-      }
-    });
-  };
-
-  const playChoiceAudio = (choice: string) => {
-    initAudio();
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
-    const now = ctx.currentTime;
-
-    if (choice === 'P1') {
-      playSynthNote(ctx, 60, now, 0.6, 0.85);
-    } else if (choice === 'M3') {
-      playSynthNote(ctx, 64, now, 0.6, 0.85);
-    } else if (choice === 'P5') {
-      playSynthNote(ctx, 67, now, 0.6, 0.85);
-    } else if (choice === 'I') {
-      playSynthNote(ctx, 48, now, 1.2, 0.7);
-      playSynthNote(ctx, 52, now + 0.02, 1.2, 0.7);
-      playSynthNote(ctx, 55, now + 0.04, 1.2, 0.7);
-      playSynthNote(ctx, 60, now + 0.06, 1.2, 0.7);
-    } else if (choice === 'IV') {
-      playSynthNote(ctx, 41, now, 1.2, 0.7);
-      playSynthNote(ctx, 45, now + 0.02, 1.2, 0.7);
-      playSynthNote(ctx, 48, now + 0.04, 1.2, 0.7);
-      playSynthNote(ctx, 65, now + 0.06, 1.2, 0.7);
-    } else if (choice === 'V') {
-      playSynthNote(ctx, 43, now, 1.2, 0.7);
-      playSynthNote(ctx, 47, now + 0.02, 1.2, 0.7);
-      playSynthNote(ctx, 50, now + 0.04, 1.2, 0.7);
-      playSynthNote(ctx, 67, now + 0.06, 1.2, 0.7);
-    }
-  };
-
-  // Timeline slots input evaluation
-  const handleAnswerInput = (choice: string) => {
-    if (focusedSlotIndex === null) return;
-
-    const slots = [...timelineSlots];
-    const target = slots[focusedSlotIndex];
-    target.answer = choice;
-
-    target.correct = target.label === choice;
-    setTimelineSlots(slots);
-
-    playChoiceAudio(choice);
-
-    let nextIndex = focusedSlotIndex + 1;
-    if (nextIndex < slots.length) {
-      setFocusedSlotIndex(nextIndex);
-    }
-
-    if (slots.every(s => s.answer !== null)) {
-      saveProgressStats(slots.filter(s => s.correct).length, slots.length);
-    }
-  };
-
-  // Tracks persistent Ear-Trainer levels tried & average/best scores
-  const saveProgressStats = (correctCount: number, total: number) => {
-    const hash = EXERCISE_HASHES[level as keyof typeof EXERCISE_HASHES];
-    if (!hash) return;
-
-    const rate = Math.round((correctCount / total) * 100);
-    try {
-      const statsKey = `@pbe_progress_${hash}`;
-      const existing = localStorage.getItem(statsKey);
-      let tried = 1;
-      let average = rate;
-      let best = rate;
-
-      if (existing) {
-        const data = JSON.parse(existing);
-        tried = (data.timesTried || 0) + 1;
-        best = Math.max(data.bestSuccess || 0, rate);
-        average = Math.round(((data.averageSuccess || 0) * (tried - 1) + rate) / tried);
-      }
-
-      localStorage.setItem(statsKey, JSON.stringify({
-        timesTried: tried,
-        averageSuccess: average,
-        bestSuccess: best
-      }));
-    } catch (e) { }
-  };
-
-  const handleRestart = () => {
-    setupExercise(true);
-  };
-
-  // Progress screen export data functions
-  const getProgressJSON = () => {
-    const profile: Record<string, any> = {};
-    Object.entries(EXERCISE_HASHES).forEach(([lvl, hash]) => {
-      try {
-        const raw = localStorage.getItem(`@pbe_progress_${hash}`);
-        if (raw) profile[hash] = JSON.parse(raw);
-      } catch (e) { }
-    });
-    return JSON.stringify(profile, null, 2);
-  };
-
-  const handleImportProgress = (jsonString: string) => {
-    try {
-      const parsed = JSON.parse(jsonString);
-      Object.entries(parsed).forEach(([hash, data]) => {
-        localStorage.setItem(`@pbe_progress_${hash}`, JSON.stringify(data));
-      });
-      console.info("[PBE Info] Progress successfully synchronized and stored from imported backup file.");
-      alert('Progress successfully synchronized!');
-      setupExercise();
-    } catch (e) {
-      console.error("[PBE Error] Malformed progress backup file load failed. JSON syntax parsing error:", e);
-      alert('Failed to parse JSON. Please select a valid progress profile.');
-    }
-  };
-
-  const handleExportFile = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(getProgressJSON());
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "play-by-ear-progress.json");
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-  };
-
-  const handleImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result;
-      if (typeof text === 'string') {
-        handleImportProgress(text);
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  };
-
-
-  const getAnswerChoices = () => {
-    if (level === 1) return ['P1', 'P5'];
-    if (level === 2) return ['P1', 'M3', 'P5'];
-    return ['I', 'IV', 'V'];
-  };
-
-  if (mode === 'progress') {
-    const triggerFilePicker = () => {
-      document.getElementById('import-file-picker')?.click();
-    };
-
-    let hasProgress = false;
-    try {
-      const progressData = JSON.parse(getProgressJSON());
-      hasProgress = Object.keys(progressData).length > 0;
-    } catch (e) { }
-
-    return (
-      <div style={domStyles.body}>
-        <div style={domStyles.wrapper}>
-          <div style={domStyles.card}>
-            <h2 style={domStyles.sectionTitle}>Sync and Save Progress</h2>
-            <p style={domStyles.metaLabel}>Backup your training profile directly to your device disk as a JSON file, or restore a previously saved file.</p>
-
-            <div style={domStyles.notesDivider} />
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
-              <button
-                style={hasProgress ? domStyles.gridBtnPlay : domStyles.gridBtnDisabled}
-                onClick={hasProgress ? handleExportFile : undefined}
-                disabled={!hasProgress}
-              >
-                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                Export Progress to Disk
-              </button>
-
-              <button style={domStyles.gridBtn} onClick={triggerFilePicker}>
-                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="17 8 12 3 7 8"></polyline>
-                  <line x1="12" y1="3" x2="12" y2="15"></line>
-                </svg>
-                Import Progress from Disk
-              </button>
-
-              {/* Hidden file input */}
-              <input
-                type="file"
-                id="import-file-picker"
-                accept=".json"
-                style={{ display: 'none' }}
-                onChange={handleImportFileChange}
-              />
-            </div>
-
-            <div style={domStyles.openSourceBadge}>
-              <IconInfo />
-              <p style={domStyles.openSourceText}>
-                Imported profiles immediately synchronize with your local storage, seamlessly updating your training statistics offline.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div style={domStyles.body}>
-      {/* Long-press tooltip overlay */}
-      {tooltipText && (
-        <div style={{
-          position: 'fixed',
-          left: tooltipX,
-          top: tooltipY,
-          transform: 'translate(-50%, -100%)',
-          backgroundColor: '#2A2D34',
-          color: '#E2E2E6',
-          fontSize: '12px',
-          fontWeight: 500,
-          padding: '5px 10px',
-          borderRadius: '8px',
-          border: '1px solid rgba(255,255,255,0.08)',
-          pointerEvents: 'none',
-          zIndex: 9999,
-          whiteSpace: 'nowrap',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-        }}>
-          {tooltipText}
-        </div>
-      )}
       <div style={domStyles.wrapper}>
-
         {/* Practice & Theory Navigation Tabs */}
         <div style={domStyles.tabRow}>
           <button
@@ -998,64 +168,72 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlaye
 
         {activeTab === 'practice' ? (
           <>
-            {/* Core Controls: Single Row Layout */}
+            {/* Core Controls: Top Row (Tonic, Chords, Melody) */}
             <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
               <button
                 style={{ ...domStyles.gridBtn, flex: 1, padding: '12px 0', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
                 onClick={handleTonicClick}
-                onPointerDown={(e) => startTooltipTimer('Tonic Reference', e)}
-                onPointerUp={cancelTooltipTimer}
-                onPointerLeave={cancelTooltipTimer}
-                onPointerCancel={cancelTooltipTimer}
-                title="Tonic Reference"
+                onMouseEnter={(e) => showTooltip('Tonic Reference', e)}
+                onMouseLeave={hideTooltip}
               >
                 <IconTuningFork />
               </button>
               <button
-                style={{ ...domStyles.gridBtn, flex: 1, padding: '12px 0', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
-                onClick={playBackingChordsOnly}
-                onPointerDown={(e) => startTooltipTimer('Root Chords Backing', e)}
-                onPointerUp={cancelTooltipTimer}
-                onPointerLeave={cancelTooltipTimer}
-                onPointerCancel={cancelTooltipTimer}
-                title="Root Chords Backing"
+                style={{
+                  ...domStyles.gridBtn,
+                  flex: 1,
+                  padding: '12px 0',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  opacity: chords.length === 0 ? 0.4 : 1,
+                  cursor: chords.length === 0 ? 'not-allowed' : 'pointer',
+                }}
+                onClick={() => audio.playBackingChordsOnly(chords, converter)}
+                disabled={chords.length === 0}
+                onMouseEnter={(e) => chords.length > 0 && showTooltip('Root Chords Backing', e)}
+                onMouseLeave={hideTooltip}
               >
                 <IconKeyboard />
               </button>
               <button
-                style={{ ...domStyles.gridBtn, flex: 1, padding: '12px 0', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
-                onClick={playMelodyOnly}
-                onPointerDown={(e) => startTooltipTimer('Just Melody Guide', e)}
-                onPointerUp={cancelTooltipTimer}
-                onPointerLeave={cancelTooltipTimer}
-                onPointerCancel={cancelTooltipTimer}
-                title="Just Melody Guide"
+                style={{
+                  ...domStyles.gridBtn,
+                  flex: 1,
+                  padding: '12px 0',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  opacity: melodyNotes.length === 0 ? 0.4 : 1,
+                  cursor: melodyNotes.length === 0 ? 'not-allowed' : 'pointer',
+                }}
+                onClick={() => audio.playMelodyOnly(melodyNotes, converter)}
+                disabled={melodyNotes.length === 0}
+                onMouseEnter={(e) => melodyNotes.length > 0 && showTooltip('Just Melody Guide', e)}
+                onMouseLeave={hideTooltip}
               >
                 <IconMelody />
               </button>
             </div>
 
-            {/* DAW metric timeline grids */}
+            {/* DAW timeline card */}
             {mode === 'trainer' && (
               <div style={domStyles.card}>
                 <DawTimeline
                   level={level}
                   timelineSlots={timelineSlots}
                   focusedSlotIndex={focusedSlotIndex}
-                  playheadTime={playheadTime}
-                  isPlaying={isPlaying}
-                  hasStarted={hasStarted}
-                  onSlotClick={(index, slot) => {
-                    setFocusedSlotIndex(index);
-                    setPlayheadTime(slot.time);
-                    triggerLiveNote(slot.midi);
-                  }}
-                  onPlayPause={isPlaying ? pausePlayback : startPlayback}
+                  playheadTime={audio.playheadTime}
+                  isPlaying={audio.isPlaying}
+                  hasStarted={audio.hasStarted}
+                  converter={converter}
+                  onSlotClick={handleSlotClick}
+                  onPlayPause={audio.isPlaying ? audio.pausePlayback : () => audio.startPlayback(melodyNotes, chords, converter)}
                 />
               </div>
             )}
 
-            {/* Scrollable Piano Visualizer */}
+            {/* Scrollable Piano Visualizer with Indicator */}
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <span style={{
                 fontSize: '10px', color: '#A8C7FA',
@@ -1072,19 +250,19 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlaye
                 8 octaves
               </span>
             </div>
-            <KeyboardVisualizer activeNotes={activeNotes} onNoteClick={triggerLiveNote} />
+            <KeyboardVisualizer activeNotes={audio.activeNotes} onNoteClick={audio.triggerLiveNote} />
 
             {/* Answer Selector Controls & Restart */}
             {mode === 'trainer' && (
               <div style={domStyles.card}>
                 <div style={domStyles.answerContainer}>
-                  <p style={domStyles.metaLabel}>Select Correct Relative Pitch:</p>
+                  <p style={domStyles.metaLabel}>Identify the {level >= 4 ? 'Chord' : 'Scale Degree'}:</p>
                   <div style={domStyles.answerRow}>
-                    {getAnswerChoices().map(choice => (
+                    {getAnswerChoices(level).map((choice) => (
                       <button
                         key={choice}
                         style={domStyles.answerBtn}
-                        onClick={() => handleAnswerInput(choice)}
+                        onClick={() => handleChoice(choice)}
                       >
                         {choice}
                       </button>
@@ -1092,14 +270,14 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlaye
                     <button
                       style={{
                         ...domStyles.restartBtn,
-                        backgroundColor: hasStarted ? '#25282F' : '#A8C7FA',
-                        color: hasStarted ? '#E2E2E6' : '#0A305F',
-                        border: hasStarted ? '1px solid rgba(255, 255, 255, 0.05)' : 'none',
-                        boxShadow: hasStarted ? 'none' : '0 2px 6px rgba(168, 199, 250, 0.25)',
+                        backgroundColor: audio.hasStarted ? '#25282F' : '#A8C7FA',
+                        color: audio.hasStarted ? '#E2E2E6' : '#0A305F',
+                        border: audio.hasStarted ? '1px solid rgba(255, 255, 255, 0.05)' : 'none',
+                        boxShadow: audio.hasStarted ? 'none' : '0 2px 6px rgba(168, 199, 250, 0.25)',
                       }}
-                      onClick={hasStarted ? handleRestart : startPlayback}
+                      onClick={audio.hasStarted ? () => setupExercise(true) : () => audio.startPlayback(melodyNotes, chords, converter)}
                     >
-                      {hasStarted ? (
+                      {audio.hasStarted ? (
                         <>
                           <IconRestart /> Reset
                         </>
@@ -1118,406 +296,32 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlaye
             )}
           </>
         ) : (
-          <TheoryTab
-            level={level}
-            userNotes={userNotes}
-            onSaveNotes={handleSaveNotes}
+          <TheoryTab 
+            level={level} 
+            userNotes={userNotes} 
+            onSaveNotes={(val) => {
+              setUserNotes(val);
+              try {
+                localStorage.setItem(`@pbe_notes_lvl_${level}`, val);
+              } catch { /* offline */ }
+            }} 
           />
         )}
-
       </div>
+
+      {/* Tooltip Render */}
+      {tooltipText && (
+        <div style={{
+          position: 'fixed', left: tooltipPos.x, top: tooltipPos.y,
+          transform: 'translate(-50%, -100%)', backgroundColor: '#2A2D34',
+          color: '#E2E2E6', fontSize: '12px', fontWeight: 500,
+          padding: '5px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)',
+          pointerEvents: 'none', zIndex: 9999, whiteSpace: 'nowrap',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+        }}>
+          {tooltipText}
+        </div>
+      )}
     </div>
   );
 }
-
-// Breathtaking desaturated Material 3 dark styles
-const markdownStyles = {
-  h3: {
-    fontSize: '18px',
-    fontWeight: '800',
-    color: '#E2E2E6',
-    margin: '12px 0 6px 0',
-  },
-  h4: {
-    fontSize: '14px',
-    fontWeight: '700',
-    color: '#A8C7FA',
-    margin: '10px 0 4px 0',
-  },
-  li: {
-    fontSize: '12.5px',
-    color: '#C2C7CF',
-    marginLeft: '14px',
-    marginBottom: '4px',
-    lineHeight: '18px',
-  },
-  blockquote: {
-    borderLeft: '3px solid #A8C7FA',
-    paddingLeft: '12px',
-    margin: '8px 0',
-    color: '#8A92A6',
-    fontStyle: 'italic',
-    fontSize: '12px',
-  },
-  p: {
-    fontSize: '12.5px',
-    color: '#C2C7CF',
-    margin: '0 0 8px 0',
-    lineHeight: '18px',
-  }
-} as const;
-
-const domStyles = {
-  body: {
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-    backgroundColor: '#111318', // M3 Dark Background
-    minHeight: '100%',
-    display: 'flex',
-    justifyContent: 'center',
-    padding: '12px',
-    color: '#E2E2E6',
-    boxSizing: 'border-box' as const,
-    overflowX: 'hidden' as const,
-  },
-  wrapper: {
-    width: '100%',
-    maxWidth: '520px',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '16px',
-  },
-  tabRow: {
-    flexDirection: 'row' as const,
-    display: 'flex',
-    gap: '12px',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-    paddingBottom: '8px',
-  },
-  tabBtn: {
-    flex: 1,
-    padding: '10px',
-    borderRadius: '12px',
-    backgroundColor: 'transparent',
-    border: 'none',
-    color: '#8A92A6',
-    fontWeight: '700' as const,
-    cursor: 'pointer',
-    fontSize: '13px',
-  },
-  activeTabBtn: {
-    flex: 1,
-    padding: '10px',
-    borderRadius: '12px',
-    backgroundColor: 'rgba(168, 199, 250, 0.08)',
-    border: '1px solid rgba(168, 199, 250, 0.2)',
-    color: '#A8C7FA',
-    fontWeight: '800' as const,
-    cursor: 'pointer',
-    fontSize: '13px',
-  },
-  gridControls: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '12px',
-  },
-  gridBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '14px',
-    borderRadius: '16px',
-    backgroundColor: '#25282F', // M3 Secondary Container
-    border: '1px solid rgba(255,255,255,0.04)',
-    color: '#E2E2E6',
-    fontSize: '14px',
-    fontWeight: '800' as const,
-    cursor: 'pointer',
-    textAlign: 'center' as const,
-  },
-  gridBtnPlay: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '14px',
-    borderRadius: '16px',
-    backgroundColor: '#A8C7FA', // M3 Primary
-    border: 'none',
-    color: '#0A305F', // M3 OnPrimary Contrast
-    fontSize: '14px',
-    fontWeight: '900' as const,
-    cursor: 'pointer',
-    textAlign: 'center' as const,
-  },
-  gridBtnDisabled: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '14px',
-    borderRadius: '16px',
-    backgroundColor: '#25282F',
-    border: 'none',
-    color: '#53565F',
-    fontSize: '14px',
-    fontWeight: '800' as const,
-    cursor: 'not-allowed',
-    textAlign: 'center' as const,
-    opacity: 0.5,
-  },
-  card: {
-    backgroundColor: '#1D2024', // M3 Surface Container
-    border: '1px solid rgba(255, 255, 255, 0.04)',
-    borderRadius: '24px',
-    padding: '18px',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '12px',
-  },
-  cardLabel: {
-    fontSize: '12px',
-    color: '#8A92A6',
-    fontWeight: '700' as const,
-    margin: '0',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.5px',
-  },
-  dawTimeline: {
-    width: '100%',
-    height: '60px',
-    position: 'relative' as const,
-    backgroundColor: '#111318',
-    borderRadius: '12px',
-    border: '1px solid rgba(255,255,255,0.03)',
-    overflow: 'hidden' as const,
-    display: 'flex',
-    alignItems: 'center',
-  },
-  dawGridOverlay: {
-    position: 'absolute' as const,
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    pointerEvents: 'none' as const,
-  },
-  dawGridLine: {
-    position: 'absolute' as const,
-    top: 0,
-    height: '100%',
-  },
-  dawSlot: {
-    position: 'absolute' as const,
-    width: '32px',
-    height: '32px',
-    borderRadius: '50%',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    cursor: 'pointer',
-  },
-  dawSlotText: {
-    fontSize: '11px',
-    fontWeight: '950' as const,
-    color: '#E2E2E6',
-  },
-  keyboardLabelRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: '11px',
-    color: '#8A92A6',
-    fontWeight: '600' as const,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.5px',
-    textAlign: 'center' as const,
-  },
-  pianoScrollFrame: {
-    width: '100%',
-    height: '160px',
-    backgroundColor: '#111318',
-    borderRadius: '16px',
-    border: '1px solid rgba(255, 255, 255, 0.04)',
-    overflowX: 'auto' as const,
-    padding: '4px',
-    boxSizing: 'border-box' as const,
-    userSelect: 'none' as const,
-  },
-  pianoInnerRow: {
-    height: '100%',
-    position: 'relative' as const,
-    display: 'flex',
-  },
-  whiteKey: {
-    height: '100%',
-    backgroundColor: '#E2E2E6',
-    borderRight: '1px solid #1D2024',
-    borderBottom: '1px solid #1D2024',
-    borderRadius: '0 0 5px 5px',
-    cursor: 'pointer',
-    boxSizing: 'border-box' as const,
-  },
-  blackKey: {
-    position: 'absolute' as const,
-    top: '0px',
-    height: '100px',
-    borderRadius: '0 0 4px 4px',
-    cursor: 'pointer',
-    zIndex: 100,
-    boxShadow: '0 3px 5px rgba(0,0,0,0.5)',
-    boxSizing: 'border-box' as const,
-  },
-  answerContainer: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '8px',
-  },
-  answerRow: {
-    display: 'flex',
-    flexDirection: 'row' as const,
-    gap: '12px',
-    alignItems: 'center',
-    overflowX: 'auto' as const,
-  },
-  answerBtn: {
-    width: '54px',
-    height: '54px',
-    borderRadius: '50%',
-    backgroundColor: '#A8C7FA', // M3 Primary
-    border: 'none',
-    color: '#0A305F',
-    fontSize: '15px',
-    fontWeight: '900' as const,
-    cursor: 'pointer',
-  },
-  restartBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '12px 18px',
-    borderRadius: '24px',
-    backgroundColor: '#25282F', // M3 Secondary Container
-    border: '1px solid rgba(255, 255, 255, 0.05)',
-    color: '#E2E2E6',
-    fontSize: '12px',
-    fontWeight: '800' as const,
-    cursor: 'pointer',
-    marginLeft: 'auto',
-  },
-  metaLabel: {
-    fontSize: '11px',
-    color: '#8A92A6',
-    fontWeight: '700' as const,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '1px',
-    margin: '0 0 4px 0',
-  },
-  sectionTitle: {
-    fontSize: '15px',
-    fontWeight: '800' as const,
-    color: '#E2E2E6',
-    margin: '4px 0',
-  },
-  textarea: {
-    width: '100%',
-    height: '120px',
-    backgroundColor: '#111318',
-    border: '1px solid rgba(255,255,255,0.06)',
-    borderRadius: '12px',
-    padding: '10px',
-    color: '#C4E7C4',
-    fontFamily: 'monospace',
-    fontSize: '11px',
-    outline: 'none',
-    resize: 'none' as const,
-  },
-  textareaEditable: {
-    width: '100%',
-    height: '90px',
-    backgroundColor: '#111318',
-    border: '1px solid rgba(255,255,255,0.06)',
-    borderRadius: '12px',
-    padding: '10px',
-    color: '#E2E2E6',
-    fontSize: '12px',
-    outline: 'none',
-    resize: 'none' as const,
-    boxSizing: 'border-box' as const,
-  },
-  theoryContent: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '4px',
-  },
-  notesDivider: {
-    height: '1px',
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    margin: '8px 0',
-  },
-  addNotesBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(168, 199, 250, 0.08)',
-    border: '1px dashed rgba(168, 199, 250, 0.3)',
-    borderRadius: '12px',
-    padding: '10px 16px',
-    color: '#A8C7FA',
-    fontSize: '12.5px',
-    fontWeight: '700' as const,
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    marginTop: '6px',
-  },
-  doneNotesBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'flex-end',
-    backgroundColor: '#0A305F',
-    border: 'none',
-    borderRadius: '8px',
-    padding: '6px 12px',
-    color: '#A8C7FA',
-    fontSize: '11px',
-    fontWeight: '700' as const,
-    cursor: 'pointer',
-    marginTop: '4px',
-  },
-  renderedNotesCardInteractive: {
-    backgroundColor: '#111318',
-    border: '1px solid rgba(255, 255, 255, 0.04)',
-    borderRadius: '16px',
-    padding: '16px',
-    width: '100%',
-    boxSizing: 'border-box' as const,
-    cursor: 'pointer',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '10px',
-    transition: 'border-color 0.2s ease',
-  },
-  cardHeaderEditLabel: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-    paddingBottom: '8px',
-    marginBottom: '4px',
-  },
-  openSourceBadge: {
-    flexDirection: 'row' as const,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    backgroundColor: 'rgba(168, 199, 250, 0.03)',
-    border: '1px dashed rgba(168, 199, 250, 0.15)',
-    borderRadius: '16px',
-    padding: '14px',
-    marginTop: '12px',
-  },
-  openSourceText: {
-    flex: 1,
-    fontSize: '11px',
-    color: '#8A92A6',
-    lineHeight: '16px',
-    margin: 0,
-  }
-} as const;

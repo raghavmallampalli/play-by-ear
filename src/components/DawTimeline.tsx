@@ -1,14 +1,8 @@
 'use dom';
 
 import React from 'react';
-
-interface TimelineSlot {
-  midi: number;
-  time: number;
-  answer: string | null;
-  correct: boolean;
-  label: string;
-}
+import { TimelineSlot } from '../types/levels';
+import { NoteConverter } from '../utils/note_converter';
 
 interface DawTimelineProps {
   level: number;
@@ -17,6 +11,7 @@ interface DawTimelineProps {
   playheadTime: number;
   isPlaying: boolean;
   hasStarted: boolean;
+  converter: NoteConverter;
   onSlotClick: (index: number, slot: TimelineSlot) => void;
   onPlayPause: () => void;
 }
@@ -46,10 +41,15 @@ export default function DawTimeline({
   playheadTime,
   isPlaying,
   hasStarted,
+  converter,
   onSlotClick,
   onPlayPause,
 }: DawTimelineProps) {
-  const maxDuration = level === 3 ? 15.0 : 2.0;
+  // Derive timeline width from the last slot's time, falling back to a level default
+  const lastSlotTime = timelineSlots.length > 0 
+    ? Math.max(...timelineSlots.map(s => converter.ticksToSeconds(s.beat))) + 2.5 
+    : 3.0;
+  const maxDuration = Math.max(lastSlotTime, level === 3 ? 18.0 : (level >= 6 ? 20.0 : (level >= 4 ? 15.0 : 3.0)));
   const barCount = Math.ceil(maxDuration);
 
   return (
@@ -96,44 +96,38 @@ export default function DawTimeline({
             {/* Playhead */}
             {playheadTime > 0 && (
               <div style={{
-                position: 'absolute', top: 0, bottom: 0,
+                position: 'absolute', top: 0, bottom: 0, width: '1.5px',
+                backgroundColor: '#A8C7FA', zIndex: 105,
+                boxShadow: '0 0 8px rgba(168, 199, 250, 0.4)',
                 left: `${54 + playheadTime * 120}px`,
-                width: '2px', backgroundColor: '#E88AB8',
-                boxShadow: '0 0 6px #E88AB8', zIndex: 104, pointerEvents: 'none',
               }} />
             )}
 
-            {/* Mystery slots */}
+            {/* Interactive Slots */}
             {timelineSlots.map((slot, index) => {
               const isFocused = focusedSlotIndex === index;
-              let slotColor = 'rgba(255, 255, 255, 0.03)';
-              let border = '1px solid rgba(255, 255, 255, 0.08)';
-              if (slot.answer !== null) {
-                slotColor = slot.correct ? 'rgba(196, 231, 196, 0.15)' : 'rgba(242, 184, 181, 0.15)';
-                border = slot.correct ? '2px solid #C4E7C4' : '2px solid #F2B8B5';
-              } else if (isFocused) {
-                slotColor = 'rgba(168, 199, 250, 0.15)';
-                border = '2px solid #A8C7FA';
-              }
+              const isSolved = slot.answer !== null;
+              const isCorrect = slot.correct;
+              const slotTime = converter.ticksToSeconds(slot.beat);
 
               return (
-                <button
+                <div
                   key={index}
                   style={{
                     ...dawStyles.slot,
-                    left: `${54 + slot.time * 120}px`,
-                    transform: 'translateX(-50%)',
-                    backgroundColor: slotColor,
-                    border,
-                    boxShadow: isFocused ? '0 0 8px rgba(168, 199, 250, 0.3)' : 'none',
-                    zIndex: isFocused ? 103 : 102,
+                    left: `${54 + slotTime * 120 - 16}px`,
+                    backgroundColor: isSolved
+                      ? (isCorrect ? '#4CAF50' : '#E57373')
+                      : (isFocused ? '#A8C7FA' : '#3C4043'),
+                    border: isFocused ? '2px solid white' : 'none',
+                    zIndex: isFocused ? 110 : 100,
                   }}
                   onClick={() => onSlotClick(index, slot)}
                 >
-                  <span style={{ fontSize: '11px', fontWeight: 950, color: '#E2E2E6' }}>
-                    {slot.answer !== null ? slot.answer : '?'}
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: isSolved || isFocused ? '#000' : '#9AA0A6' }}>
+                    {isSolved ? slot.answer : (index + 1)}
                   </span>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -147,33 +141,26 @@ export default function DawTimeline({
         }} />
       </div>
 
-      {/* Play/Pause button (only after started) */}
-      {hasStarted && (
-        <button
-          style={{
-            width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
-            backgroundColor: isPlaying ? 'rgba(255,255,255,0.06)' : '#A8C7FA',
-            color: isPlaying ? '#E2E2E6' : '#0A305F',
-            border: isPlaying ? '1px solid rgba(255,255,255,0.1)' : 'none',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer',
-            boxShadow: isPlaying ? 'none' : '0 2px 6px rgba(168, 199, 250, 0.25)',
-            transition: 'all 0.15s ease',
-          }}
-          onClick={onPlayPause}
-        >
-          {isPlaying ? (
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="3" fill="currentColor">
-              <rect x="6" y="4" width="4" height="16" rx="1" />
-              <rect x="14" y="4" width="4" height="16" rx="1" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style={{ marginLeft: '2px' }}>
-              <polygon points="6 4 20 12 6 20 6 4" />
-            </svg>
-          )}
-        </button>
-      )}
+      <button
+        onClick={onPlayPause}
+        style={{
+          width: '52px', height: '52px', borderRadius: '12px',
+          backgroundColor: isPlaying ? '#E2E2E6' : '#A8C7FA',
+          border: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center',
+          cursor: 'pointer', flexShrink: 0, transition: 'all 0.1s',
+          boxShadow: isPlaying ? 'inset 0 2px 4px rgba(0,0,0,0.2)' : '0 2px 8px rgba(168, 199, 250, 0.3)',
+        }}
+      >
+        <div style={{
+          borderLeft: isPlaying ? 'none' : '16px solid #111318',
+          borderTop: isPlaying ? 'none' : '10px solid transparent',
+          borderBottom: isPlaying ? 'none' : '10px solid transparent',
+          backgroundColor: isPlaying ? '#111318' : 'transparent',
+          borderRadius: isPlaying ? '2px' : 0,
+          width: isPlaying ? '14px' : 0,
+          height: isPlaying ? '14px' : 0,
+        }} />
+      </button>
     </div>
   );
 }
