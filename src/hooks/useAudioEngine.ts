@@ -168,7 +168,7 @@ export function useAudioEngine({ preloadMidi }: AudioEngineOptions): AudioEngine
     nextNoteIndexRef.current = 0;
   }, [pausePlayback]);
 
-  const startPlayback = useCallback(async (melody: PlayedNote[], chords: PlayedChord[], converter: NoteConverter) => {
+  const startPlayback = useCallback(async (melody: PlayedNote[], chords: PlayedChord[], converter: NoteConverter, skipCadence = false) => {
     await initAudio();
     if (isPlaying) return;
 
@@ -208,7 +208,7 @@ export function useAudioEngine({ preloadMidi }: AudioEngineOptions): AudioEngine
       schedulerTimerRef.current = setInterval(runScheduler, 25);
     };
 
-    if (playheadRef.current === 0 && !hasPlayedCadence) {
+    if (playheadRef.current === 0 && !hasPlayedCadence && !skipCadence) {
       playGroundingCadenceInternal(ctx, converter);
       setHasPlayedCadence(true);
       startTimeoutRef.current = setTimeout(doStart, 3700);

@@ -13,7 +13,7 @@ export interface AudioEngine {
   activeNotes: number[];
   hasStarted: boolean;
   hasPlayedCadence: boolean;
-  startPlayback: (melody: PlayedNote[], chords: PlayedChord[], converter: NoteConverter) => Promise<void>;
+  startPlayback: (melody: PlayedNote[], chords: PlayedChord[], converter: NoteConverter, skipCadence?: boolean) => Promise<void>;
   pausePlayback: () => void;
   stopPlayback: () => void;
   triggerLiveNote: (midi: number, showHighlight?: boolean) => void;
