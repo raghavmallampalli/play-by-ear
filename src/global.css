@@ -7,3 +7,29 @@
   --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
   --font-serif: Georgia, 'Times New Roman', serif;
 }
+
+/* Piano scrollbar styling */
+.piano-scroll-frame::-webkit-scrollbar {
+  height: 6px;
+}
+
+.piano-scroll-frame::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.01);
+  border-radius: 10px;
+}
+
+.piano-scroll-frame::-webkit-scrollbar-thumb {
+  background: rgba(168, 199, 250, 0.2);
+  border-radius: 10px;
+}
+
+.piano-scroll-frame::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 199, 250, 0.45);
+}
+
+/* Firefox support */
+.piano-scroll-frame {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 199, 250, 0.2) rgba(255, 255, 255, 0.01);
+}
+
