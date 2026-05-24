@@ -140,6 +140,29 @@ const IconInfo = () => (
   </svg>
 );
 
+const getActiveExerciseMidiNotes = (mode: 'trainer' | 'sandbox' | 'progress', level: number): number[] => {
+  if (mode === 'sandbox') {
+    return [
+      48, 55, 60, 64, 67, 71, 72, 76, 79, 83,
+      45, 52, 57, 81,
+      41, 48, 53, 69, 77, 84, 88,
+      43, 50, 59, 62, 65, 74
+    ];
+  }
+  if (level === 1) {
+    return [60, 67];
+  } else if (level === 2) {
+    return [60, 64, 67];
+  } else if (level === 3) {
+    return [
+      48, 52, 55, 60, 64,
+      41, 45, 65,
+      43, 47, 50, 67
+    ];
+  }
+  return [];
+};
+
 interface MidiPlayerDOMProps {
   mode?: 'trainer' | 'sandbox' | 'progress';
   level?: number;
@@ -236,7 +259,23 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlaye
   useEffect(() => {
     setupExercise();
     loadUserNotes();
+
+    // Preload active exercise notes immediately if audio context has been initialized
+    if (audioCtxRef.current) {
+      const activeNotes = getActiveExerciseMidiNotes(mode, level);
+      activeNotes.forEach(preloadSample);
+    }
   }, [level, mode]);
+
+  // Auto-initialize audio context and start preloading grand piano samples on mount
+  useEffect(() => {
+    initAudio();
+    return () => {
+      if (schedulerTimerRef.current) {
+        clearInterval(schedulerTimerRef.current);
+      }
+    };
+  }, []);
 
   // Dynamically resolve theory markdown from the current active level
   const getCurrentLevelTheory = () => {
@@ -310,12 +349,24 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlaye
   };
 
   const preloadAllSamples = () => {
-    const priorityKeys = [60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79, 81, 83];
-    priorityKeys.forEach(preloadSample);
+    // Priority keys loaded immediately for the trainer levels (C4 - B5 range, including black keys)
+    const priorityKeys = [
+      60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71,
+      72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83
+    ];
 
-    Object.keys(pianoSamples).forEach(key => {
-      preloadSample(Number(key));
-    });
+    // Also append to this list all the notes that are a part of the active exercise
+    const activeExerciseNotes = getActiveExerciseMidiNotes(mode, level);
+    const combinedKeys = Array.from(new Set([...priorityKeys, ...activeExerciseNotes]));
+
+    combinedKeys.forEach(preloadSample);
+
+    // Stagger loading the remaining 88 piano keys to avoid blocking IO/rendering threads
+    setTimeout(() => {
+      Object.keys(pianoSamples).forEach(key => {
+        preloadSample(Number(key));
+      });
+    }, 1500);
   };
 
   // Sets up the Trainer score and timeline slots
@@ -781,7 +832,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlaye
   // Scroll keyboard to focused registers automatically
   useEffect(() => {
     if (keyboardScrollRef.current) {
-      const c4Offset = 23 * whiteKeyWidth - window.innerWidth / 2;
+      const c4Offset = 23 * whiteKeyWidth;
       keyboardScrollRef.current.scrollLeft = c4Offset;
     }
   }, [whiteKeyWidth]);
@@ -1002,21 +1053,42 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlaye
                 {blackKeysData.map(({ midi, rightOfIndex }) => {
                   const highlightColor = getKeyHighlight(midi);
                   const blackKeyWidth = Math.floor(whiteKeyWidth * 0.58);
-                  const leftPos = (rightOfIndex + 1) * whiteKeyWidth - (blackKeyWidth / 2);
+                  const clickTargetWidth = Math.floor(whiteKeyWidth * 0.85);
+                  const leftPos = (rightOfIndex + 1) * whiteKeyWidth - (clickTargetWidth / 2);
 
                   return (
                     <div
                       key={midi}
                       style={{
-                        ...domStyles.blackKey,
+                        position: 'absolute',
+                        top: '0px',
                         left: leftPos,
-                        width: blackKeyWidth,
-                        backgroundColor: highlightColor || '#14171E',
-                        border: highlightColor ? `1.5px solid ${highlightColor}` : '1px solid #000',
-                        boxShadow: highlightColor ? `0 0 8px ${highlightColor}` : 'none'
+                        width: clickTargetWidth,
+                        height: '100px',
+                        zIndex: 100,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        backgroundColor: 'transparent',
                       }}
-                      onClick={() => triggerLiveNote(midi)}
-                    />
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        triggerLiveNote(midi);
+                      }}
+                    >
+                      <div
+                        style={{
+                          ...domStyles.blackKey,
+                          position: 'relative',
+                          left: 'auto',
+                          width: blackKeyWidth,
+                          height: '100%',
+                          backgroundColor: highlightColor || '#14171E',
+                          border: highlightColor ? `1.5px solid ${highlightColor}` : '1px solid #000',
+                          boxShadow: highlightColor ? `0 0 8px ${highlightColor}` : 'none'
+                        }}
+                      />
+                    </div>
                   );
                 })}
 
@@ -1103,7 +1175,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1 }: MidiPlaye
                 title="Click to edit notes"
               >
                 <div style={domStyles.cardHeaderEditLabel}>
-                  <span style={{ fontSize: '11px', color: '#8A92A6', fontWeight: '700' }}>YOUR MEMORY NOTES</span>
+                  <span style={{ fontSize: '11px', color: '#8A92A6', fontWeight: '700' }}>YOUR NOTES</span>
                   <span style={{ fontSize: '10px', color: '#A8C7FA', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '3px' }}>
                     <svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 20h9"></path>
