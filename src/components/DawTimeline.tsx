@@ -60,10 +60,24 @@ export default function DawTimeline({
       const playheadX = 54 + playheadTime * 120;
       const containerWidth = scrollContainerRef.current.clientWidth;
       scrollContainerRef.current.scrollLeft = playheadX - containerWidth / 2;
-    } else if (scrollContainerRef.current && playheadTime === 0) {
+    } else if (scrollContainerRef.current && playheadTime === 0 && isPlaying) {
       scrollContainerRef.current.scrollLeft = 0;
     }
-  }, [playheadTime]);
+  }, [playheadTime, isPlaying]);
+
+  React.useEffect(() => {
+    if (!isPlaying && scrollContainerRef.current && focusedSlotIndex !== null && timelineSlots[focusedSlotIndex]) {
+      const slot = timelineSlots[focusedSlotIndex];
+      const slotTime = converter.ticksToSeconds(slot.beat);
+      const slotX = 54 + slotTime * 120;
+      const containerWidth = scrollContainerRef.current.clientWidth;
+      
+      scrollContainerRef.current.scrollTo({
+        left: slotX - containerWidth / 2,
+        behavior: 'smooth',
+      });
+    }
+  }, [focusedSlotIndex, timelineSlots, converter, isPlaying]);
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -119,13 +133,15 @@ export default function DawTimeline({
 
             {/* Interactive Slots */}
             {timelineSlots.map((slot, index) => {
-              const isFocused = focusedSlotIndex === index;
               const isSolved = slot.answer !== null;
+              const isFocused = focusedSlotIndex === index && !isSolved;
               const slotTime = converter.ticksToSeconds(slot.beat);
 
               const slotStyle = isFocused
                 ? domStyles.primaryBtn
-                : (isSolved ? domStyles.disabledBtn : domStyles.secondaryBtn);
+                : (isSolved
+                    ? (slot.correct ? domStyles.correctBtn : domStyles.wrongBtn)
+                    : domStyles.secondaryBtn);
 
               return (
                 <div
