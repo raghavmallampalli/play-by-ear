@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   activeIndicator: {
     width: 24,
     height: 24,
-    borderRadius: 100,
+    borderRadius: 8,
     backgroundColor: '#A8C7FA', // M3 Primary
     justifyContent: 'center',
     alignItems: 'center',
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   lockedIndicator: {
     width: 24,
     height: 24,
-    borderRadius: 100,
+    borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.04)',
     justifyContent: 'center',
     alignItems: 'center',

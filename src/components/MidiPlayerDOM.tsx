@@ -292,7 +292,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
               <button
                 disabled={!isInteractable}
                 style={{
-                  ...(!isInteractable ? domStyles.gridBtnDisabled : domStyles.gridBtn),
+                  ...(!isInteractable ? domStyles.disabledBtn : domStyles.secondaryBtn),
                   flex: 1,
                 }}
                 onClick={handleTonicClick}
@@ -304,7 +304,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
               <button
                 disabled={!isInteractable || chords.length === 0}
                 style={{
-                  ...((!isInteractable || chords.length === 0) ? domStyles.gridBtnDisabled : domStyles.gridBtn),
+                  ...((!isInteractable || chords.length === 0) ? domStyles.disabledBtn : domStyles.secondaryBtn),
                   flex: 1,
                 }}
                 onClick={() => audio.playBackingChordsOnly(chords, converter)}
@@ -316,7 +316,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
               <button
                 disabled={!isInteractable || melodyNotes.length === 0}
                 style={{
-                  ...((!isInteractable || melodyNotes.length === 0) ? domStyles.gridBtnDisabled : domStyles.gridBtn),
+                  ...((!isInteractable || melodyNotes.length === 0) ? domStyles.disabledBtn : domStyles.secondaryBtn),
                   flex: 1,
                 }}
                 onClick={() => audio.playMelodyOnly(melodyNotes, converter)}
@@ -394,11 +394,9 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                               key={choice}
                               disabled={isAnswered}
                               style={{
-                                ...domStyles.answerBtn,
+                                ...(isAnswered ? domStyles.disabledBtn : domStyles.primaryBtn),
                                 flex: 1,
                                 maxWidth: '64px',
-                                opacity: isAnswered ? 0.35 : 1,
-                                cursor: isAnswered ? 'not-allowed' : 'pointer',
                               }}
                               onClick={() => handleChoice(choice)}
                             >
@@ -422,12 +420,12 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                     borderTop: '1px solid rgba(255, 255, 255, 0.05)',
                     paddingTop: '16px',
                   }}>
-                    {/* Column 1: Start/Reset Button (1/3 of the row) */}
-                    <div style={{ flex: 1, display: 'flex' }}>
+                    {/* Column 1: Start/Reset Button (2/5 of the row) */}
+                    <div style={{ flex: 2, display: 'flex' }}>
                       <button
                         style={{
-                          ...domStyles.actionBtn,
-                          ...(audio.hasStarted ? domStyles.secondaryActionBtn : domStyles.primaryActionBtn),
+                          ...(audio.hasStarted ? domStyles.secondaryBtn : domStyles.primaryBtn),
+                          width: '100%',
                         }}
                         onClick={audio.hasStarted ? () => setupExercise(false) : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence)}
                       >
@@ -446,7 +444,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                       </button>
                     </div>
 
-                    {/* Column 2: Accuracy Counts (1/3 of the row) */}
+                    {/* Column 2: Accuracy Counts (1/5 of the row) */}
                     <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
                       <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -465,13 +463,13 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                       </div>
                     </div>
 
-                    {/* Column 3: Next Button (1/3 of the row) */}
-                    <div style={{ flex: 1, display: 'flex' }}>
+                    {/* Column 3: Next Button (2/5 of the row) */}
+                    <div style={{ flex: 2, display: 'flex' }}>
                       <button
                         disabled={!isCurrentExerciseComplete}
                         style={{
-                          ...domStyles.actionBtn,
-                          ...(isCurrentExerciseComplete ? domStyles.primaryActionBtn : domStyles.disabledActionBtn),
+                          ...(isCurrentExerciseComplete ? domStyles.primaryBtn : domStyles.disabledBtn),
+                          width: '100%',
                         }}
                         onClick={handleNextClick}
                       >

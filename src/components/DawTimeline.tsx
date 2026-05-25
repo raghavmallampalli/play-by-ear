@@ -3,6 +3,7 @@
 import React from 'react';
 import { TimelineSlot } from '../types/levels';
 import { NoteConverter } from '../utils/note_converter';
+import { domStyles } from './styles/domStyles';
 
 import { isQueuedLevel } from '../levels';
 
@@ -27,12 +28,6 @@ const dawStyles = {
   gridLine: {
     position: 'absolute' as const,
     top: 0, height: '100%',
-  },
-  slot: {
-    position: 'absolute' as const,
-    width: '32px', height: '32px', borderRadius: '50%',
-    display: 'flex', justifyContent: 'center', alignItems: 'center',
-    cursor: 'pointer',
   },
 };
 
@@ -126,26 +121,30 @@ export default function DawTimeline({
             {timelineSlots.map((slot, index) => {
               const isFocused = focusedSlotIndex === index;
               const isSolved = slot.answer !== null;
-              const isCorrect = slot.correct;
               const slotTime = converter.ticksToSeconds(slot.beat);
+
+              const slotStyle = isFocused
+                ? domStyles.primaryBtn
+                : (isSolved ? domStyles.disabledBtn : domStyles.secondaryBtn);
 
               return (
                 <div
                   key={index}
                   style={{
-                    ...dawStyles.slot,
-                    left: `${54 + slotTime * 120 - 16}px`,
-                    backgroundColor: isSolved
-                      ? (isCorrect ? '#4CAF50' : '#E57373')
-                      : (isFocused ? '#A8C7FA' : '#3C4043'),
-                    border: isFocused ? '2px solid white' : 'none',
+                    ...slotStyle,
+                    position: 'absolute',
+                    left: `${54 + slotTime * 120}px`,
+                    transform: 'translateX(-50%)',
+                    height: '32px',
+                    minWidth: '32px',
+                    width: 'auto',
+                    padding: '0 8px',
+                    borderRadius: '10px',
                     zIndex: isFocused ? 110 : 100,
                   }}
                   onClick={() => onSlotClick(index, slot)}
                 >
-                  <span style={{ fontSize: '12px', fontWeight: '700', color: isSolved || isFocused ? '#000' : '#9AA0A6' }}>
-                    {isSolved ? slot.answer : (index + 1)}
-                  </span>
+                  {isSolved ? slot.answer : (index + 1)}
                 </div>
               );
             })}
@@ -163,22 +162,16 @@ export default function DawTimeline({
       {hasStarted && (
         <button
           onClick={onPlayPause}
-          style={{
-            width: '52px', height: '52px', borderRadius: '12px',
-            backgroundColor: isPlaying ? '#E2E2E6' : '#A8C7FA',
-            border: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center',
-            cursor: 'pointer', flexShrink: 0, transition: 'all 0.1s',
-            boxShadow: isPlaying ? 'inset 0 2px 4px rgba(0,0,0,0.2)' : '0 2px 8px rgba(168, 199, 250, 0.3)',
-          }}
+          style={isPlaying ? domStyles.secondaryBtn : domStyles.primaryBtn}
         >
           {isPlaying ? (
             <div style={{ display: 'flex', gap: '4px' }}>
-              <div style={{ width: '4px', height: '14px', backgroundColor: '#111318', borderRadius: '1px' }} />
-              <div style={{ width: '4px', height: '14px', backgroundColor: '#111318', borderRadius: '1px' }} />
+              <div style={{ width: '4px', height: '14px', backgroundColor: '#E2E2E6', borderRadius: '1px' }} />
+              <div style={{ width: '4px', height: '14px', backgroundColor: '#E2E2E6', borderRadius: '1px' }} />
             </div>
           ) : (
             <div style={{
-              borderLeft: '16px solid #111318',
+              borderLeft: '16px solid #0A305F',
               borderTop: '10px solid transparent',
               borderBottom: '10px solid transparent',
               width: 0, height: 0,

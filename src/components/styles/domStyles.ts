@@ -1,4 +1,23 @@
 /** Shared DOM-mode styles for MidiPlayerDOM and the progress screen. */
+
+// Base universal button styling for high-fidelity interactive elements (squircles)
+const baseButton = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  height: '48px',
+  minWidth: '56px',
+  padding: '0 16px',
+  borderRadius: '16px',
+  fontSize: '13px',
+  fontWeight: '800' as const,
+  cursor: 'pointer',
+  textAlign: 'center' as const,
+  transition: 'all 0.2s',
+  boxSizing: 'border-box' as const,
+  border: '1px solid transparent',
+};
+
 export const domStyles = {
   body: {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
@@ -48,102 +67,36 @@ export const domStyles = {
     fontSize: '13px',
   },
   
-  // ─── Shared Button Styles ─────────────────────────────────────────────────
+  // ─── Shared Universal Button Styles (Squircles) ───────────────────────────
   
-  gridBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '12px 0',
-    borderRadius: '16px',
-    backgroundColor: '#25282F',
-    border: '1px solid rgba(255,255,255,0.04)',
-    color: '#E2E2E6',
-    fontSize: '14px',
-    fontWeight: '800' as const,
-    cursor: 'pointer',
-    textAlign: 'center' as const,
-    transition: 'all 0.2s',
-  },
-  gridBtnPlay: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '12px 0',
-    borderRadius: '16px',
+  primaryBtn: {
+    ...baseButton,
     backgroundColor: '#A8C7FA',
-    border: 'none',
     color: '#0A305F',
-    fontSize: '14px',
     fontWeight: '900' as const,
-    cursor: 'pointer',
-    textAlign: 'center' as const,
-    transition: 'all 0.2s',
-  },
-  gridBtnDisabled: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '12px 0',
-    borderRadius: '16px',
-    backgroundColor: '#25282F',
-    border: 'none',
-    color: '#53565F',
-    fontSize: '14px',
-    fontWeight: '800' as const,
-    cursor: 'not-allowed',
-    textAlign: 'center' as const,
-    opacity: 0.4,
-    transition: 'all 0.2s',
-  },
-  answerBtn: {
-    width: '54px',
-    height: '54px',
-    borderRadius: '27px',
-    backgroundColor: '#A8C7FA',
-    border: 'none',
-    color: '#0A305F',
-    fontSize: '15px',
-    fontWeight: '900' as const,
-    cursor: 'pointer',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    transition: 'all 0.2s',
-  },
-
-  // Bottom action bar buttons (Start, Restart, Next)
-  actionBtn: {
-    width: '100%',
-    padding: '12px 0',
-    borderRadius: '16px',
-    fontSize: '12px',
-    fontWeight: '800' as const,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  },
-  primaryActionBtn: {
-    backgroundColor: '#A8C7FA',
-    color: '#0A305F',
-    border: 'none',
     boxShadow: '0 2px 6px rgba(168, 199, 250, 0.25)',
   },
-  secondaryActionBtn: {
+  
+  secondaryBtn: {
+    ...baseButton,
     backgroundColor: '#25282F',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
     color: '#E2E2E6',
-    border: '1px solid rgba(255, 255, 255, 0.05)',
-    boxShadow: 'none',
   },
-  disabledActionBtn: {
+  
+  disabledBtn: {
+    ...baseButton,
     backgroundColor: '#25282F',
     color: '#53565F',
-    border: '1px solid rgba(255, 255, 255, 0.05)',
-    opacity: 0.4,
     cursor: 'not-allowed',
-    boxShadow: 'none',
+    opacity: 0.4,
+  },
+
+  dashedBtn: {
+    ...baseButton,
+    backgroundColor: 'rgba(168, 199, 250, 0.08)',
+    border: '1px dashed rgba(168, 199, 250, 0.3)',
+    color: '#A8C7FA',
   },
 
   // ─── Layout Elements ──────────────────────────────────────────────────────
@@ -218,5 +171,32 @@ export const domStyles = {
     color: '#8A92A6',
     lineHeight: '16px',
     margin: 0,
+  },
+
+  // Notes card & textarea inside Theory Tab
+  theoryNotesCard: {
+    backgroundColor: '#111318',
+    border: '1px solid rgba(255, 255, 255, 0.04)',
+    borderRadius: '16px',
+    padding: '16px',
+    width: '100%',
+    boxSizing: 'border-box' as const,
+    cursor: 'pointer',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '10px',
+  },
+  theoryNotesTextarea: {
+    width: '100%',
+    height: '90px',
+    backgroundColor: '#111318',
+    border: '1px solid rgba(255,255,255,0.06)',
+    borderRadius: '12px',
+    padding: '10px',
+    color: '#E2E2E6',
+    fontSize: '12px',
+    outline: 'none',
+    resize: 'none' as const,
+    boxSizing: 'border-box' as const,
   },
 } as const;
