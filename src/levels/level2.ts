@@ -1,51 +1,54 @@
-import { LevelSetup, TimelineSlot } from '../types/levels';
-import { PlayedNote, PlayedChord } from '../types/music';
-import { NoteConverter } from '../utils/note_converter';
-
-const TICKS_PER_BEAT = 480;
-const BPM = 120;
-const TONIC = 0; // C
-const OCTAVE = 4;
-
-const converter = new NoteConverter(TONIC, OCTAVE, BPM, TICKS_PER_BEAT);
+import { BaseLevel } from './base_level';
+import { LevelSetup } from '../types/levels';
+import { PlayedNote, PlayedChord, RelativeNote } from '../types/music';
 
 /**
  * Level 2: upper tetrachord — degrees 5 6 7 1(octave).
  * Notes sit in the 4th/5th octave range.
  */
-const CHOICES = [
-  { degree: 7, offset: 0, label: '5' }, // G4
-  { degree: 9, offset: 0, label: '6' }, // A4
-  { degree: 11, offset: 0, label: '7' }, // B4
-  { degree: 0, offset: 1, label: '1' }, // C5
+const CHOICES: RelativeNote[] = [
+  { degree: 7, offset: 0 }, // G4
+  { degree: 9, offset: 0 }, // A4
+  { degree: 11, offset: 0 }, // B4
+  { degree: 0, offset: 1 }, // C5
 ];
 
-export const LEVEL2_ANSWER_CHOICES = ['5', '6', '7', '1'];
+export class Level2 extends BaseLevel {
+  public readonly isChordLevel = false;
 
-export function buildLevel2(): LevelSetup {
-  const melody: PlayedNote[] = [];
-  const chords: PlayedChord[] = [];
-  const slots: TimelineSlot[] = [];
-
-  for (let i = 0; i < 5; i++) {
-    const pick = CHOICES[Math.floor(Math.random() * CHOICES.length)];
-    const timeSeconds = i * 0.55;
-    const beat = converter.secondsToTicks(timeSeconds);
-    const duration = converter.secondsToTicks(0.4);
-    
-    const note = { note: { degree: pick.degree, offset: pick.offset }, beat, duration };
-    melody.push(note);
-    slots.push({ note: note.note, beat, answer: null, correct: false, label: pick.label });
+  constructor() {
+    super({
+      id: 2,
+      bpm: 120,
+      tonic: 0, // C
+      octave: 4,
+      answerChoices: ['5', '6', '7', '1'],
+    });
   }
 
-  return {
-    melody,
-    chords,
-    slots,
-    bpm: BPM,
-    ticksPerBeat: TICKS_PER_BEAT,
-    tonicPitchClass: TONIC,
-    baseOctave: OCTAVE,
-    preloadMidi: CHOICES.map(c => converter.toMidi({ degree: c.degree, offset: c.offset })),
-  };
+  build(): LevelSetup {
+    const melody: PlayedNote[] = [];
+    const chords: PlayedChord[] = [];
+
+    for (let i = 0; i < 5; i++) {
+      const pick = CHOICES[Math.floor(Math.random() * CHOICES.length)];
+      const timeSeconds = i * 0.55;
+      const beat = this.converter.secondsToTicks(timeSeconds);
+      const duration = this.converter.secondsToTicks(0.4);
+      
+      melody.push({ note: pick, beat, duration });
+    }
+
+    return {
+      melody,
+      chords,
+      slots: this.createSlotsFromMelody(melody),
+      ...this.getCommonSetup(),
+      preloadMidi: CHOICES.map(c => this.converter.toMidi(c)),
+    };
+  }
 }
+
+const levelInstance = new Level2();
+export const buildLevel2 = () => levelInstance.build();
+export const LEVEL2_ANSWER_CHOICES = levelInstance.answerChoices;

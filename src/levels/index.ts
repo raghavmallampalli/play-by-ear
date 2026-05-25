@@ -1,11 +1,12 @@
-import { buildLevel1, LEVEL1_ANSWER_CHOICES } from './level1';
-import { buildLevel2, LEVEL2_ANSWER_CHOICES } from './level2';
-import { buildLevel3, LEVEL3_ANSWER_CHOICES } from './level3';
-import { buildLevel4, LEVEL4_ANSWER_CHOICES } from './level4';
-import { buildLevel5, LEVEL5_ANSWER_CHOICES } from './level5';
-import { buildLevel6, LEVEL6_ANSWER_CHOICES } from './level6';
+import { buildLevel1 } from './level1';
+import { buildLevel2 } from './level2';
+import { buildLevel3 } from './level3';
+import { buildLevel4 } from './level4';
+import { buildLevel5 } from './level5';
+import { buildLevel6 } from './level6';
 import { buildSandboxNotes, SANDBOX_PRELOAD_MIDI } from './sandbox';
 import { LevelSetup } from '../types/levels';
+import { NoteConverter } from '../utils/note_converter';
 
 export * from '../types/levels';
 
@@ -19,40 +20,84 @@ export function isQueuedLevel(level: number): boolean {
 
 
 
-/** Stable content-hash for each level, used as the localStorage key. */
-export const EXERCISE_HASHES: Record<number, string> = {
-  1: 'lvl1_do_re_mi_fa',
-  2: 'lvl2_sol_la_ti_do',
-  3: 'lvl3_hb_melody',
-  4: 'lvl4_chord_i_iv_v',
-  5: 'lvl5_chord_melody',
-  6: 'lvl6_hb_chords',
+import { EXERCISE_HASHES } from '../constants/exercises';
+export { EXERCISE_HASHES };
+
+const ANSWER_CHOICES_MAP: Record<number, string[]> = {
+  1: ['1', '2', '3', '4'],
+  2: ['5', '6', '7', '8'],
+  3: ['1', '2', '3', '4', '5', '6', '7', '8'],
+  4: ['I', 'IV', 'V'],
+  5: ['I', 'IV', 'V'],
+  6: ['I', 'IV', 'V'],
 };
 
 /** Answer button labels shown to the user for a given level. */
 export function getAnswerChoices(level: number): string[] {
-  switch (level) {
-    case 1: return LEVEL1_ANSWER_CHOICES;
-    case 2: return LEVEL2_ANSWER_CHOICES;
-    case 3: return LEVEL3_ANSWER_CHOICES;
-    case 4: return LEVEL4_ANSWER_CHOICES;
-    case 5: return LEVEL5_ANSWER_CHOICES;
-    case 6: return LEVEL6_ANSWER_CHOICES;
-    default: return [];
-  }
+  return ANSWER_CHOICES_MAP[level] || [];
 }
 
 /** All MIDI notes that should be warm-cached for the given mode/level. */
 export function getPreloadMidi(mode: 'trainer' | 'sandbox' | 'progress', level: number): number[] {
   if (mode === 'sandbox') return SANDBOX_PRELOAD_MIDI;
-  switch (level) {
-    case 1: return [60, 62, 64, 65];
-    case 2: return [67, 69, 71, 72];
-    case 3: return [60, 62, 64, 65, 67, 69, 71, 72];
-    case 4: return [59, 60, 62, 64, 65, 67, 69, 71, 72];
-    case 5: return [59, 60, 62, 64, 65, 67, 69, 71, 72];
-    case 6: return [47, 48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72];
-    default: return [];
+  try {
+    const setup = buildLevel(mode, level);
+    const converter = new NoteConverter(setup.tonicPitchClass, setup.baseOctave, setup.bpm, setup.ticksPerBeat);
+    
+    const midiSet = new Set<number>();
+    
+    // 1. Add melody notes
+    setup.melody.forEach(n => midiSet.add(converter.toMidi(n.note)));
+    
+    // 2. Add chord notes
+    setup.chords.forEach(c => c.notes.forEach(n => midiSet.add(converter.toMidi(n))));
+    
+    // 3. Add choice audio notes so they are preloaded for gameplay feedback
+    const choices = getAnswerChoices(level);
+    choices.forEach(choice => {
+      switch (choice) {
+        case '1': midiSet.add(converter.toMidi({degree:0, offset:0})); break;
+        case '2': midiSet.add(converter.toMidi({degree:2, offset:0})); break;
+        case '3': midiSet.add(converter.toMidi({degree:4, offset:0})); break;
+        case '4': midiSet.add(converter.toMidi({degree:5, offset:0})); break;
+        case '5': midiSet.add(converter.toMidi({degree:7, offset:0})); break;
+        case '6': midiSet.add(converter.toMidi({degree:9, offset:0})); break;
+        case '7': midiSet.add(converter.toMidi({degree:11, offset:0})); break;
+        case '8': midiSet.add(converter.toMidi({degree:0, offset:1})); break;
+        case 'I':
+          midiSet.add(converter.toMidi({degree:0, offset:-1}));
+          midiSet.add(converter.toMidi({degree:4, offset:-1}));
+          midiSet.add(converter.toMidi({degree:7, offset:-1}));
+          break;
+        case 'IV':
+          midiSet.add(converter.toMidi({degree:0, offset:-1}));
+          midiSet.add(converter.toMidi({degree:5, offset:-1}));
+          midiSet.add(converter.toMidi({degree:9, offset:-1}));
+          break;
+        case 'V':
+          midiSet.add(converter.toMidi({degree:11, offset:-2}));
+          midiSet.add(converter.toMidi({degree:2, offset:-1}));
+          midiSet.add(converter.toMidi({degree:7, offset:-1}));
+          break;
+      }
+    });
+
+    // 4. Add cadence / grounding notes
+    const cadenceRelNotes = [
+      { degree: 0, offset: 0 },
+      { degree: 4, offset: 0 },
+      { degree: 7, offset: 0 },
+      { degree: 5, offset: 0 },
+      { degree: 9, offset: 0 },
+      { degree: 11, offset: -1 },
+      { degree: 2, offset: 0 },
+      { degree: 7, offset: -1 }
+    ];
+    cadenceRelNotes.forEach(n => midiSet.add(converter.toMidi(n)));
+
+    return Array.from(midiSet).sort((a, b) => a - b);
+  } catch {
+    return [];
   }
 }
 

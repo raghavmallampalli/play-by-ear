@@ -1,56 +1,52 @@
-import { LevelSetup, TimelineSlot } from '../types/levels';
-import { PlayedNote, PlayedChord, RelativeNote } from '../types/music';
-import { NoteConverter } from '../utils/note_converter';
+import { BaseLevel } from './base_level';
+import { LevelSetup } from '../types/levels';
+import { PlayedNote, PlayedChord } from '../types/music';
 import { CHORD_DICTIONARY } from '../constants/chords';
 
-const TICKS_PER_BEAT = 480;
-const BPM = 100;
-const TONIC = 0; // C
-const OCTAVE = 4;
+export class Level4 extends BaseLevel {
+  public readonly isChordLevel = true;
 
-const converter = new NoteConverter(TONIC, OCTAVE, BPM, TICKS_PER_BEAT);
-
-
-export const LEVEL4_ANSWER_CHOICES = ['I', 'IV', 'V'];
-
-export function buildLevel4(): LevelSetup {
-  const choices = ['I', 'IV', 'V'] as const;
-  const melody: PlayedNote[] = [];
-  const chords: PlayedChord[] = [];
-  const slots: TimelineSlot[] = [];
-
-  for (let i = 0; i < 5; i++) {
-    const chordLabel = choices[Math.floor(Math.random() * choices.length)];
-    const timeSeconds = i * 1.4;
-    const baseTick = converter.secondsToTicks(timeSeconds);
-    const notes = CHORD_DICTIONARY[chordLabel];
-
-    // Also add to chords for the engine
-    chords.push({
-      notes,
-      beat: baseTick,
-      duration: converter.secondsToTicks(1.1),
-    });
-
-    slots.push({
-      note: notes[0],
-      beat: baseTick,
-      answer: null,
-      correct: false,
-      label: chordLabel,
-      chord: chordLabel,
+  constructor() {
+    super({
+      id: 4,
+      bpm: 100,
+      tonic: 0, // C
+      octave: 4,
+      answerChoices: ['I', 'IV', 'V'],
     });
   }
 
-  const preloadMidi = [...new Set(Object.values(CHORD_DICTIONARY).flat().map(n => converter.toMidi(n)))];
-  return {
-    melody,
-    chords,
-    slots,
-    bpm: BPM,
-    ticksPerBeat: TICKS_PER_BEAT,
-    tonicPitchClass: TONIC,
-    baseOctave: OCTAVE,
-    preloadMidi,
-  };
+  build(): LevelSetup {
+    const choices = this.answerChoices;
+    const melody: PlayedNote[] = [];
+    const chords: PlayedChord[] = [];
+    const chordLabels: string[] = [];
+
+    for (let i = 0; i < 5; i++) {
+      const chordLabel = choices[Math.floor(Math.random() * choices.length)];
+      const timeSeconds = i * 1.4;
+      const baseTick = this.converter.secondsToTicks(timeSeconds);
+      const notes = CHORD_DICTIONARY[chordLabel];
+
+      chords.push({
+        notes,
+        beat: baseTick,
+        duration: this.converter.secondsToTicks(1.1),
+      });
+      chordLabels.push(chordLabel);
+    }
+
+    const preloadMidi = [...new Set(Object.values(CHORD_DICTIONARY).flat().map(n => this.converter.toMidi(n)))];
+    return {
+      melody,
+      chords,
+      slots: this.createSlotsFromChords(chords, chordLabels),
+      ...this.getCommonSetup(),
+      preloadMidi,
+    };
+  }
 }
+
+const levelInstance = new Level4();
+export const buildLevel4 = () => levelInstance.build();
+export const LEVEL4_ANSWER_CHOICES = levelInstance.answerChoices;

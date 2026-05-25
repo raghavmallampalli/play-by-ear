@@ -1,47 +1,44 @@
-import { LevelSetup, TimelineSlot } from '../types/levels';
+import { BaseLevel } from './base_level';
+import { LevelSetup } from '../types/levels';
 import { PlayedNote, PlayedChord } from '../types/music';
-import { NoteConverter } from '../utils/note_converter';
 
-const TICKS_PER_BEAT = 480;
-const BPM = 100;
-const TONIC = 0; // C
-const OCTAVE = 4;
-
-const converter = new NoteConverter(TONIC, OCTAVE, BPM, TICKS_PER_BEAT);
-
-export const LEVEL3_ANSWER_CHOICES = ['1', '2', '3', '4', '5', '6', '7'];
-
-const BIRTHDAY_NOTES = [
-  { degree: 0, offset: 0, label: '1', time: 0.0, duration: 0.25 }, // C4
-  { degree: 0, offset: 0, label: '1', time: 0.4, duration: 0.15 }, // C4
-  { degree: 2, offset: 0, label: '2', time: 0.6, duration: 0.45 }, // D4
-  { degree: 0, offset: 0, label: '1', time: 1.2, duration: 0.45 }, // C4
-  { degree: 5, offset: 0, label: '4', time: 1.8, duration: 0.45 }, // F4
-  { degree: 4, offset: 0, label: '3', time: 2.4, duration: 0.90 }, // E4
+// Happy Birthday melody defined directly as standard PlayedNotes (times in ticks at 100 BPM, 480 PPQ)
+const BIRTHDAY_MELODY: PlayedNote[] = [
+  { note: { degree: 0, offset: 0 }, beat: 0,     duration: 200 }, // C4
+  { note: { degree: 0, offset: 0 }, beat: 320,   duration: 120 }, // C4
+  { note: { degree: 2, offset: 0 }, beat: 480,   duration: 360 }, // D4
+  { note: { degree: 0, offset: 0 }, beat: 960,   duration: 360 }, // C4
+  { note: { degree: 5, offset: 0 }, beat: 1440,  duration: 360 }, // F4
+  { note: { degree: 4, offset: 0 }, beat: 1920,  duration: 720 }, // E4
 ];
 
-export function buildLevel3(): LevelSetup {
-  const melody: PlayedNote[] = [];
-  const chords: PlayedChord[] = [];
-  const slots: TimelineSlot[] = [];
+export class Level3 extends BaseLevel {
+  public readonly isChordLevel = false;
 
-  BIRTHDAY_NOTES.forEach((n) => {
-    const beat = converter.secondsToTicks(n.time);
-    const duration = converter.secondsToTicks(n.duration);
-    
-    const note = { note: { degree: n.degree, offset: n.offset }, beat, duration };
-    melody.push(note);
-    slots.push({ note: note.note, beat, answer: null, correct: false, label: n.label });
-  });
+  constructor() {
+    super({
+      id: 3,
+      bpm: 100,
+      tonic: 0, // C
+      octave: 4,
+      answerChoices: ['1', '2', '3', '4', '5', '6', '7'],
+    });
+  }
 
-  return {
-    melody,
-    chords,
-    slots,
-    bpm: BPM,
-    ticksPerBeat: TICKS_PER_BEAT,
-    tonicPitchClass: TONIC,
-    baseOctave: OCTAVE,
-    preloadMidi: [60, 62, 64, 65, 67, 69, 71, 72],
-  };
+  build(): LevelSetup {
+    const melody = BIRTHDAY_MELODY;
+    const chords: PlayedChord[] = [];
+
+    return {
+      melody,
+      chords,
+      slots: this.createSlotsFromMelody(melody),
+      ...this.getCommonSetup(),
+      preloadMidi: [60, 62, 64, 65, 67, 69, 71, 72],
+    };
+  }
 }
+
+const levelInstance = new Level3();
+export const buildLevel3 = () => levelInstance.build();
+export const LEVEL3_ANSWER_CHOICES = levelInstance.answerChoices;
