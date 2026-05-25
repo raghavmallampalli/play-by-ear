@@ -22,7 +22,7 @@ export class Level2 extends BaseLevel {
       bpm: 120,
       tonic: 0, // C
       octave: 4,
-      answerChoices: ['5', '6', '7', '1'],
+      answerChoices: ['5', '6', '7', '8'],
     });
   }
 

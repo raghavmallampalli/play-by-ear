@@ -21,7 +21,7 @@ export class Level3 extends BaseLevel {
       bpm: 100,
       tonic: 0, // C
       octave: 4,
-      answerChoices: ['1', '2', '3', '4', '5', '6', '7'],
+      answerChoices: ['1', '2', '3', '4', '5', '6', '7', '8'],
     });
   }
 

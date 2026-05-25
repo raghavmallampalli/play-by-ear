@@ -33,3 +33,47 @@ describe('NoteConverter', () => {
     expect(gSharpConverter.toMidi(relative)).toBe(midi);
   });
 });
+
+describe('BaseLevel Scale Degree Labeling', () => {
+  class TestScaleLevel extends (require('../levels/base_level').BaseLevel) {
+    public readonly isChordLevel = false;
+    constructor() {
+      super({
+        id: 99,
+        bpm: 120,
+        tonic: 0,
+        octave: 4,
+        answerChoices: ['1', '2', '3', '4', '5', '6', '7', '8'],
+      });
+    }
+    build() {
+      return {
+        melody: [],
+        chords: [],
+        slots: [],
+        bpm: 120,
+        ticksPerBeat: 480,
+        tonicPitchClass: 0,
+        baseOctave: 4,
+        preloadMidi: []
+      };
+    }
+  }
+
+  const level = new TestScaleLevel();
+
+  test('correctly infers scale degrees, including the octave note as "8"', () => {
+    // 1st degree / Tonic (offset 0) -> '1'
+    expect(level.inferLabel({ degree: 0, offset: 0 })).toBe('1');
+    
+    // 2nd degree -> '2'
+    expect(level.inferLabel({ degree: 2, offset: 0 })).toBe('2');
+    
+    // 5th degree -> '5'
+    expect(level.inferLabel({ degree: 7, offset: 0 })).toBe('5');
+    
+    // Octave note (degree 0, offset 1) -> '8'
+    expect(level.inferLabel({ degree: 0, offset: 1 })).toBe('8');
+  });
+});
+

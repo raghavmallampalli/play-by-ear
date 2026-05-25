@@ -51,7 +51,7 @@ export abstract class BaseLevel {
       return '';
     } else {
       // Scale Degrees (levels 1-3)
-      if (note.degree === 0 && note.offset === 1) return '1';
+      if (note.degree === 0 && note.offset === 1) return '8';
       if (note.degree === 0) return '1';
       if (note.degree === 2) return '2';
       if (note.degree === 4) return '3';
