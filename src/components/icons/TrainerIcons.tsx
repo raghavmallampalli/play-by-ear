@@ -35,9 +35,8 @@ export const IconKeyboard = () => (
 
 export const IconMelody = () => (
   <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
-    <path d="M9 18V5l12-2v13" />
-    <circle cx="6" cy="18" r="3" />
-    <circle cx="18" cy="16" r="3" />
+    <path d="M9 17V5a3 3 0 0 1 3 3" />
+    <circle cx="6" cy="17" r="3" />
   </svg>
 );
 

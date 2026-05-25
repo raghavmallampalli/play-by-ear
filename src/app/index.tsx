@@ -19,6 +19,7 @@ export default function DashboardScreen() {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView 
+          style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,
             isLandscape && styles.scrollContentLandscape
@@ -27,9 +28,11 @@ export default function DashboardScreen() {
         >
           
           {/* Header Section */}
-          <View style={[styles.header, isLandscape && styles.headerLandscape]}>
-            <Text style={[styles.appTitle, isLandscape && styles.appTitleLandscape]}>Play by Ear</Text>
-            <Text style={styles.appSubtitle}>Relative Pitch Chord Trainer</Text>
+          <View style={[styles.headerContainer, isLandscape && styles.headerContainerLandscape]}>
+            <View style={[styles.header, isLandscape && styles.headerLandscape]}>
+              <Text style={[styles.appTitle, isLandscape && styles.appTitleLandscape]}>Play by Ear</Text>
+              <Text style={styles.appSubtitle}>Relative Pitch Chord Trainer</Text>
+            </View>
           </View>
 
           {/* Cards Grid/Stack */}
@@ -56,9 +59,6 @@ export default function DashboardScreen() {
               </View>
 
               <Text style={styles.cardTitle}>Relative Pitch Trainer</Text>
-              <Text style={styles.cardDesc}>
-                Master intervals, diatonic triads, inversions, and chord progressions across 27 progressive levels.
-              </Text>
             </Pressable>
 
             {/* Dummy Screen C: MIDI Sandbox */}
@@ -75,29 +75,24 @@ export default function DashboardScreen() {
                 </View>
               </View>
               <Text style={[styles.smallCardTitle, { color: '#53565F' }]}>MIDI Sandbox</Text>
-              <Text style={[styles.smallCardDesc, { color: '#53565F' }]}>
-                Load standard .mid files, play in high-fidelity, and view root-position chord breakdowns. (In development)
-              </Text>
             </Pressable>
 
-            {/* Screen D: Progress Management */}
+            {/* Screen D: Settings & Preferences */}
             <Pressable 
-              style={[styles.disabledCard, isLandscape && styles.cardLandscape]}
+              style={({ pressed }) => [
+                styles.smallPrimaryCard,
+                isLandscape && styles.cardLandscape,
+                pressed && styles.cardPressed
+              ]}
               onPress={() => {
-                log.debug("Dashboard: User clicked locked Export & Import Progress card (Coming Soon).");
-                // router.push('/progress'); // Preserved functional expansion path
+                log.info("Dashboard: Navigating to Settings & Preferences screen.");
+                router.push('/settings');
               }}
             >
               <View style={styles.cardHeaderRow}>
-                <Ionicons name="construct-outline" size={20} color="#53565F" />
-                <View style={styles.grayBadge}>
-                  <Text style={styles.grayBadgeText}>COMING SOON</Text>
-                </View>
+                <Ionicons name="settings" size={20} color="#A8C7FA" />
               </View>
-              <Text style={[styles.smallCardTitle, { color: '#53565F' }]}>Export & Import Progress</Text>
-              <Text style={[styles.smallCardDesc, { color: '#53565F' }]}>
-                Backup your ear-training records, import JSON progress sheets, and view training analytics. (In development)
-              </Text>
+              <Text style={styles.smallCardTitle}>Settings & Preferences</Text>
             </Pressable>
 
           </View>
@@ -125,22 +120,50 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 24,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 16,
     gap: 32,
     alignItems: 'center',
+    flexGrow: 1,
+  },
+  scrollView: {
+    flex: 1,
   },
   scrollContentLandscape: {
     padding: 16,
     gap: 20,
   },
+  headerContainer: {
+    width: '100%',
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  headerContainerLandscape: {
+    marginTop: 8,
+  },
   header: {
     alignItems: 'center',
     gap: 6,
-    marginTop: 20,
   },
   headerLandscape: {
-    marginTop: 8,
     gap: 2,
+  },
+  settingsBtn: {
+    position: 'absolute',
+    right: 0,
+    top: 6,
+    padding: 10,
+    borderRadius: 14,
+    backgroundColor: '#1D2024',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  settingsBtnPressed: {
+    backgroundColor: '#25282F',
+    opacity: 0.8,
   },
   appTitle: {
     fontSize: 40,
@@ -178,125 +201,106 @@ const styles = StyleSheet.create({
   primaryCard: {
     backgroundColor: '#1D2024', // Material 3 Surface Container
     borderWidth: 1,
-    borderColor: 'rgba(168, 199, 250, 0.12)', // Light primary border highlight
-    borderRadius: 24,
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: 28,
     padding: 24,
-    gap: 12,
+    alignItems: 'flex-start',
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  card: {
+  smallPrimaryCard: {
     backgroundColor: '#1D2024', // Material 3 Surface Container
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.04)',
     borderRadius: 24,
-    padding: 20,
-    gap: 8,
+    padding: 18,
+    alignItems: 'flex-start',
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  cardPressed: {
+    backgroundColor: '#25282F',
+    transform: [{ scale: 0.985 }],
   },
   disabledCard: {
-    backgroundColor: '#1D2024',
+    backgroundColor: '#15171A',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.02)',
     borderRadius: 24,
-    padding: 20,
-    gap: 8,
-  },
-  cardPressed: {
-    transform: [{ scale: 0.985 }],
-    opacity: 0.9,
-    borderColor: 'rgba(168, 199, 250, 0.4)',
-  },
-  badge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(168, 199, 250, 0.1)',
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 100,
-  },
-  badgeText: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#A8C7FA', // Material 3 Primary Light
-    letterSpacing: 1,
-  },
-  grayBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 100,
-  },
-  grayBadgeText: {
-    fontSize: 8,
-    fontWeight: '800',
-    color: '#8A92A6',
-    letterSpacing: 0.5,
-  },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 4,
+    padding: 18,
+    alignItems: 'flex-start',
+    gap: 12,
   },
   iconContainerPrimary: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: '#A8C7FA', // M3 Primary
-    justifyContent: 'center',
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    backgroundColor: '#A8C7FA', // Primary Blue container
     alignItems: 'center',
-    marginBottom: 4,
+    justifyContent: 'center',
   },
   cardTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800',
-    color: '#E2E2E6',
-    letterSpacing: -0.5,
-  },
-  smallCardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
     color: '#E2E2E6',
   },
   cardDesc: {
-    fontSize: 14,
-    color: '#C2C7CF', // M3 On Surface Variant
-    lineHeight: 20,
+    fontSize: 13,
+    color: '#A8C7FA',
+    lineHeight: 18,
+  },
+  smallCardTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#E2E2E6',
   },
   smallCardDesc: {
     fontSize: 12,
     color: '#8A92A6',
-    lineHeight: 18,
+    lineHeight: 16,
   },
-  actionRow: {
+  cardHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 4,
+    justifyContent: 'space-between',
+    width: '100%',
   },
-  actionText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#A8C7FA',
+  grayBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    backgroundColor: '#1D2024',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  grayBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#8E919A',
   },
   footerContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
+    alignItems: 'center',
+    marginTop: 'auto',
+    marginBottom: 20,
   },
   footerText: {
     fontSize: 11,
-    color: '#434753',
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    color: '#53565F',
   },
   footerLink: {
     fontSize: 11,
     color: '#A8C7FA',
     fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
     textDecorationLine: 'underline',
   },
 });
