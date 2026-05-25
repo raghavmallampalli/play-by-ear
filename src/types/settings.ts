@@ -8,3 +8,10 @@ export interface AppSettings {
   tempoMap: Record<number, number>;
   confirmRestartLevel: boolean;
 }
+
+export interface LevelConfig {
+  bpm: number;
+  tonic: number;
+  octave: number;
+  ticksPerBeat: number;
+}

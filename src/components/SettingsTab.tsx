@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { buildLevel } from '../levels';
 import { domStyles } from './styles/domStyles';
-import { AppSettings } from '../types/settings';
+import { AppSettings, LevelConfig } from '../types/settings';
 
 interface SettingsTabProps {
   settings: AppSettings;
@@ -11,8 +11,8 @@ interface SettingsTabProps {
   isFromTrainer?: boolean;
   level: number;
   mode: 'trainer' | 'sandbox' | 'progress' | 'settings';
-  levelConfig: { bpm: number };
-  setLevelConfig: React.Dispatch<React.SetStateAction<any>>;
+  levelConfig: LevelConfig;
+  setLevelConfig: React.Dispatch<React.SetStateAction<LevelConfig>>;
 }
 
 export default function SettingsTab({
@@ -67,7 +67,7 @@ export default function SettingsTab({
               style={{ ...domStyles.secondaryBtn, width: '40px', height: '40px', padding: 0, minWidth: '40px' }}
               onClick={() => {
                 const nextBpm = Math.max(40, levelConfig.bpm - 5);
-                setLevelConfig((prev: any) => ({ ...prev, bpm: nextBpm }));
+                setLevelConfig(prev => ({ ...prev, bpm: nextBpm }));
                 const nextMap = { ...settings.tempoMap, [level]: nextBpm };
                 saveSettings({ ...settings, tempoMap: nextMap });
               }}
@@ -81,7 +81,7 @@ export default function SettingsTab({
               style={{ ...domStyles.secondaryBtn, width: '40px', height: '40px', padding: 0, minWidth: '40px' }}
               onClick={() => {
                 const nextBpm = Math.min(240, levelConfig.bpm + 5);
-                setLevelConfig((prev: any) => ({ ...prev, bpm: nextBpm }));
+                setLevelConfig(prev => ({ ...prev, bpm: nextBpm }));
                 const nextMap = { ...settings.tempoMap, [level]: nextBpm };
                 saveSettings({ ...settings, tempoMap: nextMap });
               }}
@@ -93,7 +93,7 @@ export default function SettingsTab({
               onClick={() => {
                 const defaultSetup = buildLevel(mode === 'settings' ? 'trainer' : mode, level);
                 const defaultBpm = defaultSetup.bpm;
-                setLevelConfig((prev: any) => ({ ...prev, bpm: defaultBpm }));
+                setLevelConfig(prev => ({ ...prev, bpm: defaultBpm }));
                 const nextMap = { ...settings.tempoMap };
                 delete nextMap[level];
                 saveSettings({ ...settings, tempoMap: nextMap });
@@ -109,7 +109,7 @@ export default function SettingsTab({
             value={levelConfig.bpm}
             onChange={(e) => {
               const nextBpm = Number(e.target.value);
-              setLevelConfig((prev: any) => ({ ...prev, bpm: nextBpm }));
+              setLevelConfig(prev => ({ ...prev, bpm: nextBpm }));
               const nextMap = { ...settings.tempoMap, [level]: nextBpm };
               saveSettings({ ...settings, tempoMap: nextMap });
             }}

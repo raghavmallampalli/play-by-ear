@@ -27,6 +27,7 @@ Keep the codebase modular, decoupled, and clean. Avoid long monolithic files (es
    - All shared TypeScript type definitions, interfaces, and enums must be declared in the `src/types/` directory.
    - Avoid defining ad-hoc local interfaces in components unless they are completely private to that component.
    - Re-export type modules clearly so they can be clean imports elsewhere.
+   - Never declare shared app interfaces (such as `AppSettings`) inside a component or utility module.
 
 ---
 
@@ -54,3 +55,15 @@ Keep the codebase modular, decoupled, and clean. Avoid long monolithic files (es
 - **Comments & Docstrings**: Maintain code documentation integrity. Do not strip out existing comments or JSDocs that are unrelated to your edits. Add meaningful inline documentation for complex logic.
 - **Type Safety**: Strictly avoid `any`. Ensure all TypeScript compilation checks pass with zero warnings.
 - **Semantic Commit Messages**: When presenting or committing changes, structure them cleanly using standard semantic prefixes (e.g., `feat:`, `fix:`, `refactor:`, `test:`, `docs:`).
+
+---
+
+## ⚠️ Mistakes to Avoid
+1. **Monolithic Layout Bloat**:
+   - Do NOT construct new features (such as custom settings tabs, dashboard controls, or heavy forms) directly inside active controller coordinates like `MidiPlayerDOM.tsx`. 
+   - Modularity is paramount: create isolated, stateless or sub-state components in `src/components/` (like `SettingsTab.tsx` or `TheoryTab.tsx`) and embed them cleanly as thin presentation wrappers.
+
+2. **Compiler and Warning Ignorance**:
+   - Never finalize a task or commit changes without running static TypeScript analysis.
+   - Always run `npx tsc --noEmit` and check for implicit `any` type warnings, mapping checks, and export errors before presenting the finished task. Testing files do not catch all static type mismatch bugs!
+   - Do not summarize your changes unless the user asks. Assume your edits were poor quality and ask the user to test the app.
