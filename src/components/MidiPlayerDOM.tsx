@@ -251,6 +251,16 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
     return chunks;
   }, [level]);
 
+  // Check if the gameplay is interactable (must be started/running in trainer mode)
+  const isInteractable = mode !== 'trainer' || audio.hasStarted;
+
+  const firstPlayedNoteMidi = useMemo(() => {
+    if (melodyNotes.length > 0) {
+      return converter.toMidi(melodyNotes[0].note);
+    }
+    return converter.toMidi({ degree: 0, offset: 0 });
+  }, [melodyNotes, converter]);
+
   // Tonic button
   const handleTonicClick = () => {
     audio.playGroundingCadence(converter);
@@ -280,45 +290,37 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
             {/* Core Controls: Top Row (Tonic, Chords, Melody) */}
             <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
               <button
-                style={{ ...domStyles.gridBtn, flex: 1, padding: '12px 0', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+                disabled={!isInteractable}
+                style={{
+                  ...(!isInteractable ? domStyles.gridBtnDisabled : domStyles.gridBtn),
+                  flex: 1,
+                }}
                 onClick={handleTonicClick}
-                onMouseEnter={(e) => showTooltip('Tonic Reference', e)}
+                onMouseEnter={(e) => isInteractable && showTooltip('Tonic Reference', e)}
                 onMouseLeave={hideTooltip}
               >
                 <IconTuningFork />
               </button>
               <button
+                disabled={!isInteractable || chords.length === 0}
                 style={{
-                  ...domStyles.gridBtn,
+                  ...((!isInteractable || chords.length === 0) ? domStyles.gridBtnDisabled : domStyles.gridBtn),
                   flex: 1,
-                  padding: '12px 0',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  opacity: chords.length === 0 ? 0.4 : 1,
-                  cursor: chords.length === 0 ? 'not-allowed' : 'pointer',
                 }}
                 onClick={() => audio.playBackingChordsOnly(chords, converter)}
-                disabled={chords.length === 0}
-                onMouseEnter={(e) => chords.length > 0 && showTooltip('Root Chords Backing', e)}
+                onMouseEnter={(e) => isInteractable && chords.length > 0 && showTooltip('Root Chords Backing', e)}
                 onMouseLeave={hideTooltip}
               >
                 <IconKeyboard />
               </button>
               <button
+                disabled={!isInteractable || melodyNotes.length === 0}
                 style={{
-                  ...domStyles.gridBtn,
+                  ...((!isInteractable || melodyNotes.length === 0) ? domStyles.gridBtnDisabled : domStyles.gridBtn),
                   flex: 1,
-                  padding: '12px 0',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  opacity: melodyNotes.length === 0 ? 0.4 : 1,
-                  cursor: melodyNotes.length === 0 ? 'not-allowed' : 'pointer',
                 }}
                 onClick={() => audio.playMelodyOnly(melodyNotes, converter)}
-                disabled={melodyNotes.length === 0}
-                onMouseEnter={(e) => melodyNotes.length > 0 && showTooltip('Just Melody Guide', e)}
+                onMouseEnter={(e) => isInteractable && melodyNotes.length > 0 && showTooltip('Just Melody Guide', e)}
                 onMouseLeave={hideTooltip}
               >
                 <IconMelody />
@@ -359,7 +361,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                 8 octaves
               </span>
             </div>
-            <KeyboardVisualizer activeNotes={audio.activeNotes} onNoteClick={audio.triggerLiveNote} />
+            <KeyboardVisualizer activeNotes={audio.activeNotes} onNoteClick={audio.triggerLiveNote} firstNoteMidi={firstPlayedNoteMidi} />
 
             {/* Answer Selector Controls & Restart */}
             {mode === 'trainer' && (
@@ -395,14 +397,8 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                                 ...domStyles.answerBtn,
                                 flex: 1,
                                 maxWidth: '64px',
-                                height: '54px',
-                                borderRadius: '27px',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
                                 opacity: isAnswered ? 0.35 : 1,
                                 cursor: isAnswered ? 'not-allowed' : 'pointer',
-                                transition: 'all 0.2s',
                               }}
                               onClick={() => handleChoice(choice)}
                             >
@@ -430,19 +426,8 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                     <div style={{ flex: 1, display: 'flex' }}>
                       <button
                         style={{
-                          width: '100%',
-                          padding: '12px 0',
-                          borderRadius: '16px',
-                          backgroundColor: audio.hasStarted ? '#25282F' : '#A8C7FA',
-                          color: audio.hasStarted ? '#E2E2E6' : '#0A305F',
-                          border: audio.hasStarted ? '1px solid rgba(255, 255, 255, 0.05)' : 'none',
-                          boxShadow: audio.hasStarted ? 'none' : '0 2px 6px rgba(168, 199, 250, 0.25)',
-                          fontSize: '12px',
-                          fontWeight: '800',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center',
+                          ...domStyles.actionBtn,
+                          ...(audio.hasStarted ? domStyles.secondaryActionBtn : domStyles.primaryActionBtn),
                         }}
                         onClick={audio.hasStarted ? () => setupExercise(false) : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence)}
                       >
@@ -485,20 +470,8 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                       <button
                         disabled={!isCurrentExerciseComplete}
                         style={{
-                          width: '100%',
-                          padding: '12px 0',
-                          borderRadius: '16px',
-                          backgroundColor: isCurrentExerciseComplete ? '#A8C7FA' : '#25282F',
-                          color: isCurrentExerciseComplete ? '#0A305F' : '#53565F',
-                          border: isCurrentExerciseComplete ? 'none' : '1px solid rgba(255, 255, 255, 0.05)',
-                          opacity: isCurrentExerciseComplete ? 1 : 0.4,
-                          fontSize: '12px',
-                          fontWeight: '800',
-                          cursor: isCurrentExerciseComplete ? 'pointer' : 'not-allowed',
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          transition: 'all 0.2s',
+                          ...domStyles.actionBtn,
+                          ...(isCurrentExerciseComplete ? domStyles.primaryActionBtn : domStyles.disabledActionBtn),
                         }}
                         onClick={handleNextClick}
                       >
