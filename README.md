@@ -94,19 +94,19 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
 - [x] Refactor: Can we share button styling across as many buttons as possible?
  
 ### 📱 Responsive Layouts & Orientation
-- [ ] **Major Bugfix**: Implement complete, robust support for **Landscape Mode** layouts across all dashboard, trainer, and sandbox views to ensure standard phone compatibility. Support react native on web, use that to get the layout correct.
+- [x] **Major Bugfix**: Implement complete, robust support for **Landscape Mode** layouts across all dashboard, trainer, and sandbox views to ensure standard phone compatibility. Support react native on web, use that to get the layout correct.
 
 ### ⚙️ Dashboard Settings Panel
 - [ ] **Feature**: Create a dedicated settings button on the dashboard interface.
 - [ ] **Feature**: Move the existing export & import data actions inside this dashboard settings pane.
 - [ ] **Feature**: Implement comprehensive custom settings:
-  - [ ] **Instrument Mode**: Toggle between **Guitar** vs. **Piano** synthesis modes.
+  - [ ] **Instrument Mode**: Toggle between **Guitar** vs. **Piano** synthesis modes. Disable guitar for now.
   - [ ] **Note Labels**: 
     - *Melody*: Carnatic vs. Solfege vs. Note Numbers vs. Absolute pitches.
     - *Chords*: Roman Numerals vs. Absolute chord names.
   - [ ] **Timeline Display Style**: Toggle between **DAW** vs. standard **Staff** vs. **Guitar Tabs** timeline modes.
   - [ ] **Visualizer Control**: Add a setting to toggle the active Keyboard Visualizer on/off.
-  - [ ] **Chord mode**: Currently, chord definitions use root plus inversion. Instead use standard. Make a todo to introduce inversions after minor chords, i.e in group 4. Tonic can continue to use the slash chords.
+  - [ ] **Chord mode**: Currently, chord definitions use root plus inversion. Instead use standard. Make a todo to introduce inversions as a new excercise group after minor chords, i.e in group 4. Tonic can continue to use the slash chords.
 
 ### 🎓 Trainer Settings & Level Customization
 - [ ] **Feature**: Embed a direct shortcut path to the Settings pane from inside the trainer/training page.

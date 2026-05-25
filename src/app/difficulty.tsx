@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Pressable, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -92,6 +92,8 @@ const LEVEL_GROUPS = [
 
 export default function DifficultyScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
 
   const handleSelectLevel = (levelId: number) => {
     log.info(`Level Selected: Launching training level #${levelId}`);
@@ -113,13 +115,26 @@ export default function DifficultyScreen() {
           <Text style={styles.screenTitle}>Select Trainer Level</Text>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          contentContainerStyle={[
+            styles.scrollContent,
+            isLandscape && styles.scrollContentLandscape
+          ]} 
+          showsVerticalScrollIndicator={false}
+        >
           <Text style={styles.introText}>
             Progress through the 9 progressive training groups below. To begin, let's play the first levels!
           </Text>
 
-          {LEVEL_GROUPS.map((group, groupIdx) => (
-            <View key={groupIdx} style={styles.groupCard}>
+          <View style={[styles.grid, isLandscape && styles.gridLandscape]}>
+            {LEVEL_GROUPS.map((group, groupIdx) => (
+              <View 
+                key={groupIdx} 
+                style={[
+                  styles.groupCard, 
+                  isLandscape && styles.groupCardLandscape
+                ]}
+              >
               <View style={styles.groupHeader}>
                 <Text style={styles.groupTitle}>{group.title}</Text>
                 <Text style={styles.groupDesc}>{group.desc}</Text>
@@ -161,6 +176,7 @@ export default function DifficultyScreen() {
               </View>
             </View>
           ))}
+          </View>
         </ScrollView>
 
       </SafeAreaView>
@@ -202,12 +218,28 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 20,
   },
+  scrollContentLandscape: {
+    padding: 20,
+    gap: 20,
+    alignItems: 'center',
+  },
   introText: {
     fontSize: 14,
     color: '#8A92A6',
     lineHeight: 20,
     textAlign: 'center',
     paddingHorizontal: 10,
+  },
+  grid: {
+    width: '100%',
+    gap: 20,
+  },
+  gridLandscape: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 20,
+    maxWidth: 960,
+    width: '100%',
   },
   groupCard: {
     backgroundColor: '#1D2024', // Material 3 Card Container
@@ -216,6 +248,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 20,
     gap: 16,
+  },
+  groupCardLandscape: {
+    width: '48.5%',
   },
   groupHeader: {
     gap: 4,
