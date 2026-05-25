@@ -53,6 +53,11 @@ export default function KeyboardVisualizer({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wheelCleanupRef = useRef<(() => void) | undefined>(undefined);
 
+  const [showPopout, setShowPopout] = useState(false);
+  const [scrollOctave, setScrollOctave] = useState<number | null>(null);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollListenerRef = useRef<(() => void) | undefined>(undefined);
+
   const keysCount = isLandscape ? 14 : 8.4;
   const keyAreaWidth = Math.max(200, containerWidth - 8);
   const whiteKeyWidth = Math.floor(keyAreaWidth / keysCount);
@@ -84,11 +89,40 @@ export default function KeyboardVisualizer({
       wheelCleanupRef.current();
       wheelCleanupRef.current = undefined;
     }
+    if (scrollListenerRef.current) {
+      scrollListenerRef.current();
+      scrollListenerRef.current = undefined;
+    }
     scrollRef.current = node;
     if (node) {
       wheelCleanupRef.current = setupHorizontalWheelScroll(node);
+
+      const onScroll = () => {
+        const scrollLeft = node.scrollLeft;
+        if (whiteKeyWidth > 0) {
+          const whiteKeyIdx = Math.max(0, Math.min(whiteKeys.length - 1, Math.round(scrollLeft / whiteKeyWidth)));
+          const leftmostMidi = whiteKeys[whiteKeyIdx];
+          const oct = Math.floor(leftmostMidi / 12) - 1;
+          const displayOctave = oct + 1;
+          
+          setScrollOctave(displayOctave);
+          setShowPopout(true);
+          
+          if (scrollTimeoutRef.current) {
+            clearTimeout(scrollTimeoutRef.current);
+          }
+          scrollTimeoutRef.current = setTimeout(() => {
+            setShowPopout(false);
+          }, 700);
+        }
+      };
+
+      node.addEventListener('scroll', onScroll, { passive: true });
+      scrollListenerRef.current = () => {
+        node.removeEventListener('scroll', onScroll);
+      };
     }
-  }, []);
+  }, [whiteKeyWidth]);
 
   const hasCenteredOnMount = useRef(false);
   useLayoutEffect(() => {
@@ -113,6 +147,12 @@ export default function KeyboardVisualizer({
     return () => {
       if (wheelCleanupRef.current) {
         wheelCleanupRef.current();
+      }
+      if (scrollListenerRef.current) {
+        scrollListenerRef.current();
+      }
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
       }
     };
   }, []);
@@ -235,6 +275,50 @@ export default function KeyboardVisualizer({
         background: 'linear-gradient(to left, #111318 10%, transparent)',
         pointerEvents: 'none', zIndex: 105, borderRadius: '0 16px 16px 0'
       }} />
+
+      {/* Popout bubble for scroll octave */}
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        width: '72px',
+        height: '72px',
+        borderRadius: '20px',
+        backgroundColor: 'rgba(17, 19, 24, 0.92)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border: '1.5px solid rgba(255, 255, 255, 0.08)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        opacity: showPopout ? 1 : 0,
+        pointerEvents: 'none',
+        zIndex: 1000,
+        boxShadow: '0 12px 28px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+        transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        transform: `translate(-50%, -50%) ${showPopout ? 'scale(1)' : 'scale(0.8)'}`,
+      }}>
+        <span style={{
+          fontSize: '9px',
+          fontWeight: '800',
+          color: '#8A92A6',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          marginBottom: '2px',
+        }}>
+          Octave
+        </span>
+        <span style={{
+          fontSize: '28px',
+          fontWeight: '900',
+          color: scrollOctave !== null ? (octaveColors[scrollOctave - 1] || '#E2E2E6') : '#E2E2E6',
+          textShadow: scrollOctave !== null ? `0 0 12px ${octaveColors[scrollOctave - 1]}80` : 'none',
+          lineHeight: 1,
+        }}>
+          {scrollOctave}
+        </span>
+      </div>
     </div>
   );
 }

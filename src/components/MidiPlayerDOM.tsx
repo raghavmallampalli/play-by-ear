@@ -732,31 +732,13 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                   )}
 
                   {settings.visualizerEnabled && (
-                    <>
-                      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
-                        <span style={{
-                          fontSize: '10px', color: '#A8C7FA',
-                          backgroundColor: 'rgba(168, 199, 250, 0.08)',
-                          border: '1px solid rgba(168, 199, 250, 0.15)',
-                          padding: '2px 8px', borderRadius: '8px', fontWeight: '700',
-                          display: 'flex', alignItems: 'center', gap: '5px',
-                        }}>
-                          <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="7 8 3 12 7 16" />
-                            <polyline points="17 8 21 12 17 16" />
-                            <line x1="3" y1="12" x2="21" y2="12" />
-                          </svg>
-                          8 octaves
-                        </span>
-                      </div>
-                      <KeyboardVisualizer
-                        activeNotes={audio.activeNotes}
-                        onNoteClick={audio.triggerLiveNote}
-                        firstNoteMidi={firstPlayedNoteMidi}
-                        baseOctaveMidi={baseOctaveMidi}
-                        tonicScrollTrigger={tonicScrollTrigger}
-                      />
-                    </>
+                    <KeyboardVisualizer
+                      activeNotes={audio.activeNotes}
+                      onNoteClick={audio.triggerLiveNote}
+                      firstNoteMidi={firstPlayedNoteMidi}
+                      baseOctaveMidi={baseOctaveMidi}
+                      tonicScrollTrigger={tonicScrollTrigger}
+                    />
                   )}
                 </div>
 
@@ -797,31 +779,13 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                 )}
 
                 {settings.visualizerEnabled && (
-                  <>
-                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                      <span style={{
-                        fontSize: '10px', color: '#A8C7FA',
-                        backgroundColor: 'rgba(168, 199, 250, 0.08)',
-                        border: '1px solid rgba(168, 199, 250, 0.15)',
-                        padding: '2px 8px', borderRadius: '8px', fontWeight: '700',
-                        display: 'flex', alignItems: 'center', gap: '5px',
-                      }}>
-                        <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="7 8 3 12 7 16" />
-                          <polyline points="17 8 21 12 17 16" />
-                          <line x1="3" y1="12" x2="21" y2="12" />
-                        </svg>
-                        8 octaves
-                      </span>
-                    </div>
-                    <KeyboardVisualizer
-                      activeNotes={audio.activeNotes}
-                      onNoteClick={audio.triggerLiveNote}
-                      firstNoteMidi={firstPlayedNoteMidi}
-                      baseOctaveMidi={baseOctaveMidi}
-                      tonicScrollTrigger={tonicScrollTrigger}
-                    />
-                  </>
+                  <KeyboardVisualizer
+                    activeNotes={audio.activeNotes}
+                    onNoteClick={audio.triggerLiveNote}
+                    firstNoteMidi={firstPlayedNoteMidi}
+                    baseOctaveMidi={baseOctaveMidi}
+                    tonicScrollTrigger={tonicScrollTrigger}
+                  />
                 )}
 
                 {renderChoicesCard()}
