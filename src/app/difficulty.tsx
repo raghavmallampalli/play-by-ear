@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { log } from '@/services/logger';
+import { log } from '@/utils/logger';
 
 // Definition of the 9 groups of 3 levels (27 levels total)
 const LEVEL_GROUPS = [
