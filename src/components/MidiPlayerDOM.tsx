@@ -1,18 +1,18 @@
 'use dom';
 
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAudioEngine } from '../hooks/useAudioEngine';
 import { buildLevel, EXERCISE_HASHES, getAnswerChoices, getPreloadMidi, isQueuedLevel, LevelSetup } from '../levels';
 import { displayLabel } from '../levels/labels';
+import { ChordLabelSystem, MelodyLabelSystem } from '../types/labels';
 import { TimelineSlot } from '../types/levels';
-import { PlayedNote, PlayedChord } from '../types/music';
+import { PlayedChord, PlayedNote } from '../types/music';
 import { NoteConverter } from '../utils/note_converter';
 import DawTimeline from './DawTimeline';
 import { IconKeyboard, IconMelody, IconRestart, IconTuningFork } from './icons/TrainerIcons';
 import KeyboardVisualizer from './KeyboardVisualizer';
 import { domStyles } from './styles/domStyles';
 import TheoryTab from './TheoryTab';
-import { MelodyLabelSystem, ChordLabelSystem } from '../types/labels';
 
 interface AppSettings {
   instrumentMode: 'piano' | 'guitar';
@@ -20,6 +20,7 @@ interface AppSettings {
   chordLabelSystem: ChordLabelSystem;
   visualizerEnabled: boolean;
   tempoMap: Record<number, number>;
+  confirmRestartLevel: boolean;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -28,6 +29,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   chordLabelSystem: 'roman',
   visualizerEnabled: true,
   tempoMap: {},
+  confirmRestartLevel: true,
 };
 
 interface MidiPlayerDOMProps {
@@ -63,16 +65,19 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
     try {
       const stored = localStorage.getItem('@pbe_settings');
       if (stored) {
-        setSettings(JSON.parse(stored));
+        setSettings({
+          ...DEFAULT_SETTINGS,
+          ...JSON.parse(stored)
+        });
       }
-    } catch {}
+    } catch { }
   }, []);
 
   const saveSettings = (newSettings: AppSettings) => {
     setSettings(newSettings);
     try {
       localStorage.setItem('@pbe_settings', JSON.stringify(newSettings));
-    } catch {}
+    } catch { }
   };
 
   const exportProgress = () => {
@@ -85,7 +90,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
           if (val) data[key] = val;
         }
       }
-    } catch {}
+    } catch { }
     return JSON.stringify(data, null, 2);
   };
 
@@ -112,7 +117,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
   const [focusedSlotIndex, setFocusedSlotIndex] = useState<number | null>(null);
   const [userNotes, setUserNotes] = useState('');
   const [tonicScrollTrigger, setTonicScrollTrigger] = useState(0);
-  
+
   // 10-in-a-row queue state
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [exerciseQueue, setExerciseQueue] = useState<LevelSetup[]>([]);
@@ -134,6 +139,10 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const tooltipTimer = useRef<any>(null);
   const tooltipDismissTimer = useRef<any>(null);
+
+  // Restart modal warning
+  const [showRestartModal, setShowRestartModal] = useState(false);
+  const [dontShowRestartWarningAgain, setDontShowRestartWarningAgain] = useState(false);
 
   const preloadMidi = useMemo(() => getPreloadMidi(mode, level), [mode, level]);
   const audio = useAudioEngine({ mode, level, preloadMidi });
@@ -224,7 +233,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
     if (focusedSlotIndex === null) return;
     const slot = timelineSlots[focusedSlotIndex];
     if (slot.answer !== null) return; // Ignore choices if already answered
-    
+
     audio.playChoiceAudio(choice, converter);
 
     const newSlots = [...timelineSlots];
@@ -256,7 +265,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
     setFocusedSlotIndex(index);
     const slot = timelineSlots[index];
     const slotTime = converter.ticksToSeconds(slot.beat);
-    
+
     // Stop playback, seek to slot's timestamp, and play from there immediately (skipping cadence)
     audio.stopPlayback();
     audio.setPlayheadTime(slotTime);
@@ -267,14 +276,14 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
     const rect = e.currentTarget.getBoundingClientRect();
     const x = rect.left + rect.width / 2;
     const y = rect.top - 8;
-    
+
     if (tooltipTimer.current) clearTimeout(tooltipTimer.current);
     if (tooltipDismissTimer.current) clearTimeout(tooltipDismissTimer.current);
-    
+
     tooltipTimer.current = setTimeout(() => {
       setTooltipText(text);
       setTooltipPos({ x, y });
-      
+
       // Auto-dismiss after 3 seconds to prevent sticky tooltips on mobile/touch interfaces
       tooltipDismissTimer.current = setTimeout(() => {
         setTooltipText(null);
@@ -328,7 +337,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
       setChords(nextEx.chords);
       setTimelineSlots(nextEx.slots);
       setFocusedSlotIndex(0);
-      
+
       // Stop running audio and immediately start the next queued exercise (skipping cadence)
       audio.stopPlayback();
       audio.startPlayback(nextEx.melody, nextEx.chords, converter, true);
@@ -387,6 +396,14 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
     audio.startPlayback(melodyNotes, chords, converter, skipCadence);
   };
 
+  const handleRestartClick = () => {
+    if (settings.confirmRestartLevel !== false) {
+      setShowRestartModal(true);
+    } else {
+      setupExercise(false);
+    }
+  };
+
   // ─── Settings Rendering ─────────────────────────────────────────────────────
 
   const renderSettingsContent = (isFromTrainer = false) => {
@@ -395,9 +412,9 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
         {/* BPM controls only if from trainer */}
         {isFromTrainer && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}>
-            <h4 style={{ fontSize: '11px', fontWeight: '800', color: '#A8C7FA', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>Trainer Tempo (BPM)</h4>
+            <h4 style={domStyles.settingTitle}>Trainer Tempo (BPM)</h4>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <button 
+              <button
                 style={{ ...domStyles.secondaryBtn, width: '40px', height: '40px', padding: 0, minWidth: '40px' }}
                 onClick={() => {
                   const nextBpm = Math.max(40, levelConfig.bpm - 5);
@@ -411,7 +428,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
               <span style={{ fontSize: '16px', fontWeight: '800', color: '#E2E2E6', minWidth: '70px', textAlign: 'center' }}>
                 {levelConfig.bpm} BPM
               </span>
-              <button 
+              <button
                 style={{ ...domStyles.secondaryBtn, width: '40px', height: '40px', padding: 0, minWidth: '40px' }}
                 onClick={() => {
                   const nextBpm = Math.min(240, levelConfig.bpm + 5);
@@ -436,7 +453,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                 Reset Default
               </button>
             </div>
-            <input 
+            <input
               type="range"
               min="40"
               max="240"
@@ -459,11 +476,11 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
 
         {/* Instrument Mode Selection */}
         <div>
-          <h4 style={{ fontSize: '11px', fontWeight: '800', color: '#A8C7FA', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>Instrument Mode</h4>
+          <h4 style={domStyles.settingTitle}>Instrument Mode</h4>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button 
-              style={{ 
-                flex: 1, 
+            <button
+              style={{
+                flex: 1,
                 ...(settings.instrumentMode === 'piano' ? domStyles.activeTabBtn : domStyles.secondaryBtn),
                 display: 'flex',
                 alignItems: 'center',
@@ -481,11 +498,11 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
               </svg>
               Piano
             </button>
-            <button 
+            <button
               disabled
-              style={{ 
-                ...domStyles.disabledBtn, 
-                flex: 1, 
+              style={{
+                ...domStyles.disabledBtn,
+                flex: 1,
                 opacity: 0.4,
                 display: 'flex',
                 alignItems: 'center',
@@ -503,27 +520,27 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
 
         {/* Note Labels Systems Selection */}
         <div>
-          <h4 style={{ fontSize: '11px', fontWeight: '800', color: '#A8C7FA', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>Melody Note Labels</h4>
+          <h4 style={domStyles.settingTitle}>Melody Note Labels</h4>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-            <button 
+            <button
               style={settings.melodyLabelSystem === 'carnatic' ? domStyles.activeTabBtn : domStyles.secondaryBtn}
               onClick={() => saveSettings({ ...settings, melodyLabelSystem: 'carnatic' })}
             >
               Carnatic (Sa, Re...)
             </button>
-            <button 
+            <button
               style={settings.melodyLabelSystem === 'solfege' ? domStyles.activeTabBtn : domStyles.secondaryBtn}
               onClick={() => saveSettings({ ...settings, melodyLabelSystem: 'solfege' })}
             >
               Solfege (Do, Re...)
             </button>
-            <button 
+            <button
               style={settings.melodyLabelSystem === 'numerical' ? domStyles.activeTabBtn : domStyles.secondaryBtn}
               onClick={() => saveSettings({ ...settings, melodyLabelSystem: 'numerical' })}
             >
               Numbers (1, 2...)
             </button>
-            <button 
+            <button
               style={settings.melodyLabelSystem === 'abc' ? domStyles.activeTabBtn : domStyles.secondaryBtn}
               onClick={() => saveSettings({ ...settings, melodyLabelSystem: 'abc' })}
             >
@@ -534,15 +551,15 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
 
         {/* Chord Labels Selection */}
         <div>
-          <h4 style={{ fontSize: '11px', fontWeight: '800', color: '#A8C7FA', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>Chord Labels</h4>
+          <h4 style={domStyles.settingTitle}>Chord Labels</h4>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button 
+            <button
               style={{ flex: 1, ...(settings.chordLabelSystem === 'roman' ? domStyles.activeTabBtn : domStyles.secondaryBtn) }}
               onClick={() => saveSettings({ ...settings, chordLabelSystem: 'roman' })}
             >
               Roman (I, IV, V)
             </button>
-            <button 
+            <button
               style={{ flex: 1, ...(settings.chordLabelSystem === 'abc' ? domStyles.activeTabBtn : domStyles.secondaryBtn) }}
               onClick={() => saveSettings({ ...settings, chordLabelSystem: 'abc' })}
             >
@@ -552,24 +569,18 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
         </div>
 
         {/* Visualizer Control Toggle */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.01)', padding: '12px 14px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.04)' }}>
+        <div style={domStyles.settingRow}>
           <div>
-            <h4 style={{ fontSize: '13px', fontWeight: '800', color: '#E2E2E6', margin: 0 }}>Piano Visualizer</h4>
+            <h4 style={domStyles.toggleLabel}>Piano Visualizer</h4>
           </div>
-          
+
           {/* Custom Premium Android/iOS-style Toggle Switch */}
-          <div 
+          <div
             onClick={() => saveSettings({ ...settings, visualizerEnabled: !settings.visualizerEnabled })}
             style={{
-              width: '44px',
-              height: '24px',
-              borderRadius: '12px',
+              ...domStyles.toggleContainer,
               backgroundColor: settings.visualizerEnabled ? '#A8C7FA' : 'rgba(255, 255, 255, 0.12)',
               border: settings.visualizerEnabled ? 'none' : '1.5px solid rgba(255, 255, 255, 0.24)',
-              position: 'relative',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s ease, border-color 0.2s ease',
-              boxSizing: 'border-box',
             }}
           >
             <div style={{
@@ -585,12 +596,40 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
           </div>
         </div>
 
+        {/* Confirm Restart Toggle Switch */}
+        <div style={domStyles.settingRow}>
+          <div>
+            <h4 style={domStyles.toggleLabel}>Confirm Level Restart</h4>
+            <p style={domStyles.toggleSublabel}>Warn before clearing progress to restart</p>
+          </div>
+
+          <div
+            onClick={() => saveSettings({ ...settings, confirmRestartLevel: !settings.confirmRestartLevel })}
+            style={{
+              ...domStyles.toggleContainer,
+              backgroundColor: settings.confirmRestartLevel ? '#A8C7FA' : 'rgba(255, 255, 255, 0.12)',
+              border: settings.confirmRestartLevel ? 'none' : '1.5px solid rgba(255, 255, 255, 0.24)',
+            }}
+          >
+            <div style={{
+              width: '14px',
+              height: '14px',
+              borderRadius: '50%',
+              backgroundColor: settings.confirmRestartLevel ? '#111318' : '#8A92A6',
+              position: 'absolute',
+              top: settings.confirmRestartLevel ? '5px' : '3.5px',
+              left: settings.confirmRestartLevel ? '24px' : '3.5px',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            }} />
+          </div>
+        </div>
+
         {/* Progress Export & Import Actions */}
         <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
-          <h4 style={{ fontSize: '11px', fontWeight: '800', color: '#A8C7FA', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>Progress & Backups</h4>
-          
+          <h4 style={domStyles.settingTitle}>Progress & Backups</h4>
+
           <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-            <button 
+            <button
               style={{ ...domStyles.primaryBtn, flex: 1, height: '40px' }}
               onClick={() => {
                 const json = exportProgress();
@@ -619,7 +658,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                 borderColor: 'rgba(168, 199, 250, 0.15)',
               }}
             />
-            <button 
+            <button
               disabled={!importJson.trim()}
               style={{
                 ...(!importJson.trim() ? domStyles.disabledBtn : domStyles.primaryBtn),
@@ -668,21 +707,14 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
       <div
         onMouseEnter={(e) => showTooltip(audio.hasStarted ? 'Restart Level' : 'Start Exercise', e)}
         onMouseLeave={hideTooltip}
-        style={{ flex: 1, display: 'flex' }}
+        style={domStyles.practiceControlBtnWrapper}
       >
         <button
           style={{
             ...(audio.hasStarted ? domStyles.restartBtn : domStyles.primaryBtn),
-            flex: 1,
-            width: '100%',
-            height: '44px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: 0,
-            minWidth: 'auto',
+            ...domStyles.practiceControlBtn,
           }}
-          onClick={audio.hasStarted ? () => setupExercise(false) : handleStartClick}
+          onClick={audio.hasStarted ? handleRestartClick : handleStartClick}
         >
           {audio.hasStarted ? (
             <IconRestart />
@@ -699,19 +731,13 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
       <div
         onMouseEnter={(e) => showTooltip('Tonic Reference', e)}
         onMouseLeave={hideTooltip}
-        style={{ flex: 1, display: 'flex' }}
+        style={domStyles.practiceControlBtnWrapper}
       >
         <button
           disabled={!isInteractable}
           style={{
             ...(!isInteractable ? domStyles.disabledBtn : domStyles.secondaryBtn),
-            flex: 1,
-            width: '100%',
-            height: '44px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: 'auto',
+            ...domStyles.practiceControlBtn,
             pointerEvents: !isInteractable ? 'none' : 'auto',
           }}
           onClick={handleTonicClick}
@@ -725,19 +751,13 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
       <div
         onMouseEnter={(e) => showTooltip('Play Backing Chords', e)}
         onMouseLeave={hideTooltip}
-        style={{ flex: 1, display: 'flex' }}
+        style={domStyles.practiceControlBtnWrapper}
       >
         <button
           disabled={!isInteractable || chords.length === 0}
           style={{
             ...((!isInteractable || chords.length === 0) ? domStyles.disabledBtn : domStyles.secondaryBtn),
-            flex: 1,
-            width: '100%',
-            height: '44px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: 'auto',
+            ...domStyles.practiceControlBtn,
             pointerEvents: (!isInteractable || chords.length === 0) ? 'none' : 'auto',
           }}
           onClick={() => audio.playBackingChordsOnly(chords, converter)}
@@ -751,19 +771,13 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
       <div
         onMouseEnter={(e) => showTooltip('Play Melody Guide', e)}
         onMouseLeave={hideTooltip}
-        style={{ flex: 1, display: 'flex' }}
+        style={domStyles.practiceControlBtnWrapper}
       >
         <button
           disabled={!isInteractable || melodyNotes.length === 0}
           style={{
             ...((!isInteractable || melodyNotes.length === 0) ? domStyles.disabledBtn : domStyles.secondaryBtn),
-            flex: 1,
-            width: '100%',
-            height: '44px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: 'auto',
+            ...domStyles.practiceControlBtn,
             pointerEvents: (!isInteractable || melodyNotes.length === 0) ? 'none' : 'auto',
           }}
           onClick={() => audio.playMelodyOnly(melodyNotes, converter)}
@@ -775,7 +789,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
 
     if (landscapeMode) {
       return (
-        <div style={{ display: 'flex', gap: '8px', width: '100%', marginBottom: '4px' }}>
+        <div style={domStyles.practiceControlRowLandscape}>
           {startBtn}
           {tonicBtn}
           {chordsBtn}
@@ -785,12 +799,12 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
     }
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', marginBottom: '4px' }}>
-        <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+      <div style={domStyles.practiceControlRowPortrait}>
+        <div style={domStyles.practiceControlSubRow}>
           {startBtn}
           {tonicBtn}
         </div>
-        <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+        <div style={domStyles.practiceControlSubRow}>
           {chordsBtn}
           {melodyBtn}
         </div>
@@ -815,7 +829,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
     return (
       <div style={domStyles.card}>
         <p style={domStyles.metaLabel}>Identify the {level >= 4 ? 'Chord' : 'Scale Degree'}:</p>
-        
+
         <div style={domStyles.answerContainer}>
           {choiceChunks.map((chunk, rowIdx) => (
             <div key={rowIdx} style={domStyles.answerRow}>
@@ -852,23 +866,15 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
 
     return (
       <div style={{
-        ...domStyles.card,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '12px 18px',
-        backgroundColor: 'rgba(168, 199, 250, 0.02)',
+        ...domStyles.progressCard,
         borderColor: isCurrentExerciseComplete ? 'rgba(168, 199, 250, 0.15)' : 'rgba(255,255,255,0.04)',
       }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: '11px', fontWeight: '800', color: '#A8C7FA' }}>
-            SET PROGRESS
-          </span>
-          <span style={{ fontSize: '12px', color: '#8A92A6', marginTop: '2px', fontWeight: '700' }}>
+          <span style={{ fontSize: '13px', color: '#E2E2E6', fontWeight: '800' }}>
             Exercise {currentExerciseIndex + 1} of 10
           </span>
         </div>
-        
+
         <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -886,21 +892,38 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
             </div>
           </div>
 
-          {isCurrentExerciseComplete && (
+          <div
+            onMouseEnter={(e) => showTooltip(
+              isCurrentExerciseComplete
+                ? (currentExerciseIndex < 9 ? 'Next Set' : 'Finish Level')
+                : 'Identify all slots to continue',
+              e
+            )}
+            onMouseLeave={hideTooltip}
+            style={{ display: 'flex' }}
+          >
             <button
+              disabled={!isCurrentExerciseComplete}
               style={{
-                ...domStyles.primaryBtn,
+                ...(isCurrentExerciseComplete ? domStyles.primaryBtn : domStyles.disabledBtn),
                 height: '36px',
-                padding: '0 14px',
-                fontSize: '12px',
+                width: '36px',
+                padding: 0,
                 minWidth: 'auto',
                 borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                pointerEvents: !isCurrentExerciseComplete ? 'none' : 'auto',
               }}
               onClick={handleNextClick}
             >
-              {currentExerciseIndex < 9 ? 'Next Set' : 'Finish Level'}
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
             </button>
-          )}
+          </div>
         </div>
       </div>
     );
@@ -939,7 +962,8 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
 
   return (
     <div style={domStyles.body}>
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .piano-scroll-frame::-webkit-scrollbar {
           height: 6px !important;
           width: 6px !important;
@@ -962,7 +986,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
           scrollbar-color: rgba(255, 255, 255, 0.16) transparent !important;
         }
       `}} />
-      
+
       {/* 
         Add bottom padding to protect space for the truly fixed bottom navigation bar (72px high) in portrait.
         This guarantees that no scrolled page contents are ever hidden behind it.
@@ -971,10 +995,10 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
         ...(isLandscape ? domStyles.wrapperLandscape : domStyles.wrapper),
         paddingBottom: isLandscape ? '8px' : '88px',
       }}>
-        
+
         {/* Full-Screen Tabbed Presentation area */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', width: '100%', gap: '12px', overflowY: 'auto', minHeight: 0 }}>
-          
+
           {/* Tab A: Full-Page Practice */}
           {activeTab === 'practice' && (
             isLandscape ? (
@@ -987,7 +1011,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                 minHeight: '100%',
                 flex: 1,
               }}>
-                
+
                 {/* Left Column: Timeline and Keyboard */}
                 <div style={domStyles.leftColumn}>
                   {mode === 'trainer' && (
@@ -1108,15 +1132,15 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
 
           {/* Tab B: Full-Page Theory */}
           {activeTab === 'theory' && (
-            <TheoryTab 
-              level={level} 
-              userNotes={userNotes} 
+            <TheoryTab
+              level={level}
+              userNotes={userNotes}
               onSaveNotes={(val) => {
                 setUserNotes(val);
                 try {
                   localStorage.setItem(`@pbe_notes_lvl_${level}`, val);
                 } catch { /* offline */ }
-              }} 
+              }}
             />
           )}
 
@@ -1153,14 +1177,14 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
               <circle cx="18" cy="16" r="3" />
             </svg>
           ), 'Practice')}
-          
+
           {renderTabButton('theory', (
             <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
             </svg>
           ), 'Theory')}
-          
+
           {renderTabButton('settings', (
             <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" />
@@ -1182,6 +1206,94 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
           boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
         }}>
           {tooltipText}
+        </div>
+      )}
+
+      {/* Restart Warning Modal */}
+      {showRestartModal && (
+        <div style={domStyles.modalOverlay}>
+          <div style={domStyles.modalCard}>
+            {/* Warning Icon */}
+            <div style={domStyles.modalIconContainer}>
+              <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+
+            {/* Title & Desc */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#E2E2E6', margin: 0 }}>Restart Level?</h3>
+              <p style={{ fontSize: '13px', color: '#9AA0A6', margin: 0, lineHeight: '1.5' }}>
+                This will restart the level, not just the current set. Are you sure?
+              </p>
+            </div>
+
+            {/* Don't show again row with tick */}
+            <label style={domStyles.modalCheckboxRow}>
+              <input
+                type="checkbox"
+                checked={dontShowRestartWarningAgain}
+                onChange={(e) => setDontShowRestartWarningAgain(e.target.checked)}
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  accentColor: '#A8C7FA',
+                  cursor: 'pointer',
+                }}
+              />
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#C4C7C5' }}>
+                Don't show this warning again
+              </span>
+            </label>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: '12px', width: '100%', marginTop: '4px' }}>
+              <button
+                style={{
+                  ...domStyles.secondaryBtn,
+                  flex: 1,
+                  height: '42px',
+                  borderRadius: '14px',
+                  fontSize: '13px',
+                  fontWeight: '800',
+                }}
+                onClick={() => {
+                  setShowRestartModal(false);
+                  setDontShowRestartWarningAgain(false);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                style={{
+                  ...domStyles.restartBtn,
+                  flex: 1,
+                  height: '42px',
+                  borderRadius: '14px',
+                  fontSize: '13px',
+                  fontWeight: '800',
+                  border: 'none',
+                  backgroundColor: '#E9A117',
+                  color: '#0A0B0E',
+                }}
+                onClick={() => {
+                  if (dontShowRestartWarningAgain) {
+                    saveSettings({
+                      ...settings,
+                      confirmRestartLevel: false,
+                    });
+                  }
+                  setShowRestartModal(false);
+                  setDontShowRestartWarningAgain(false);
+                  setupExercise(false);
+                }}
+              >
+                Restart
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
