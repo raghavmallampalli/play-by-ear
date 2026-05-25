@@ -5,6 +5,8 @@ import { TimelineSlot } from '../types/levels';
 import { NoteConverter } from '../utils/note_converter';
 import { domStyles } from './styles/domStyles';
 import { setupHorizontalWheelScroll } from '../utils/scroll_helper';
+import { displayLabel } from '../levels/labels';
+import { MelodyLabelSystem, ChordLabelSystem } from '../types/labels';
 
 import { isQueuedLevel } from '../levels';
 
@@ -18,6 +20,8 @@ interface DawTimelineProps {
   converter: NoteConverter;
   onSlotClick: (index: number, slot: TimelineSlot) => void;
   onPlayPause: () => void;
+  melodyLabelSystem?: MelodyLabelSystem;
+  chordLabelSystem?: ChordLabelSystem;
 }
 
 const dawStyles = {
@@ -42,6 +46,8 @@ export default function DawTimeline({
   converter,
   onSlotClick,
   onPlayPause,
+  melodyLabelSystem = 'carnatic',
+  chordLabelSystem = 'roman',
 }: DawTimelineProps) {
   // Derive timeline width from the last slot's time, falling back to a level default
   const isQueued = isQueuedLevel(level);
@@ -206,7 +212,9 @@ export default function DawTimeline({
                   }}
                   onClick={() => hasStarted && onSlotClick(index, slot)}
                 >
-                  {isSolved ? slot.answer : (index + 1)}
+                  {isSolved 
+                    ? displayLabel(slot.answer || '', melodyLabelSystem, chordLabelSystem, converter.tonicPitchClass) 
+                    : ''}
                 </div>
               );
             })}

@@ -10,7 +10,7 @@ export default function MidiPlayerScreen() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
         
         {/* Header navigation bar */}
         <View style={styles.headerBar}>

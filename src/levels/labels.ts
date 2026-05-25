@@ -13,15 +13,15 @@ import { MelodyLabelSystem, ChordLabelSystem } from '../types/labels';
 
 // ── Melody maps (relative — tonicPitchClass not needed) ──────────────────────
 
-const MELODY_CARNATIC:  Record<string, string> = { '1':'Sa','2':'Re','3':'Ga','4':'Ma','5':'Pa','6':'Dha','7':'Ni' };
-const MELODY_NUMERICAL: Record<string, string> = { '1':'1', '2':'2', '3':'3', '4':'4', '5':'5', '6':'6',  '7':'7' };
-const MELODY_SOLFEGE:   Record<string, string> = { '1':'Do','2':'Re','3':'Mi','4':'Fa','5':'Sol','6':'La','7':'Ti' };
+const MELODY_CARNATIC:  Record<string, string> = { '1':'Sa','2':'Re','3':'Ga','4':'Ma','5':'Pa','6':'Dha','7':'Ni','8':'Sa' };
+const MELODY_NUMERICAL: Record<string, string> = { '1':'1', '2':'2', '3':'3', '4':'4', '5':'5', '6':'6',  '7':'7', '8':'8' };
+const MELODY_SOLFEGE:   Record<string, string> = { '1':'Do','2':'Re','3':'Mi','4':'Fa','5':'Sol','6':'La','7':'Ti','8':'Do' };
 
 // ── Absolute maps (require tonicPitchClass) ───────────────────────────────────
 
 /** Semitone offset from tonic for each scale degree in the major scale. */
 const DEGREE_SEMITONES: Record<string, number> = {
-  '1': 0, '2': 2, '3': 4, '4': 5, '5': 7, '6': 9, '7': 11,
+  '1': 0, '2': 2, '3': 4, '4': 5, '5': 7, '6': 9, '7': 11, '8': 12,
 };
 
 /** Semitone offset from tonic for chord roots in the major scale. */
@@ -37,7 +37,7 @@ const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'] as con
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-const DEGREE_RE = /^[1-7]$/;
+const DEGREE_RE = /^[1-8]$/;
 const CHORD_RE  = /^(I{1,3}|I?V|VI{0,2}|VII)$/;
 
 /**

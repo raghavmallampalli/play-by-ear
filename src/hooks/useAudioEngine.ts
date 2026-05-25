@@ -277,8 +277,8 @@ export function useAudioEngine({ preloadMidi }: AudioEngineOptions): AudioEngine
         case '7': playSynthNote(ctx, converter.toMidi({degree:11, offset:0}), now, 0.6, 0.85, showHighlight); break;
         case '8': playSynthNote(ctx, converter.toMidi({degree:0, offset:1}), now, 0.6, 0.85, showHighlight); break;
         case 'I':  chord([{degree:0, offset:-1}, {degree:4, offset:-1}, {degree:7, offset:-1}]); break;
-        case 'IV': chord([{degree:0, offset:-1}, {degree:5, offset:-1}, {degree:9, offset:-1}]); break;
-        case 'V':  chord([{degree:11, offset:-2}, {degree:2, offset:-1}, {degree:7, offset:-1}]); break;
+        case 'IV': chord([{degree:5, offset:-1}, {degree:9, offset:-1}, {degree:0, offset:0}]); break;
+        case 'V':  chord([{degree:7, offset:-1}, {degree:11, offset:-1}, {degree:2, offset:0}]); break;
       }
     });
   }, [initAudio, playSynthNote]);

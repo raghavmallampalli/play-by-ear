@@ -1,28 +1,32 @@
-import React from 'react';
-import { StyleSheet, View, Text, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import MidiPlayerDOM from '@/components/MidiPlayerDOM';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function ProgressScreen() {
+export default function SettingsScreen() {
   const router = useRouter();
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
         {/* Header navigation bar */}
         <View style={styles.headerBar}>
-          <Pressable style={styles.backBtn} onPress={() => router.back()}>
+          <Pressable 
+            style={styles.backBtn} 
+            onPress={() => {
+              router.back();
+            }}
+          >
             <Ionicons name="arrow-back" size={18} color="#C2C7CF" />
           </Pressable>
-          <Text style={styles.screenTitle}>Sync Progress Profile</Text>
+          <Text style={styles.screenTitle}>Settings & Preferences</Text>
         </View>
 
-        {/* DOM Progress Manager Component */}
+        {/* DOM settings Component */}
         <View style={styles.playerWrapper}>
-          <MidiPlayerDOM mode="progress" />
+          <MidiPlayerDOM mode="settings" />
         </View>
       </SafeAreaView>
     </View>
@@ -32,7 +36,7 @@ export default function ProgressScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111318', // Material 3 Dark Background
+    backgroundColor: '#111318',
   },
   safeArea: {
     flex: 1,

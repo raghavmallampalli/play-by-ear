@@ -70,14 +70,14 @@ export function getPreloadMidi(mode: 'trainer' | 'sandbox' | 'progress', level: 
           midiSet.add(converter.toMidi({degree:7, offset:-1}));
           break;
         case 'IV':
-          midiSet.add(converter.toMidi({degree:0, offset:-1}));
           midiSet.add(converter.toMidi({degree:5, offset:-1}));
           midiSet.add(converter.toMidi({degree:9, offset:-1}));
+          midiSet.add(converter.toMidi({degree:0, offset:0}));
           break;
         case 'V':
-          midiSet.add(converter.toMidi({degree:11, offset:-2}));
-          midiSet.add(converter.toMidi({degree:2, offset:-1}));
           midiSet.add(converter.toMidi({degree:7, offset:-1}));
+          midiSet.add(converter.toMidi({degree:11, offset:-1}));
+          midiSet.add(converter.toMidi({degree:2, offset:0}));
           break;
       }
     });
