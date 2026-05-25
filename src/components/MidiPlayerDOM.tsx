@@ -451,12 +451,13 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                             <div key={chunkIdx} style={{ display: 'flex', flexDirection: 'row', gap: '12px', justifyContent: 'center', width: '100%' }}>
                               {chunk.map((choice) => {
                                 const isAnswered = focusedSlotIndex !== null && timelineSlots[focusedSlotIndex]?.answer !== null;
+                                const isButtonDisabled = !isInteractable || isAnswered;
                                 return (
                                   <button
                                     key={choice}
-                                    disabled={isAnswered}
+                                    disabled={isButtonDisabled}
                                     style={{
-                                      ...(isAnswered ? domStyles.disabledBtn : domStyles.primaryBtn),
+                                      ...(isButtonDisabled ? domStyles.disabledBtn : domStyles.primaryBtn),
                                       flex: 1,
                                       maxWidth: '64px',
                                     }}
@@ -691,12 +692,13 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                           <div key={chunkIdx} style={{ display: 'flex', flexDirection: 'row', gap: '12px', justifyContent: 'center', width: '100%' }}>
                             {chunk.map((choice) => {
                               const isAnswered = focusedSlotIndex !== null && timelineSlots[focusedSlotIndex]?.answer !== null;
+                              const isButtonDisabled = !isInteractable || isAnswered;
                               return (
                                 <button
                                   key={choice}
-                                  disabled={isAnswered}
+                                  disabled={isButtonDisabled}
                                   style={{
-                                    ...(isAnswered ? domStyles.disabledBtn : domStyles.primaryBtn),
+                                    ...(isButtonDisabled ? domStyles.disabledBtn : domStyles.primaryBtn),
                                     flex: 1,
                                     maxWidth: '64px',
                                   }}

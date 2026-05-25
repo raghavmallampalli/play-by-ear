@@ -98,19 +98,18 @@ export default function DawTimeline({
       
       const playheadX = 54 + playheadTime * 120 + 54;
       const isPlayheadOut = playheadX > clientWidth;
-      const isPlayingActive = isPlaying || hasStarted;
       
-      const needsOverflow = maxNoteWidth > clientWidth || isPlayheadOut || (isPlayingActive && (54 + maxDuration * 120 + 54) > clientWidth);
+      const needsOverflow = maxNoteWidth > clientWidth || (playheadTime > 0 && isPlayheadOut);
       
       setHasOverflow(needsOverflow);
     }
-  }, [timelineSlots, playheadTime, isPlaying, hasStarted, maxDuration, converter]);
+  }, [timelineSlots, playheadTime, converter]);
 
   React.useEffect(() => {
     checkOverflow();
     const timer = setTimeout(checkOverflow, 50);
     return () => clearTimeout(timer);
-  }, [timelineSlots, hasStarted, isPlaying, playheadTime, maxDuration, checkOverflow]);
+  }, [checkOverflow]);
 
   React.useEffect(() => {
     window.addEventListener('resize', checkOverflow);
@@ -134,10 +133,13 @@ export default function DawTimeline({
           ref={scrollContainerRef}
           className="piano-scroll-frame"
           style={{
-            width: '100%', overflowX: hasOverflow ? 'auto' : 'hidden',
+            width: '100%',
+            height: '66px',
+            overflowX: hasOverflow ? 'auto' : 'hidden',
+            overflowY: 'hidden',
             backgroundColor: '#111318', borderRadius: '12px',
             border: '1px solid rgba(255,255,255,0.03)',
-            padding: '4px 0', boxSizing: 'border-box', userSelect: 'none',
+            padding: '7px 0', boxSizing: 'border-box', userSelect: 'none',
           }}
         >
           <div style={{
@@ -177,11 +179,13 @@ export default function DawTimeline({
               const isFocused = focusedSlotIndex === index && !isSolved;
               const slotTime = converter.ticksToSeconds(slot.beat);
 
-              const slotStyle = isFocused
-                ? domStyles.primaryBtn
-                : (isSolved
-                    ? (slot.correct ? domStyles.correctBtn : domStyles.wrongBtn)
-                    : domStyles.secondaryBtn);
+              const slotStyle = !hasStarted
+                ? domStyles.disabledBtn
+                : (isFocused
+                    ? domStyles.primaryBtn
+                    : (isSolved
+                        ? (slot.correct ? domStyles.correctBtn : domStyles.wrongBtn)
+                        : domStyles.secondaryBtn));
 
               return (
                 <div
@@ -197,8 +201,10 @@ export default function DawTimeline({
                     padding: '0 8px',
                     borderRadius: '10px',
                     zIndex: isFocused ? 110 : 100,
+                    cursor: !hasStarted ? 'default' : 'pointer',
+                    pointerEvents: !hasStarted ? 'none' : 'auto',
                   }}
-                  onClick={() => onSlotClick(index, slot)}
+                  onClick={() => hasStarted && onSlotClick(index, slot)}
                 >
                   {isSolved ? slot.answer : (index + 1)}
                 </div>
@@ -217,10 +223,15 @@ export default function DawTimeline({
         )}
       </div>
 
-      {hasStarted && (
+      <div style={{ width: '56px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <button
+          disabled={!hasStarted}
           onClick={onPlayPause}
-          style={isPlaying ? domStyles.secondaryBtn : domStyles.primaryBtn}
+          style={{
+            ...(!hasStarted ? domStyles.disabledBtn : (isPlaying ? domStyles.secondaryBtn : domStyles.primaryBtn)),
+            width: '100%',
+            height: '100%',
+          }}
         >
           {isPlaying ? (
             <div style={{ display: 'flex', gap: '4px' }}>
@@ -229,14 +240,15 @@ export default function DawTimeline({
             </div>
           ) : (
             <div style={{
-              borderLeft: '16px solid #0A305F',
+              borderLeft: `16px solid ${!hasStarted ? '#8E919A' : '#0A305F'}`,
               borderTop: '10px solid transparent',
               borderBottom: '10px solid transparent',
               width: 0, height: 0,
+              opacity: !hasStarted ? 0.6 : 1,
             }} />
           )}
         </button>
-      )}
+      </div>
     </div>
   );
 }

@@ -125,9 +125,9 @@ export const domStyles = {
   disabledBtn: {
     ...baseButton,
     backgroundColor: '#25282F',
-    color: '#53565F',
+    color: '#8E919A',
     cursor: 'not-allowed',
-    opacity: 0.4,
+    opacity: 0.55,
   },
 
   correctBtn: {
