@@ -1,9 +1,11 @@
 'use dom';
 
-import React, { useState } from 'react';
 import { marked } from 'marked';
-import { EXERCISE_TO_THEORY_MAP } from '../theory/theory_registry';
+import React, { useState } from 'react';
 import { EXERCISE_HASHES } from '../constants/exercises';
+import { EXERCISE_TO_THEORY_MAP } from '../theory/theory_registry';
+import { getRepoEditUrl } from '../constants/links';
+import { domStyles } from './styles/domStyles';
 
 const IconInfo = () => (
   <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#A8C7FA', flexShrink: 0 }}>
@@ -55,8 +57,28 @@ interface TheoryTabProps {
   onSaveNotes: (val: string) => void;
 }
 
+const getGuideFilePath = (level: number): string => {
+  const hash = EXERCISE_HASHES[level];
+  switch (hash) {
+    case 'lvl1_do_re_mi_fa':
+    case 'lvl2_sol_la_ti_do':
+      return 'src/theory/guides/guide_scale_degrees.md';
+    case 'lvl3_hb_melody':
+      return 'src/theory/guides/guide_melody_dictation.md';
+    case 'lvl4_chord_i_iv_v':
+      return 'src/theory/guides/guide_chords_i_iv_v.md';
+    case 'lvl5_chord_melody':
+      return 'src/theory/guides/guide_chords_melody.md';
+    case 'lvl6_hb_chords':
+      return 'src/theory/guides/guide_hb_chords.md';
+    default:
+      return 'src/theory/theory_registry.ts';
+  }
+};
+
 export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabProps) {
   const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const getCurrentLevelTheory = () => {
     const exerciseHash = EXERCISE_HASHES[level];
@@ -64,29 +86,33 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
       || '### Under Construction\n\nThere is no theory guide mapped for this level yet.';
   };
 
+  const handleCopyNotes = () => {
+    const textToCopy = userNotes?.trim() || '';
+    if (!textToCopy) {
+      alert('Your notes are currently empty. Type some notes first before copying!');
+      return;
+    }
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {
+      alert('Could not copy notes. Please select and copy them manually.');
+    });
+  };
+
   return (
-    <div style={{
-      backgroundColor: '#1D2024', border: '1px solid rgba(255, 255, 255, 0.04)',
-      borderRadius: '24px', padding: '18px',
-      display: 'flex', flexDirection: 'column', gap: '12px',
-    }}>
+    <div style={domStyles.card}>
       {/* Theory content */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
         {renderMarkdown(getCurrentLevelTheory())}
       </div>
 
-      <div style={{ height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.04)', margin: '8px 0' }} />
+      <div style={domStyles.notesDivider} />
 
       {/* User notes section */}
       {!isEditingNotes && (userNotes?.trim() ?? '').length === 0 ? (
         <button
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            alignSelf: 'flex-start', backgroundColor: 'rgba(168, 199, 250, 0.08)',
-            border: '1px dashed rgba(168, 199, 250, 0.3)', borderRadius: '12px',
-            padding: '10px 16px', color: '#A8C7FA', fontSize: '12.5px',
-            fontWeight: 700, cursor: 'pointer', marginTop: '6px',
-          }}
+          style={domStyles.dashedBtn}
           onClick={() => setIsEditingNotes(true)}
         >
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
@@ -103,20 +129,10 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
             value={userNotes}
             onChange={(e) => onSaveNotes(e.target.value)}
             onBlur={() => setIsEditingNotes(false)}
-            style={{
-              width: '100%', height: '90px', backgroundColor: '#111318',
-              border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px',
-              padding: '10px', color: '#E2E2E6', fontSize: '12px',
-              outline: 'none', resize: 'none', boxSizing: 'border-box',
-            }}
+            style={domStyles.theoryNotesTextarea}
           />
           <button
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              alignSelf: 'flex-end', backgroundColor: '#0A305F', border: 'none',
-              borderRadius: '8px', padding: '6px 12px', color: '#A8C7FA',
-              fontSize: '11px', fontWeight: 700, cursor: 'pointer', marginTop: '4px',
-            }}
+            style={domStyles.primaryBtn}
             onClick={() => setIsEditingNotes(false)}
           >
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '5px' }}>
@@ -127,12 +143,7 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
         </div>
       ) : (
         <div
-          style={{
-            backgroundColor: '#111318', border: '1px solid rgba(255, 255, 255, 0.04)',
-            borderRadius: '16px', padding: '16px', width: '100%',
-            boxSizing: 'border-box', cursor: 'pointer',
-            display: 'flex', flexDirection: 'column', gap: '10px',
-          }}
+          style={domStyles.theoryNotesCard}
           onClick={() => setIsEditingNotes(true)}
           title="Click to edit notes"
         >
@@ -155,15 +166,38 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
       )}
 
       {/* Open-source badge */}
-      <div style={{
-        flexDirection: 'row', display: 'flex', alignItems: 'center', gap: '12px',
-        backgroundColor: 'rgba(168, 199, 250, 0.03)',
-        border: '1px dashed rgba(168, 199, 250, 0.15)',
-        borderRadius: '16px', padding: '14px', marginTop: '12px',
-      }}>
+      <div style={domStyles.openSourceBadge}>
         <IconInfo />
         <p style={{ flex: 1, fontSize: '11px', color: '#8A92A6', lineHeight: '16px', margin: 0 }}>
-          <strong>Open Source relative pitch trainer.</strong> We welcome you to improve this theory guide or notes! Copy/edit this markdown and submit a PR to our repository.
+          <strong>Open Source relative pitch trainer.</strong> We welcome you to improve this theory guide!{' '}
+          <span 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCopyNotes();
+            }} 
+            style={{ 
+              color: '#A8C7FA', 
+              textDecoration: 'underline', 
+              cursor: 'pointer',
+              fontWeight: 700 
+            }}
+          >
+            {copied ? 'Copied!' : 'Copy'}
+          </span>{' '}
+          your notes and submit a PR to{' '}
+          <a 
+            href={getRepoEditUrl(getGuideFilePath(level))} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              color: '#A8C7FA', 
+              textDecoration: 'underline',
+              fontWeight: 700
+            }}
+          >
+            the repository
+          </a>.
         </p>
       </div>
     </div>

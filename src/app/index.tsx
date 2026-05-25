@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View, Text, Pressable, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, Pressable, ScrollView, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { log } from '@/utils/logger';
+import { REPO_BASE_URL } from '../constants/links';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -46,11 +47,6 @@ export default function DashboardScreen() {
               <Text style={styles.cardDesc}>
                 Master intervals, diatonic triads, inversions, and chord progressions across 27 progressive levels.
               </Text>
-              
-              <View style={styles.actionRow}>
-                <Text style={styles.actionText}>Start Training</Text>
-                <Ionicons name="arrow-forward" size={16} color="#A8C7FA" />
-              </View>
             </Pressable>
 
             {/* Dummy Screen C: MIDI Sandbox */}
@@ -97,7 +93,7 @@ export default function DashboardScreen() {
           {/* Footer branding */}
           <View style={styles.footerContainer}>
             <Text style={styles.footerText}>Built in 🇮🇳 • </Text>
-            <Pressable>
+            <Pressable onPress={() => Linking.openURL(REPO_BASE_URL)}>
               <Text style={styles.footerLink}>GitHub</Text>
             </Pressable>
           </View>
