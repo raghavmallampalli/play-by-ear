@@ -81,7 +81,7 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
 - [x] **Bugfix**: move the hashes out of theorytab.tsx - perhaps to constants.py
 - [x] **Feature**: Add app icon, splash screen (if needed) and title.
 - [x] Timeline follows playing note, keyboard viz snaps to first played note (tonic or actual excercise)
-- [ ] Bugfix: octave note is always read as wrong (since it thinks it's the 0th degree)
+- [x] Bugfix: octave note is always read as wrong (since it thinks it's the 0th degree)
 
 - [x] Refactor: simplify getAnswerChoices in index.ts (levels). 
 - [x] Refactor: Preload should be auto handled from the note list, not hardcoded. 
