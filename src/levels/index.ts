@@ -91,7 +91,7 @@ export function getPreloadMidi(mode: 'trainer' | 'sandbox' | 'progress', level: 
       { degree: 9, offset: 0 },
       { degree: 11, offset: -1 },
       { degree: 2, offset: 0 },
-      { degree: 7, offset: -1 }
+      { degree: 7, offset: 0 }
     ];
     cadenceRelNotes.forEach(n => midiSet.add(converter.toMidi(n)));
 

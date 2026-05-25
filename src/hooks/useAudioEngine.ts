@@ -220,16 +220,16 @@ export function useAudioEngine({ preloadMidi }: AudioEngineOptions): AudioEngine
   // ─── Convenience Playback ──────────────────────────────────────────────────
 
   const playGroundingCadenceInternal = (ctx: AudioContext, converter: NoteConverter) => {
-    const playChord = (time: number, degrees: number[], octaveOffset = 0) => {
-      degrees.forEach((d, i) => {
-        const midi = converter.toMidi({ degree: d, offset: octaveOffset });
+    const playChord = (time: number, notes: { degree: number; offset: number }[]) => {
+      notes.forEach((n, i) => {
+        const midi = converter.toMidi(n);
         playSynthNote(ctx, midi, ctx.currentTime + time + i * 0.015, 0.7, 0.7);
       });
     };
-    playChord(0.0, [0, 4, 7], 0); // I
-    playChord(0.8, [0, 5, 9], 0); // IV
-    playChord(1.6, [11, 2, 7], -1); // V
-    playChord(2.4, [0, 4, 7], 0); // I
+    playChord(0.0, [{ degree: 0, offset: 0 }, { degree: 4, offset: 0 }, { degree: 7, offset: 0 }]); // I
+    playChord(0.8, [{ degree: 0, offset: 0 }, { degree: 5, offset: 0 }, { degree: 9, offset: 0 }]); // IV
+    playChord(1.6, [{ degree: 11, offset: -1 }, { degree: 2, offset: 0 }, { degree: 7, offset: 0 }]); // V
+    playChord(2.4, [{ degree: 0, offset: 0 }, { degree: 4, offset: 0 }, { degree: 7, offset: 0 }]); // I
   };
 
   const playGroundingCadence = useCallback((converter: NoteConverter) => {
