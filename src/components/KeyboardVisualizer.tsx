@@ -6,6 +6,8 @@ interface KeyboardVisualizerProps {
   activeNotes: number[];
   onNoteClick: (midi: number) => void;
   firstNoteMidi?: number;
+  baseOctaveMidi?: number;
+  tonicScrollTrigger?: number;
 }
 
 const isNoteBlack = (midi: number) => [1, 3, 6, 8, 10].includes(midi % 12);
@@ -37,7 +39,13 @@ const octaveColors: Record<number, string> = {
   8: '#EC8787'
 };
 
-export default function KeyboardVisualizer({ activeNotes, onNoteClick, firstNoteMidi }: KeyboardVisualizerProps) {
+export default function KeyboardVisualizer({
+  activeNotes,
+  onNoteClick,
+  firstNoteMidi,
+  baseOctaveMidi,
+  tonicScrollTrigger,
+}: KeyboardVisualizerProps) {
   const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -61,47 +69,33 @@ export default function KeyboardVisualizer({ activeNotes, onNoteClick, firstNote
       }
       const whiteKeyIdx = whiteKeys.indexOf(keyToScroll);
       if (whiteKeyIdx !== -1) {
-        const targetScroll = Math.max(0, Math.floor((whiteKeyIdx - keysCount / 2) * whiteKeyWidth));
+        const targetScroll = Math.max(0, Math.floor((whiteKeyIdx - 1) * whiteKeyWidth));
         scrollRef.current.scrollLeft = targetScroll;
       }
     } else if (scrollRef.current) {
-      scrollRef.current.scrollLeft = 23 * whiteKeyWidth;
+      scrollRef.current.scrollLeft = 22 * whiteKeyWidth;
     }
   }, [firstNoteMidi, whiteKeyWidth, keysCount]);
 
-  // Smoothly center keyboard when notes are actively playing and fall out of viewport bounds
-  const lastSnappedNoteRef = useRef<number | null>(null);
   useEffect(() => {
-    if (activeNotes.length > 0 && scrollRef.current) {
-      const firstActive = activeNotes[0];
-      if (firstActive !== lastSnappedNoteRef.current) {
-        lastSnappedNoteRef.current = firstActive;
-        const isBlack = (m: number) => [1, 3, 6, 8, 10].includes(m % 12);
-        let keyToScroll = firstActive;
-        if (isBlack(keyToScroll)) {
-          keyToScroll -= 1;
-        }
-        const whiteKeyIdx = whiteKeys.indexOf(keyToScroll);
-        if (whiteKeyIdx !== -1) {
-          const container = scrollRef.current;
-          const keyX = whiteKeyIdx * whiteKeyWidth;
-          const containerWidth = container.clientWidth;
-          const scrollLeft = container.scrollLeft;
-
-          // Only auto-scroll if the playing note is near/outside the visible boundary
-          const minVisibleX = scrollLeft + whiteKeyWidth;
-          const maxVisibleX = scrollLeft + containerWidth - whiteKeyWidth * 2;
-
-          if (keyX < minVisibleX || keyX > maxVisibleX) {
-            container.scrollTo({
-              left: Math.max(0, Math.floor((whiteKeyIdx - keysCount / 2) * whiteKeyWidth)),
-              behavior: 'smooth',
-            });
-          }
-        }
+    if (scrollRef.current && baseOctaveMidi && tonicScrollTrigger && tonicScrollTrigger > 0) {
+      const isBlack = (m: number) => [1, 3, 6, 8, 10].includes(m % 12);
+      let keyToScroll = baseOctaveMidi;
+      if (isBlack(keyToScroll)) {
+        keyToScroll -= 1;
+      }
+      const whiteKeyIdx = whiteKeys.indexOf(keyToScroll);
+      if (whiteKeyIdx !== -1) {
+        const targetScroll = Math.max(0, Math.floor((whiteKeyIdx - 1) * whiteKeyWidth));
+        scrollRef.current.scrollTo({
+          left: targetScroll,
+          behavior: 'smooth',
+        });
       }
     }
-  }, [activeNotes, whiteKeyWidth, keysCount]);
+  }, [tonicScrollTrigger, baseOctaveMidi, whiteKeyWidth]);
+
+
 
   const getKeyHighlight = (midi: number) => {
     if (!activeNotes.includes(midi)) return null;

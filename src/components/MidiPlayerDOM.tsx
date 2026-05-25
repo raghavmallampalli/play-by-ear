@@ -25,6 +25,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
   const [timelineSlots, setTimelineSlots] = useState<TimelineSlot[]>([]);
   const [focusedSlotIndex, setFocusedSlotIndex] = useState<number | null>(null);
   const [userNotes, setUserNotes] = useState('');
+  const [tonicScrollTrigger, setTonicScrollTrigger] = useState(0);
   
   // 10-in-a-row queue state
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
@@ -261,9 +262,20 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
     return converter.toMidi({ degree: 0, offset: 0 });
   }, [melodyNotes, converter]);
 
+  const baseOctaveMidi = useMemo(() => {
+    return converter.toMidi({ degree: 0, offset: 0 });
+  }, [converter]);
+
   // Tonic button
   const handleTonicClick = () => {
+    setTonicScrollTrigger((prev) => prev + 1);
     audio.playGroundingCadence(converter);
+  };
+
+  // Start exercise handler
+  const handleStartClick = () => {
+    setTonicScrollTrigger((prev) => prev + 1);
+    audio.startPlayback(melodyNotes, chords, converter, skipCadence);
   };
 
   return (
@@ -361,7 +373,13 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                 8 octaves
               </span>
             </div>
-            <KeyboardVisualizer activeNotes={audio.activeNotes} onNoteClick={audio.triggerLiveNote} firstNoteMidi={firstPlayedNoteMidi} />
+            <KeyboardVisualizer
+              activeNotes={audio.activeNotes}
+              onNoteClick={audio.triggerLiveNote}
+              firstNoteMidi={firstPlayedNoteMidi}
+              baseOctaveMidi={baseOctaveMidi}
+              tonicScrollTrigger={tonicScrollTrigger}
+            />
 
             {/* Answer Selector Controls & Restart */}
             {mode === 'trainer' && (
@@ -427,7 +445,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                           ...(audio.hasStarted ? domStyles.secondaryBtn : domStyles.primaryBtn),
                           width: '100%',
                         }}
-                        onClick={audio.hasStarted ? () => setupExercise(false) : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence)}
+                        onClick={audio.hasStarted ? () => setupExercise(false) : handleStartClick}
                       >
                         {audio.hasStarted ? (
                           <>
