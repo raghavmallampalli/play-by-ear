@@ -1,6 +1,6 @@
 'use dom';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import { setupHorizontalWheelScroll } from '../utils/scroll_helper';
 
 interface KeyboardVisualizerProps {
@@ -87,27 +87,27 @@ export default function KeyboardVisualizer({
     scrollRef.current = node;
     if (node) {
       wheelCleanupRef.current = setupHorizontalWheelScroll(node);
-      
-      if (baseOctaveMidi && whiteKeyWidth > 0) {
-        const isBlack = (m: number) => [1, 3, 6, 8, 10].includes(m % 12);
-        let keyToScroll = baseOctaveMidi;
-        if (isBlack(keyToScroll)) {
-          keyToScroll -= 1;
-        }
-        const whiteKeyIdx = whiteKeys.indexOf(keyToScroll);
-        if (whiteKeyIdx !== -1) {
-          const targetScroll = Math.max(0, Math.floor((whiteKeyIdx - 1) * whiteKeyWidth));
-          node.scrollLeft = targetScroll;
-          
-          setTimeout(() => {
-            if (scrollRef.current) {
-              scrollRef.current.scrollLeft = targetScroll;
-            }
-          }, 50);
+    }
+  }, []);
+
+  const hasCenteredOnMount = useRef(false);
+  useLayoutEffect(() => {
+    if (scrollRef.current && baseOctaveMidi && whiteKeyWidth > 0 && !hasCenteredOnMount.current) {
+      const isBlack = (m: number) => [1, 3, 6, 8, 10].includes(m % 12);
+      let keyToScroll = baseOctaveMidi;
+      if (isBlack(keyToScroll)) {
+        keyToScroll -= 1;
+      }
+      const whiteKeyIdx = whiteKeys.indexOf(keyToScroll);
+      if (whiteKeyIdx !== -1) {
+        const targetScroll = Math.max(0, Math.floor((whiteKeyIdx - 1) * whiteKeyWidth));
+        scrollRef.current.scrollLeft = targetScroll;
+        if (containerWidth !== 484) {
+          hasCenteredOnMount.current = true;
         }
       }
     }
-  }, [baseOctaveMidi, whiteKeyWidth]);
+  }, [baseOctaveMidi, whiteKeyWidth, containerWidth]);
 
   useEffect(() => {
     return () => {
