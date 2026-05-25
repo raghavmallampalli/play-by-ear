@@ -107,10 +107,10 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
   - [x] **Chord mode**: Currently, chord definitions use root plus inversion. Instead use standard. Make a todo to introduce inversions as a new excercise group after minor chords, i.e in group 4. Tonic can continue to use the slash chords.
 
 ### 🎓 Trainer Settings & Level Customization
-- [ ] **Feature**: Embed a direct shortcut path to the Settings pane from inside the trainer/training page.
-- [ ] **Feature**: Add trainer-specific controls (like **Tempo/BPM**) at the top of this settings pane (only show this trainer settings section when accessed from the training screen).
-- [ ] **Feature**: Persist modified tempo values directly into the active level setup so they remain configured for subsequent runs of that exercise.
-- [ ] **Feature**: Add a "Reset to Default" button to revert the tempo back to the level's standard BPM value.
+- [x] **Feature**: Embed a direct shortcut path to the Settings pane from inside the trainer/training page.
+- [x] **Feature**: Add trainer-specific controls (like **Tempo/BPM**) at the top of this settings pane (only show this trainer settings section when accessed from the training screen).
+- [x] **Feature**: Persist modified tempo values directly into the active level setup so they remain configured for subsequent runs of that exercise.
+- [x] **Feature**: Add a "Reset to Default" button to revert the tempo back to the level's standard BPM value.
 
 ### 🎹 MIDI Sandbox & Audio Engines
 - [ ] **Feature**: Fully hook up, wire, and integrate the MIDI Sandbox page.
