@@ -77,7 +77,9 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
 
 ### ⏱️ Workout Flow & Timeline UI
 - [x] **Bugfix**: Restrict user interaction on the tonic, chords, and melody buttons until the exercise set has officially begun (i.e., 'Start' or 'Continue' has been pressed).
-- [x] **Bugfix**: Hide the Play/Pause button on the timeline view before the exercise set starts.
+- [x] **Feature**: Keep the play/pause button persistently visible in the timeline layout, cleanly disabled and grayed out prior to exercise start to eliminate horizontal layout shifts.
+- [x] **Bugfix**: Stabilize timeline layout (fixed vertical height and refined scrollbar overflow checks) to eliminate vertical gutter scrollbar shifts when there is ample free space.
+- [x] **Feature**: Implement layout-stable initial positioning for piano visualizer using React's synchronous `useLayoutEffect` to achieve seamless, zero-scroll-jump mount alignment.
 - [x] **Bugfix**: move the hashes out of theorytab.tsx - perhaps to constants.py
 - [x] **Feature**: Add app icon, splash screen (if needed) and title.
 - [x] Timeline follows playing note, keyboard viz snaps to first played note (tonic or actual excercise)
@@ -104,7 +106,7 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
     - *Chords*: Roman Numerals vs. Absolute chord names.
   - [ ] **Timeline Display Style**: Toggle between **DAW** vs. standard **Staff** vs. **Guitar Tabs** timeline modes.
   - [ ] **Visualizer Control**: Add a setting to toggle the active Keyboard Visualizer on/off.
-  - [ ] **Chord mode**: Toggle between slash and standard chords. Default to standard chords. (or should be tested as separate groups?)
+  - [ ] **Chord mode**: Currently, chord definitions use root plus inversion. Instead use standard. Make a todo to introduce inversions after minor chords, i.e in group 4. Tonic can continue to use the slash chords.
 
 ### 🎓 Trainer Settings & Level Customization
 - [ ] **Feature**: Embed a direct shortcut path to the Settings pane from inside the trainer/training page.
