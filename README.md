@@ -81,17 +81,18 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
 - [x] **Bugfix**: move the hashes out of theorytab.tsx - perhaps to constants.py
 - [x] **Feature**: Add app icon, splash screen (if needed) and title.
 - [x] Timeline follows playing note, keyboard viz snaps to first played note (tonic or actual excercise)
+- [ ] Bugfix: octave note is always read as wrong (since it thinks it's the 0th degree)
 
 - [x] Refactor: simplify getAnswerChoices in index.ts (levels). 
 - [x] Refactor: Preload should be auto handled from the note list, not hardcoded. 
 - [x] Refactor: Can levels be converted to a class to reduce boilerplate? 
 - [x] Refactor: Move logger to utils. 
 - [x] Refactor: Find a way to move the theory registry into md files for ease of editing. 
-- [ ] Refactor: Understand global.css vs. domStyles and invididual button styling. 
-- [ ] Refactor: Can we share button styling across as many buttons as possible?
+- [x] Refactor: Understand global.css vs. domStyles and invididual button styling. 
+- [x] Refactor: Can we share button styling across as many buttons as possible?
  
 ### 📱 Responsive Layouts & Orientation
-- [ ] **Major Bugfix**: Implement complete, robust support for **Landscape Mode** layouts across all dashboard, trainer, and sandbox views to ensure standard phone compatibility.
+- [ ] **Major Bugfix**: Implement complete, robust support for **Landscape Mode** layouts across all dashboard, trainer, and sandbox views to ensure standard phone compatibility. Support react native on web, use that to get the layout correct.
 
 ### ⚙️ Dashboard Settings Panel
 - [ ] **Feature**: Create a dedicated settings button on the dashboard interface.
