@@ -58,6 +58,18 @@ export default function DawTimeline({
   const barCount = Math.ceil(maxDuration);
 
 
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (scrollContainerRef.current && playheadTime > 0) {
+      const playheadX = 54 + playheadTime * 120;
+      const containerWidth = scrollContainerRef.current.clientWidth;
+      scrollContainerRef.current.scrollLeft = playheadX - containerWidth / 2;
+    } else if (scrollContainerRef.current && playheadTime === 0) {
+      scrollContainerRef.current.scrollLeft = 0;
+    }
+  }, [playheadTime]);
+
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
       {/* Scrollable timeline container */}
@@ -70,6 +82,7 @@ export default function DawTimeline({
         }} />
 
         <div
+          ref={scrollContainerRef}
           className="piano-scroll-frame"
           style={{
             width: '100%', overflowX: 'auto',
@@ -147,30 +160,32 @@ export default function DawTimeline({
         }} />
       </div>
 
-      <button
-        onClick={onPlayPause}
-        style={{
-          width: '52px', height: '52px', borderRadius: '12px',
-          backgroundColor: isPlaying ? '#E2E2E6' : '#A8C7FA',
-          border: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center',
-          cursor: 'pointer', flexShrink: 0, transition: 'all 0.1s',
-          boxShadow: isPlaying ? 'inset 0 2px 4px rgba(0,0,0,0.2)' : '0 2px 8px rgba(168, 199, 250, 0.3)',
-        }}
-      >
-        {isPlaying ? (
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <div style={{ width: '4px', height: '14px', backgroundColor: '#111318', borderRadius: '1px' }} />
-            <div style={{ width: '4px', height: '14px', backgroundColor: '#111318', borderRadius: '1px' }} />
-          </div>
-        ) : (
-          <div style={{
-            borderLeft: '16px solid #111318',
-            borderTop: '10px solid transparent',
-            borderBottom: '10px solid transparent',
-            width: 0, height: 0,
-          }} />
-        )}
-      </button>
+      {hasStarted && (
+        <button
+          onClick={onPlayPause}
+          style={{
+            width: '52px', height: '52px', borderRadius: '12px',
+            backgroundColor: isPlaying ? '#E2E2E6' : '#A8C7FA',
+            border: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center',
+            cursor: 'pointer', flexShrink: 0, transition: 'all 0.1s',
+            boxShadow: isPlaying ? 'inset 0 2px 4px rgba(0,0,0,0.2)' : '0 2px 8px rgba(168, 199, 250, 0.3)',
+          }}
+        >
+          {isPlaying ? (
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <div style={{ width: '4px', height: '14px', backgroundColor: '#111318', borderRadius: '1px' }} />
+              <div style={{ width: '4px', height: '14px', backgroundColor: '#111318', borderRadius: '1px' }} />
+            </div>
+          ) : (
+            <div style={{
+              borderLeft: '16px solid #111318',
+              borderTop: '10px solid transparent',
+              borderBottom: '10px solid transparent',
+              width: 0, height: 0,
+            }} />
+          )}
+        </button>
+      )}
     </div>
   );
 }
