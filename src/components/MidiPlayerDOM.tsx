@@ -20,6 +20,17 @@ interface MidiPlayerDOMProps {
 
 export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel }: MidiPlayerDOMProps) {
   const [activeTab, setActiveTab] = useState<'practice' | 'theory'>('practice');
+  const [isLandscape, setIsLandscape] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsLandscape(window.innerWidth > window.innerHeight && window.innerWidth >= 600);
+    };
+    handleResize(); // Initial check
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [melodyNotes, setMelodyNotes] = useState<PlayedNote[]>([]);
   const [chords, setChords] = useState<PlayedChord[]>([]);
   const [timelineSlots, setTimelineSlots] = useState<TimelineSlot[]>([]);
@@ -280,240 +291,515 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
 
   return (
     <div style={domStyles.body}>
-      <div style={domStyles.wrapper}>
-        {/* Practice & Theory Navigation Tabs */}
-        <div style={domStyles.tabRow}>
-          <button
-            style={activeTab === 'practice' ? domStyles.activeTabBtn : domStyles.tabBtn}
-            onClick={() => setActiveTab('practice')}
-          >
-            Practice Exercise
-          </button>
-          <button
-            style={activeTab === 'theory' ? domStyles.activeTabBtn : domStyles.tabBtn}
-            onClick={() => setActiveTab('theory')}
-          >
-            Theory & Notes
-          </button>
-        </div>
-
-        {activeTab === 'practice' ? (
-          <>
-            {/* Core Controls: Top Row (Tonic, Chords, Melody) */}
-            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-              <button
-                disabled={!isInteractable}
-                style={{
-                  ...(!isInteractable ? domStyles.disabledBtn : domStyles.secondaryBtn),
-                  flex: 1,
-                }}
-                onClick={handleTonicClick}
-                onMouseEnter={(e) => isInteractable && showTooltip('Tonic Reference', e)}
-                onMouseLeave={hideTooltip}
-              >
-                <IconTuningFork />
-              </button>
-              <button
-                disabled={!isInteractable || chords.length === 0}
-                style={{
-                  ...((!isInteractable || chords.length === 0) ? domStyles.disabledBtn : domStyles.secondaryBtn),
-                  flex: 1,
-                }}
-                onClick={() => audio.playBackingChordsOnly(chords, converter)}
-                onMouseEnter={(e) => isInteractable && chords.length > 0 && showTooltip('Root Chords Backing', e)}
-                onMouseLeave={hideTooltip}
-              >
-                <IconKeyboard />
-              </button>
-              <button
-                disabled={!isInteractable || melodyNotes.length === 0}
-                style={{
-                  ...((!isInteractable || melodyNotes.length === 0) ? domStyles.disabledBtn : domStyles.secondaryBtn),
-                  flex: 1,
-                }}
-                onClick={() => audio.playMelodyOnly(melodyNotes, converter)}
-                onMouseEnter={(e) => isInteractable && melodyNotes.length > 0 && showTooltip('Just Melody Guide', e)}
-                onMouseLeave={hideTooltip}
-              >
-                <IconMelody />
-              </button>
-            </div>
-
-            {/* DAW timeline card */}
-            {mode === 'trainer' && (
-              <div style={domStyles.card}>
-                <DawTimeline
-                  level={level}
-                  timelineSlots={timelineSlots}
-                  focusedSlotIndex={focusedSlotIndex}
-                  playheadTime={audio.playheadTime}
-                  isPlaying={audio.isPlaying}
-                  hasStarted={audio.hasStarted}
-                  converter={converter}
-                  onSlotClick={handleSlotClick}
-                  onPlayPause={audio.isPlaying ? audio.pausePlayback : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence)}
-                />
-              </div>
-            )}
-
-            {/* Scrollable Piano Visualizer with Indicator */}
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <span style={{
-                fontSize: '10px', color: '#A8C7FA',
-                backgroundColor: 'rgba(168, 199, 250, 0.08)',
-                border: '1px solid rgba(168, 199, 250, 0.15)',
-                padding: '2px 8px', borderRadius: '8px', fontWeight: '700',
-                display: 'flex', alignItems: 'center', gap: '5px',
-              }}>
-                <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="7 8 3 12 7 16" />
-                  <polyline points="17 8 21 12 17 16" />
-                  <line x1="3" y1="12" x2="21" y2="12" />
-                </svg>
-                8 octaves
-              </span>
-            </div>
-            <KeyboardVisualizer
-              activeNotes={audio.activeNotes}
-              onNoteClick={audio.triggerLiveNote}
-              firstNoteMidi={firstPlayedNoteMidi}
-              baseOctaveMidi={baseOctaveMidi}
-              tonicScrollTrigger={tonicScrollTrigger}
-            />
-
-            {/* Answer Selector Controls & Restart */}
-            {mode === 'trainer' && (
-              <div style={domStyles.card}>
-                <div style={domStyles.answerContainer}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
-                    <p style={domStyles.metaLabel}>Identify the {level >= 4 ? 'Chord' : 'Scale Degree'}:</p>
-                    {isQueuedLevel(level) && (
-                      <span style={{
-                        fontSize: '10px',
-                        color: '#A8C7FA',
-                        backgroundColor: 'rgba(168, 199, 250, 0.08)',
-                        padding: '2px 8px',
-                        borderRadius: '8px',
-                        fontWeight: '700',
-                      }}>
-                        Exercise {currentExerciseIndex + 1} of 10
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Choices rows (max 4 per row) */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', marginBottom: '8px' }}>
-                    {choiceChunks.map((chunk, chunkIdx) => (
-                      <div key={chunkIdx} style={{ display: 'flex', flexDirection: 'row', gap: '12px', justifyContent: 'center', width: '100%' }}>
-                        {chunk.map((choice) => {
-                          const isAnswered = focusedSlotIndex !== null && timelineSlots[focusedSlotIndex]?.answer !== null;
-                          return (
-                            <button
-                              key={choice}
-                              disabled={isAnswered}
-                              style={{
-                                ...(isAnswered ? domStyles.disabledBtn : domStyles.primaryBtn),
-                                flex: 1,
-                                maxWidth: '64px',
-                              }}
-                              onClick={() => handleChoice(choice)}
-                            >
-                              {choice}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Last row: Start/Reset (1/3 width), Accuracy (1/3 width), Next (1/3 width) */}
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    gap: '12px',
-                    marginTop: '8px',
-                    borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-                    paddingTop: '16px',
-                  }}>
-                    {/* Column 1: Start/Reset Button (2/5 of the row) */}
-                    <div style={{ flex: 2, display: 'flex' }}>
-                      <button
-                        style={{
-                          ...(audio.hasStarted ? domStyles.secondaryBtn : domStyles.primaryBtn),
-                          width: '100%',
-                        }}
-                        onClick={audio.hasStarted ? () => setupExercise(false) : handleStartClick}
-                      >
-                        {audio.hasStarted ? (
-                          <>
-                            <IconRestart /> Restart
-                          </>
-                        ) : (
-                          <>
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style={{ marginRight: '6px' }}>
-                              <polygon points="6 4 20 12 6 20 6 4"></polygon>
-                            </svg>
-                            {skipCadence ? 'Continue' : 'Start'}
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    {/* Column 2: Accuracy Counts (1/5 of the row) */}
-                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-                      <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ fontSize: '13px', fontWeight: '800', color: '#81C784' }}>{correctCount}</span>
-                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="#81C784" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ fontSize: '13px', fontWeight: '800', color: '#E57373' }}>{wrongCount}</span>
-                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="#E57373" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18" />
-                            <line x1="6" y1="6" x2="18" y2="18" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Column 3: Next Button (2/5 of the row) */}
-                    <div style={{ flex: 2, display: 'flex' }}>
-                      <button
-                        disabled={!isCurrentExerciseComplete}
-                        style={{
-                          ...(isCurrentExerciseComplete ? domStyles.primaryBtn : domStyles.disabledBtn),
-                          width: '100%',
-                        }}
-                        onClick={handleNextClick}
-                      >
-                        <span>Next</span>
-                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '4px' }}>
-                          <line x1="5" y1="12" x2="19" y2="12" />
-                          <polyline points="12 5 19 12 12 19" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
+      <style dangerouslySetInnerHTML={{ __html: `
+        .piano-scroll-frame::-webkit-scrollbar {
+          height: 6px !important;
+          width: 6px !important;
+          display: block !important;
+        }
+        .piano-scroll-frame::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.03) !important;
+          border-radius: 10px !important;
+        }
+        .piano-scroll-frame::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.16) !important;
+          border-radius: 10px !important;
+        }
+        .piano-scroll-frame::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.3) !important;
+        }
+        .piano-scroll-frame {
+          -ms-overflow-style: auto !important;
+          scrollbar-width: thin !important;
+          scrollbar-color: rgba(255, 255, 255, 0.16) transparent !important;
+        }
+      `}} />
+      <div style={isLandscape ? domStyles.wrapperLandscape : domStyles.wrapper}>
+        
+        {isLandscape ? (
+          // Two-column side-by-side landscape layout
+          <div style={domStyles.landscapeLayoutGrid}>
+            
+            {/* Left Column: Timeline and Keyboard */}
+            <div style={domStyles.leftColumn}>
+              {/* DAW timeline card */}
+              {mode === 'trainer' && (
+                <div style={domStyles.card}>
+                  <DawTimeline
+                    level={level}
+                    timelineSlots={timelineSlots}
+                    focusedSlotIndex={focusedSlotIndex}
+                    playheadTime={audio.playheadTime}
+                    isPlaying={audio.isPlaying}
+                    hasStarted={audio.hasStarted}
+                    converter={converter}
+                    onSlotClick={handleSlotClick}
+                    onPlayPause={audio.isPlaying ? audio.pausePlayback : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence)}
+                  />
                 </div>
+              )}
+
+              {/* Scrollable Piano Visualizer with Indicator */}
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
+                <span style={{
+                  fontSize: '10px', color: '#A8C7FA',
+                  backgroundColor: 'rgba(168, 199, 250, 0.08)',
+                  border: '1px solid rgba(168, 199, 250, 0.15)',
+                  padding: '2px 8px', borderRadius: '8px', fontWeight: '700',
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                }}>
+                  <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="7 8 3 12 7 16" />
+                    <polyline points="17 8 21 12 17 16" />
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                  </svg>
+                  8 octaves
+                </span>
               </div>
+              <KeyboardVisualizer
+                activeNotes={audio.activeNotes}
+                onNoteClick={audio.triggerLiveNote}
+                firstNoteMidi={firstPlayedNoteMidi}
+                baseOctaveMidi={baseOctaveMidi}
+                tonicScrollTrigger={tonicScrollTrigger}
+              />
+            </div>
+
+            {/* Right Column: Navigation Tabs & Tab Content */}
+            <div style={domStyles.rightColumn}>
+              {/* Practice & Theory Navigation Tabs */}
+              <div style={domStyles.tabRow}>
+                <button
+                  style={activeTab === 'practice' ? domStyles.activeTabBtn : domStyles.tabBtn}
+                  onClick={() => setActiveTab('practice')}
+                >
+                  Practice Exercise
+                </button>
+                <button
+                  style={activeTab === 'theory' ? domStyles.activeTabBtn : domStyles.tabBtn}
+                  onClick={() => setActiveTab('theory')}
+                >
+                  Theory & Notes
+                </button>
+              </div>
+
+              {activeTab === 'practice' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+                  {/* Core Controls: Top Row (Tonic, Chords, Melody) */}
+                  <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                    <button
+                      disabled={!isInteractable}
+                      style={{
+                        ...(!isInteractable ? domStyles.disabledBtn : domStyles.secondaryBtn),
+                        flex: 1,
+                      }}
+                      onClick={handleTonicClick}
+                      onMouseEnter={(e) => isInteractable && showTooltip('Tonic Reference', e)}
+                      onMouseLeave={hideTooltip}
+                    >
+                      <IconTuningFork />
+                    </button>
+                    <button
+                      disabled={!isInteractable || chords.length === 0}
+                      style={{
+                        ...((!isInteractable || chords.length === 0) ? domStyles.disabledBtn : domStyles.secondaryBtn),
+                        flex: 1,
+                      }}
+                      onClick={() => audio.playBackingChordsOnly(chords, converter)}
+                      onMouseEnter={(e) => isInteractable && chords.length > 0 && showTooltip('Root Chords Backing', e)}
+                      onMouseLeave={hideTooltip}
+                    >
+                      <IconKeyboard />
+                    </button>
+                    <button
+                      disabled={!isInteractable || melodyNotes.length === 0}
+                      style={{
+                        ...((!isInteractable || melodyNotes.length === 0) ? domStyles.disabledBtn : domStyles.secondaryBtn),
+                        flex: 1,
+                      }}
+                      onClick={() => audio.playMelodyOnly(melodyNotes, converter)}
+                      onMouseEnter={(e) => isInteractable && melodyNotes.length > 0 && showTooltip('Just Melody Guide', e)}
+                      onMouseLeave={hideTooltip}
+                    >
+                      <IconMelody />
+                    </button>
+                  </div>
+
+                  {/* Answer Selector Controls & Restart */}
+                  {mode === 'trainer' && (
+                    <div style={domStyles.card}>
+                      <div style={domStyles.answerContainer}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
+                          <p style={domStyles.metaLabel}>Identify the {level >= 4 ? 'Chord' : 'Scale Degree'}:</p>
+                          {isQueuedLevel(level) && (
+                            <span style={{
+                              fontSize: '10px',
+                              color: '#A8C7FA',
+                              backgroundColor: 'rgba(168, 199, 250, 0.08)',
+                              padding: '2px 8px',
+                              borderRadius: '8px',
+                              fontWeight: '700',
+                            }}>
+                              Exercise {currentExerciseIndex + 1} of 10
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Choices rows (max 4 per row) */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', marginBottom: '8px' }}>
+                          {choiceChunks.map((chunk, chunkIdx) => (
+                            <div key={chunkIdx} style={{ display: 'flex', flexDirection: 'row', gap: '12px', justifyContent: 'center', width: '100%' }}>
+                              {chunk.map((choice) => {
+                                const isAnswered = focusedSlotIndex !== null && timelineSlots[focusedSlotIndex]?.answer !== null;
+                                return (
+                                  <button
+                                    key={choice}
+                                    disabled={isAnswered}
+                                    style={{
+                                      ...(isAnswered ? domStyles.disabledBtn : domStyles.primaryBtn),
+                                      flex: 1,
+                                      maxWidth: '64px',
+                                    }}
+                                    onClick={() => handleChoice(choice)}
+                                  >
+                                    {choice}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Last row: Start/Reset (1/3 width), Accuracy (1/3 width), Next (1/3 width) */}
+                        <div style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          width: '100%',
+                          gap: '12px',
+                          marginTop: '8px',
+                          borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                          paddingTop: '16px',
+                        }}>
+                          {/* Column 1: Start/Reset Button (2/5 of the row) */}
+                          <div style={{ flex: 2, display: 'flex' }}>
+                            <button
+                              style={{
+                                ...(audio.hasStarted ? domStyles.secondaryBtn : domStyles.primaryBtn),
+                                width: '100%',
+                              }}
+                              onClick={audio.hasStarted ? () => setupExercise(false) : handleStartClick}
+                            >
+                              {audio.hasStarted ? (
+                                <>
+                                  <IconRestart /> Restart
+                                </>
+                              ) : (
+                                <>
+                                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style={{ marginRight: '6px' }}>
+                                    <polygon points="6 4 20 12 6 20 6 4"></polygon>
+                                  </svg>
+                                  {skipCadence ? 'Continue' : 'Start'}
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          {/* Column 2: Accuracy Counts (1/5 of the row) */}
+                          <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: '800', color: '#81C784' }}>{correctCount}</span>
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="#81C784" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: '800', color: '#E57373' }}>{wrongCount}</span>
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="#E57373" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                                  <line x1="18" y1="6" x2="6" y2="18" />
+                                  <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Column 3: Next Button (2/5 of the row) */}
+                          <div style={{ flex: 2, display: 'flex' }}>
+                            <button
+                              disabled={!isCurrentExerciseComplete}
+                              style={{
+                                ...(isCurrentExerciseComplete ? domStyles.primaryBtn : domStyles.disabledBtn),
+                                width: '100%',
+                              }}
+                              onClick={handleNextClick}
+                            >
+                              <span>Next</span>
+                              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '4px' }}>
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                                <polyline points="12 5 19 12 12 19" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <TheoryTab 
+                  level={level} 
+                  userNotes={userNotes} 
+                  onSaveNotes={(val) => {
+                    setUserNotes(val);
+                    try {
+                      localStorage.setItem(`@pbe_notes_lvl_${level}`, val);
+                    } catch { /* offline */ }
+                  }} 
+                />
+              )}
+            </div>
+
+          </div>
+        ) : (
+          // Standard one-column vertical layout (Portrait)
+          <>
+            {/* Practice & Theory Navigation Tabs */}
+            <div style={domStyles.tabRow}>
+              <button
+                style={activeTab === 'practice' ? domStyles.activeTabBtn : domStyles.tabBtn}
+                onClick={() => setActiveTab('practice')}
+              >
+                Practice Exercise
+              </button>
+              <button
+                style={activeTab === 'theory' ? domStyles.activeTabBtn : domStyles.tabBtn}
+                onClick={() => setActiveTab('theory')}
+              >
+                Theory & Notes
+              </button>
+            </div>
+
+            {activeTab === 'practice' ? (
+              <>
+                {/* Core Controls: Top Row (Tonic, Chords, Melody) */}
+                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                  <button
+                    disabled={!isInteractable}
+                    style={{
+                      ...(!isInteractable ? domStyles.disabledBtn : domStyles.secondaryBtn),
+                      flex: 1,
+                    }}
+                    onClick={handleTonicClick}
+                    onMouseEnter={(e) => isInteractable && showTooltip('Tonic Reference', e)}
+                    onMouseLeave={hideTooltip}
+                  >
+                    <IconTuningFork />
+                  </button>
+                  <button
+                    disabled={!isInteractable || chords.length === 0}
+                    style={{
+                      ...((!isInteractable || chords.length === 0) ? domStyles.disabledBtn : domStyles.secondaryBtn),
+                      flex: 1,
+                    }}
+                    onClick={() => audio.playBackingChordsOnly(chords, converter)}
+                    onMouseEnter={(e) => isInteractable && chords.length > 0 && showTooltip('Root Chords Backing', e)}
+                    onMouseLeave={hideTooltip}
+                  >
+                    <IconKeyboard />
+                  </button>
+                  <button
+                    disabled={!isInteractable || melodyNotes.length === 0}
+                    style={{
+                      ...((!isInteractable || melodyNotes.length === 0) ? domStyles.disabledBtn : domStyles.secondaryBtn),
+                      flex: 1,
+                    }}
+                    onClick={() => audio.playMelodyOnly(melodyNotes, converter)}
+                    onMouseEnter={(e) => isInteractable && melodyNotes.length > 0 && showTooltip('Just Melody Guide', e)}
+                    onMouseLeave={hideTooltip}
+                  >
+                    <IconMelody />
+                  </button>
+                </div>
+
+                {/* DAW timeline card */}
+                {mode === 'trainer' && (
+                  <div style={domStyles.card}>
+                    <DawTimeline
+                      level={level}
+                      timelineSlots={timelineSlots}
+                      focusedSlotIndex={focusedSlotIndex}
+                      playheadTime={audio.playheadTime}
+                      isPlaying={audio.isPlaying}
+                      hasStarted={audio.hasStarted}
+                      converter={converter}
+                      onSlotClick={handleSlotClick}
+                      onPlayPause={audio.isPlaying ? audio.pausePlayback : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence)}
+                    />
+                  </div>
+                )}
+
+                {/* Scrollable Piano Visualizer with Indicator */}
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <span style={{
+                    fontSize: '10px', color: '#A8C7FA',
+                    backgroundColor: 'rgba(168, 199, 250, 0.08)',
+                    border: '1px solid rgba(168, 199, 250, 0.15)',
+                    padding: '2px 8px', borderRadius: '8px', fontWeight: '700',
+                    display: 'flex', alignItems: 'center', gap: '5px',
+                  }}>
+                    <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="7 8 3 12 7 16" />
+                      <polyline points="17 8 21 12 17 16" />
+                      <line x1="3" y1="12" x2="21" y2="12" />
+                    </svg>
+                    8 octaves
+                  </span>
+                </div>
+                <KeyboardVisualizer
+                  activeNotes={audio.activeNotes}
+                  onNoteClick={audio.triggerLiveNote}
+                  firstNoteMidi={firstPlayedNoteMidi}
+                  baseOctaveMidi={baseOctaveMidi}
+                  tonicScrollTrigger={tonicScrollTrigger}
+                />
+
+                {/* Answer Selector Controls & Restart */}
+                {mode === 'trainer' && (
+                  <div style={domStyles.card}>
+                    <div style={domStyles.answerContainer}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '4px' }}>
+                        <p style={domStyles.metaLabel}>Identify the {level >= 4 ? 'Chord' : 'Scale Degree'}:</p>
+                        {isQueuedLevel(level) && (
+                          <span style={{
+                            fontSize: '10px',
+                            color: '#A8C7FA',
+                            backgroundColor: 'rgba(168, 199, 250, 0.08)',
+                            padding: '2px 8px',
+                            borderRadius: '8px',
+                            fontWeight: '700',
+                          }}>
+                            Exercise {currentExerciseIndex + 1} of 10
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Choices rows (max 4 per row) */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', marginBottom: '8px' }}>
+                        {choiceChunks.map((chunk, chunkIdx) => (
+                          <div key={chunkIdx} style={{ display: 'flex', flexDirection: 'row', gap: '12px', justifyContent: 'center', width: '100%' }}>
+                            {chunk.map((choice) => {
+                              const isAnswered = focusedSlotIndex !== null && timelineSlots[focusedSlotIndex]?.answer !== null;
+                              return (
+                                <button
+                                  key={choice}
+                                  disabled={isAnswered}
+                                  style={{
+                                    ...(isAnswered ? domStyles.disabledBtn : domStyles.primaryBtn),
+                                    flex: 1,
+                                    maxWidth: '64px',
+                                  }}
+                                  onClick={() => handleChoice(choice)}
+                                >
+                                  {choice}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Last row: Start/Reset (1/3 width), Accuracy (1/3 width), Next (1/3 width) */}
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        gap: '12px',
+                        marginTop: '8px',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                        paddingTop: '16px',
+                      }}>
+                        {/* Column 1: Start/Reset Button (2/5 of the row) */}
+                        <div style={{ flex: 2, display: 'flex' }}>
+                          <button
+                            style={{
+                              ...(audio.hasStarted ? domStyles.secondaryBtn : domStyles.primaryBtn),
+                              width: '100%',
+                            }}
+                            onClick={audio.hasStarted ? () => setupExercise(false) : handleStartClick}
+                          >
+                            {audio.hasStarted ? (
+                              <>
+                                <IconRestart /> Restart
+                              </>
+                            ) : (
+                              <>
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style={{ marginRight: '6px' }}>
+                                  <polygon points="6 4 20 12 6 20 6 4"></polygon>
+                                </svg>
+                                {skipCadence ? 'Continue' : 'Start'}
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Column 2: Accuracy Counts (1/5 of the row) */}
+                        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ fontSize: '13px', fontWeight: '800', color: '#81C784' }}>{correctCount}</span>
+                              <svg viewBox="0 0 24 24" width="14" height="14" stroke="#81C784" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ fontSize: '13px', fontWeight: '800', color: '#E57373' }}>{wrongCount}</span>
+                              <svg viewBox="0 0 24 24" width="14" height="14" stroke="#E57373" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Column 3: Next Button (2/5 of the row) */}
+                        <div style={{ flex: 2, display: 'flex' }}>
+                          <button
+                            disabled={!isCurrentExerciseComplete}
+                            style={{
+                              ...(isCurrentExerciseComplete ? domStyles.primaryBtn : domStyles.disabledBtn),
+                              width: '100%',
+                            }}
+                            onClick={handleNextClick}
+                          >
+                            <span>Next</span>
+                            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '4px' }}>
+                              <line x1="5" y1="12" x2="19" y2="12" />
+                              <polyline points="12 5 19 12 12 19" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <TheoryTab 
+                level={level} 
+                userNotes={userNotes} 
+                onSaveNotes={(val) => {
+                  setUserNotes(val);
+                  try {
+                    localStorage.setItem(`@pbe_notes_lvl_${level}`, val);
+                  } catch { /* offline */ }
+                }} 
+              />
             )}
           </>
-        ) : (
-          <TheoryTab 
-            level={level} 
-            userNotes={userNotes} 
-            onSaveNotes={(val) => {
-              setUserNotes(val);
-              try {
-                localStorage.setItem(`@pbe_notes_lvl_${level}`, val);
-              } catch { /* offline */ }
-            }} 
-          />
         )}
       </div>
 

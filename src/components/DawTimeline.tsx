@@ -4,6 +4,7 @@ import React from 'react';
 import { TimelineSlot } from '../types/levels';
 import { NoteConverter } from '../utils/note_converter';
 import { domStyles } from './styles/domStyles';
+import { setupHorizontalWheelScroll } from '../utils/scroll_helper';
 
 import { isQueuedLevel } from '../levels';
 
@@ -56,6 +57,10 @@ export default function DawTimeline({
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
+    return setupHorizontalWheelScroll(scrollContainerRef.current);
+  }, []);
+
+  React.useEffect(() => {
     if (scrollContainerRef.current && playheadTime > 0) {
       const playheadX = 54 + playheadTime * 120;
       const containerWidth = scrollContainerRef.current.clientWidth;
@@ -79,22 +84,57 @@ export default function DawTimeline({
     }
   }, [focusedSlotIndex, timelineSlots, converter, isPlaying]);
 
+  const [hasOverflow, setHasOverflow] = React.useState(false);
+
+  const checkOverflow = React.useCallback(() => {
+    if (scrollContainerRef.current) {
+      const { clientWidth } = scrollContainerRef.current;
+      if (clientWidth <= 0) return;
+
+      const lastSlotTime = timelineSlots.length > 0 
+        ? Math.max(...timelineSlots.map(s => converter.ticksToSeconds(s.beat)))
+        : 0;
+      const maxNoteWidth = 54 + lastSlotTime * 120 + 54;
+      
+      const playheadX = 54 + playheadTime * 120 + 54;
+      const isPlayheadOut = playheadX > clientWidth;
+      const isPlayingActive = isPlaying || hasStarted;
+      
+      const needsOverflow = maxNoteWidth > clientWidth || isPlayheadOut || (isPlayingActive && (54 + maxDuration * 120 + 54) > clientWidth);
+      
+      setHasOverflow(needsOverflow);
+    }
+  }, [timelineSlots, playheadTime, isPlaying, hasStarted, maxDuration, converter]);
+
+  React.useEffect(() => {
+    checkOverflow();
+    const timer = setTimeout(checkOverflow, 50);
+    return () => clearTimeout(timer);
+  }, [timelineSlots, hasStarted, isPlaying, playheadTime, maxDuration, checkOverflow]);
+
+  React.useEffect(() => {
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [checkOverflow]);
+
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
       {/* Scrollable timeline container */}
       <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
         {/* Left fade */}
-        <div style={{
-          position: 'absolute', left: 0, top: 0, bottom: 0, width: '24px',
-          background: 'linear-gradient(to right, #1D2024 15%, transparent)',
-          pointerEvents: 'none', zIndex: 106,
-        }} />
+        {hasOverflow && (
+          <div style={{
+            position: 'absolute', left: 0, top: 0, bottom: 0, width: '24px',
+            background: 'linear-gradient(to right, #1D2024 15%, transparent)',
+            pointerEvents: 'none', zIndex: 106,
+          }} />
+        )}
 
         <div
           ref={scrollContainerRef}
           className="piano-scroll-frame"
           style={{
-            width: '100%', overflowX: 'auto',
+            width: '100%', overflowX: hasOverflow ? 'auto' : 'hidden',
             backgroundColor: '#111318', borderRadius: '12px',
             border: '1px solid rgba(255,255,255,0.03)',
             padding: '4px 0', boxSizing: 'border-box', userSelect: 'none',
@@ -168,11 +208,13 @@ export default function DawTimeline({
         </div>
 
         {/* Right fade */}
-        <div style={{
-          position: 'absolute', right: 0, top: 0, bottom: 0, width: '24px',
-          background: 'linear-gradient(to left, #1D2024 15%, transparent)',
-          pointerEvents: 'none', zIndex: 106,
-        }} />
+        {hasOverflow && (
+          <div style={{
+            position: 'absolute', right: 0, top: 0, bottom: 0, width: '24px',
+            background: 'linear-gradient(to left, #1D2024 15%, transparent)',
+            pointerEvents: 'none', zIndex: 106,
+          }} />
+        )}
       </div>
 
       {hasStarted && (

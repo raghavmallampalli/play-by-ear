@@ -24,9 +24,11 @@ export const domStyles = {
   body: {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
     backgroundColor: '#111318',
+    width: '100%',
     minHeight: '100%',
     display: 'flex',
     justifyContent: 'center',
+    alignItems: 'center',
     padding: '12px',
     color: '#E2E2E6',
     boxSizing: 'border-box' as const,
@@ -38,6 +40,38 @@ export const domStyles = {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '16px',
+  },
+  wrapperLandscape: {
+    width: '100%',
+    maxWidth: '100%',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '16px',
+    boxSizing: 'border-box' as const,
+  },
+  landscapeLayoutGrid: {
+    display: 'flex',
+    flexDirection: 'row' as const,
+    gap: '16px',
+    alignItems: 'stretch',
+    width: '100%',
+    boxSizing: 'border-box' as const,
+  },
+  leftColumn: {
+    flex: 1.1,
+    minWidth: '0',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '12px',
+    boxSizing: 'border-box' as const,
+  },
+  rightColumn: {
+    flex: 0.9,
+    minWidth: '0',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '12px',
+    boxSizing: 'border-box' as const,
   },
   tabRow: {
     flexDirection: 'row' as const,
@@ -94,6 +128,22 @@ export const domStyles = {
     color: '#53565F',
     cursor: 'not-allowed',
     opacity: 0.4,
+  },
+
+  correctBtn: {
+    ...baseButton,
+    backgroundColor: 'rgba(129, 199, 132, 0.12)',
+    borderColor: 'rgba(129, 199, 132, 0.3)',
+    color: '#81C784',
+    fontWeight: '900' as const,
+  },
+
+  wrongBtn: {
+    ...baseButton,
+    backgroundColor: 'rgba(229, 115, 115, 0.12)',
+    borderColor: 'rgba(229, 115, 115, 0.3)',
+    color: '#E57373',
+    fontWeight: '900' as const,
   },
 
   dashedBtn: {

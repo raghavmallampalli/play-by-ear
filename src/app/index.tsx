@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View, Text, Pressable, ScrollView, Linking } from 'react-native';
+import { StyleSheet, View, Text, Pressable, ScrollView, Linking, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,8 @@ import { REPO_BASE_URL } from '../constants/links';
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
 
   useEffect(() => {
     log.debug("Play-by-ear App Launched! Dashboard Screen Mounted successfully.");
@@ -16,21 +18,31 @@ export default function DashboardScreen() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          contentContainerStyle={[
+            styles.scrollContent,
+            isLandscape && styles.scrollContentLandscape
+          ]} 
+          showsVerticalScrollIndicator={false}
+        >
           
           {/* Header Section */}
-          <View style={styles.header}>
-            <Text style={styles.appTitle}>Play by Ear</Text>
+          <View style={[styles.header, isLandscape && styles.headerLandscape]}>
+            <Text style={[styles.appTitle, isLandscape && styles.appTitleLandscape]}>Play by Ear</Text>
             <Text style={styles.appSubtitle}>Relative Pitch Chord Trainer</Text>
           </View>
 
           {/* Cards Grid/Stack */}
-          <View style={styles.grid}>
+          <View style={[
+            styles.grid,
+            isLandscape && styles.gridLandscape
+          ]}>
             
             {/* Primary Action Card: Trainer */}
             <Pressable 
               style={({ pressed }) => [
                 styles.primaryCard,
+                isLandscape && styles.cardLandscape,
                 pressed && styles.cardPressed
               ]}
               onPress={() => {
@@ -51,7 +63,7 @@ export default function DashboardScreen() {
 
             {/* Dummy Screen C: MIDI Sandbox */}
             <Pressable 
-              style={styles.disabledCard}
+              style={[styles.disabledCard, isLandscape && styles.cardLandscape]}
               onPress={() => {
                 log.debug("Dashboard: User clicked locked MIDI Sandbox card (Coming Soon).");
               }}
@@ -70,7 +82,7 @@ export default function DashboardScreen() {
 
             {/* Screen D: Progress Management */}
             <Pressable 
-              style={styles.disabledCard}
+              style={[styles.disabledCard, isLandscape && styles.cardLandscape]}
               onPress={() => {
                 log.debug("Dashboard: User clicked locked Export & Import Progress card (Coming Soon).");
                 // router.push('/progress'); // Preserved functional expansion path
@@ -117,10 +129,18 @@ const styles = StyleSheet.create({
     gap: 32,
     alignItems: 'center',
   },
+  scrollContentLandscape: {
+    padding: 16,
+    gap: 20,
+  },
   header: {
     alignItems: 'center',
     gap: 6,
     marginTop: 20,
+  },
+  headerLandscape: {
+    marginTop: 8,
+    gap: 2,
   },
   appTitle: {
     fontSize: 40,
@@ -128,6 +148,9 @@ const styles = StyleSheet.create({
     color: '#E2E2E6',
     letterSpacing: -0.5,
     textAlign: 'center',
+  },
+  appTitleLandscape: {
+    fontSize: 28,
   },
   appSubtitle: {
     fontSize: 12,
@@ -141,6 +164,16 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 480,
     gap: 16,
+  },
+  gridLandscape: {
+    flexDirection: 'row',
+    maxWidth: 960,
+    alignItems: 'stretch',
+  },
+  cardLandscape: {
+    flex: 1,
+    height: '100%',
+    justifyContent: 'flex-start',
   },
   primaryCard: {
     backgroundColor: '#1D2024', // Material 3 Surface Container

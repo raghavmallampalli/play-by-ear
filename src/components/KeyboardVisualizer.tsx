@@ -1,6 +1,7 @@
 'use dom';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { setupHorizontalWheelScroll } from '../utils/scroll_helper';
 
 interface KeyboardVisualizerProps {
   activeNotes: number[];
@@ -47,7 +48,17 @@ export default function KeyboardVisualizer({
   tonicScrollTrigger,
 }: KeyboardVisualizerProps) {
   const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(484);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const wheelCleanupRef = useRef<(() => void) | undefined>(undefined);
+
+  const keysCount = isLandscape ? 14 : 8.4;
+  const keyAreaWidth = Math.max(200, containerWidth - 8);
+  const whiteKeyWidth = Math.floor(keyAreaWidth / keysCount);
+  const keyboardRowWidth = 52 * whiteKeyWidth;
+  const keyboardHeight = isLandscape ? '115px' : '160px';
+  const blackKeyHeight = isLandscape ? '70px' : '100px';
 
   useEffect(() => {
     const handleResize = () => setIsLandscape(window.innerWidth > window.innerHeight);
@@ -55,30 +66,61 @@ export default function KeyboardVisualizer({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const keysCount = isLandscape ? 14 : 8.4;
-  const containerWidth = Math.min(window.innerWidth, 520) - 36;
-  const whiteKeyWidth = Math.floor(containerWidth / keysCount);
-  const keyboardRowWidth = 52 * whiteKeyWidth;
-
   useEffect(() => {
-    if (scrollRef.current && firstNoteMidi) {
-      const isBlack = (m: number) => [1, 3, 6, 8, 10].includes(m % 12);
-      let keyToScroll = firstNoteMidi;
-      if (isBlack(keyToScroll)) {
-        keyToScroll -= 1;
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        if (entry.contentRect.width > 0) {
+          setContainerWidth(entry.contentRect.width);
+        }
       }
-      const whiteKeyIdx = whiteKeys.indexOf(keyToScroll);
-      if (whiteKeyIdx !== -1) {
-        const targetScroll = Math.max(0, Math.floor((whiteKeyIdx - 1) * whiteKeyWidth));
-        scrollRef.current.scrollLeft = targetScroll;
-      }
-    } else if (scrollRef.current) {
-      scrollRef.current.scrollLeft = 22 * whiteKeyWidth;
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const scrollRefCallback = useCallback((node: HTMLDivElement | null) => {
+    if (wheelCleanupRef.current) {
+      wheelCleanupRef.current();
+      wheelCleanupRef.current = undefined;
     }
-  }, [firstNoteMidi, whiteKeyWidth, keysCount]);
+    scrollRef.current = node;
+    if (node) {
+      wheelCleanupRef.current = setupHorizontalWheelScroll(node);
+      
+      if (baseOctaveMidi && whiteKeyWidth > 0) {
+        const isBlack = (m: number) => [1, 3, 6, 8, 10].includes(m % 12);
+        let keyToScroll = baseOctaveMidi;
+        if (isBlack(keyToScroll)) {
+          keyToScroll -= 1;
+        }
+        const whiteKeyIdx = whiteKeys.indexOf(keyToScroll);
+        if (whiteKeyIdx !== -1) {
+          const targetScroll = Math.max(0, Math.floor((whiteKeyIdx - 1) * whiteKeyWidth));
+          node.scrollLeft = targetScroll;
+          
+          setTimeout(() => {
+            if (scrollRef.current) {
+              scrollRef.current.scrollLeft = targetScroll;
+            }
+          }, 50);
+        }
+      }
+    }
+  }, [baseOctaveMidi, whiteKeyWidth]);
 
   useEffect(() => {
-    if (scrollRef.current && baseOctaveMidi && tonicScrollTrigger && tonicScrollTrigger > 0) {
+    return () => {
+      if (wheelCleanupRef.current) {
+        wheelCleanupRef.current();
+      }
+    };
+  }, []);
+
+
+
+  const centerOnTonic = (smooth = false) => {
+    if (scrollRef.current && baseOctaveMidi && whiteKeyWidth > 0) {
       const isBlack = (m: number) => [1, 3, 6, 8, 10].includes(m % 12);
       let keyToScroll = baseOctaveMidi;
       if (isBlack(keyToScroll)) {
@@ -87,13 +129,24 @@ export default function KeyboardVisualizer({
       const whiteKeyIdx = whiteKeys.indexOf(keyToScroll);
       if (whiteKeyIdx !== -1) {
         const targetScroll = Math.max(0, Math.floor((whiteKeyIdx - 1) * whiteKeyWidth));
-        scrollRef.current.scrollTo({
-          left: targetScroll,
-          behavior: 'smooth',
-        });
+        if (smooth) {
+          scrollRef.current.scrollTo({
+            left: targetScroll,
+            behavior: 'smooth',
+          });
+        } else {
+          scrollRef.current.scrollLeft = targetScroll;
+        }
       }
     }
-  }, [tonicScrollTrigger, baseOctaveMidi, whiteKeyWidth]);
+  };
+
+  // 2. Fire centering logic smoothly on tonic or start/restart button clicks
+  useEffect(() => {
+    if (tonicScrollTrigger && tonicScrollTrigger > 0) {
+      centerOnTonic(true);
+    }
+  }, [tonicScrollTrigger]);
 
 
 
@@ -104,7 +157,7 @@ export default function KeyboardVisualizer({
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
+    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
       {/* Left fade */}
       <div style={{
         position: 'absolute', left: '1px', top: '1px', bottom: '1px', width: '28px',
@@ -113,9 +166,10 @@ export default function KeyboardVisualizer({
       }} />
 
       <div
-        ref={scrollRef}
+        ref={scrollRefCallback}
+        className="piano-scroll-frame"
         style={{
-          width: '100%', height: '160px', backgroundColor: '#111318',
+          width: '100%', height: keyboardHeight, backgroundColor: '#111318',
           borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.04)',
           overflowX: 'auto', padding: '4px', boxSizing: 'border-box', userSelect: 'none',
         }}
@@ -153,7 +207,7 @@ export default function KeyboardVisualizer({
                 key={midi}
                 style={{
                   position: 'absolute', top: '0px', left: leftPos,
-                  width: clickTargetWidth, height: '100px',
+                  width: clickTargetWidth, height: blackKeyHeight,
                   zIndex: 100, cursor: 'pointer',
                   display: 'flex', justifyContent: 'center',
                   backgroundColor: 'transparent',
