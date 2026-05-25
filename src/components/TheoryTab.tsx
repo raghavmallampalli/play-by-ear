@@ -2,16 +2,8 @@
 
 import React, { useState } from 'react';
 import { marked } from 'marked';
-import { EXERCISE_TO_THEORY_MAP, THEORY_REGISTRY } from '../theory/theory_registry';
-
-const EXERCISE_HASHES: Record<number, string> = {
-  1: 'lvl1_do_re_mi_fa',
-  2: 'lvl2_sol_la_ti_do',
-  3: 'lvl3_hb_melody',
-  4: 'lvl4_chord_i_iv_v',
-  5: 'lvl5_chord_melody',
-  6: 'lvl6_hb_chords',
-};
+import { EXERCISE_TO_THEORY_MAP } from '../theory/theory_registry';
+import { EXERCISE_HASHES } from '../constants/exercises';
 
 const IconInfo = () => (
   <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#A8C7FA', flexShrink: 0 }}>
@@ -68,8 +60,7 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
 
   const getCurrentLevelTheory = () => {
     const exerciseHash = EXERCISE_HASHES[level];
-    const theoryHash = exerciseHash ? EXERCISE_TO_THEORY_MAP[exerciseHash] : undefined;
-    return (theoryHash ? THEORY_REGISTRY[theoryHash] : null)
+    return (exerciseHash ? EXERCISE_TO_THEORY_MAP[exerciseHash] : null)
       || '### Under Construction\n\nThere is no theory guide mapped for this level yet.';
   };
 
