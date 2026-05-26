@@ -403,4 +403,13 @@ export const domStyles = {
     resize: 'none' as const,
     boxSizing: 'border-box' as const,
   },
+  iconSpacingRight: {
+    marginRight: 6,
+  },
+  iconSpacingRightSmall: {
+    marginRight: 4,
+  },
+  iconNoSpacing: {
+    marginRight: 0,
+  },
 } as const;

@@ -2,17 +2,14 @@
 
 import { marked } from 'marked';
 import React, { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { EXERCISE_HASHES } from '../constants/exercises';
 import { EXERCISE_TO_THEORY_MAP } from '../theory/theory_registry';
 import { getRepoEditUrl } from '../constants/links';
 import { domStyles } from './styles/domStyles';
 
 const IconInfo = () => (
-  <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#A8C7FA', flexShrink: 0 }}>
-    <circle cx="12" cy="12" r="10" />
-    <line x1="12" y1="16" x2="12" y2="12" />
-    <line x1="12" y1="8" x2="12.01" y2="8" />
-  </svg>
+  <Ionicons name="information-circle" size={20} color="#A8C7FA" style={{ flexShrink: 0 }} />
 );
 
 const renderMarkdown = (text: string) => {
@@ -115,10 +112,7 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
           style={domStyles.dashedBtn}
           onClick={() => setIsEditingNotes(true)}
         >
-          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
-            <path d="M12 20h9" />
-            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-          </svg>
+          <Ionicons name="create" size={15} color="currentColor" style={domStyles.iconSpacingRight} />
           Add Notes
         </button>
       ) : isEditingNotes ? (
@@ -135,9 +129,7 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
             style={domStyles.primaryBtn}
             onClick={() => setIsEditingNotes(false)}
           >
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '5px' }}>
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
+            <Ionicons name="checkmark" size={14} color="currentColor" style={domStyles.iconSpacingRightSmall} />
             Done Editing
           </button>
         </div>
@@ -154,10 +146,7 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
           }}>
             <span style={{ fontSize: '11px', color: '#8A92A6', fontWeight: 700 }}>YOUR NOTES</span>
             <span style={{ fontSize: '10px', color: '#A8C7FA', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
-              <svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 20h9" />
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-              </svg>
+              <Ionicons name="create" size={11} color="currentColor" style={{ marginRight: 3 }} />
               CLICK TO EDIT
             </span>
           </div>

@@ -69,7 +69,9 @@ export default function DashboardScreen() {
               }}
             >
               <View style={styles.cardHeaderRow}>
-                <Ionicons name="construct-outline" size={20} color="#53565F" />
+                <View style={styles.iconContainerDisabled}>
+                  <Ionicons name="construct-outline" size={36} color="#53565F" />
+                </View>
                 <View style={styles.grayBadge}>
                   <Text style={styles.grayBadgeText}>COMING SOON</Text>
                 </View>
@@ -90,7 +92,9 @@ export default function DashboardScreen() {
               }}
             >
               <View style={styles.cardHeaderRow}>
-                <Ionicons name="settings" size={20} color="#A8C7FA" />
+                <View style={styles.iconContainerSecondary}>
+                  <Ionicons name="settings" size={36} color="#A8C7FA" />
+                </View>
               </View>
               <Text style={styles.smallCardTitle}>Settings & Preferences</Text>
             </Pressable>
@@ -244,6 +248,26 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 18,
     backgroundColor: '#A8C7FA', // Primary Blue container
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconContainerSecondary: {
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    backgroundColor: 'rgba(168, 199, 250, 0.06)', // Subtle blue-gray container
+    borderWidth: 1,
+    borderColor: 'rgba(168, 199, 250, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconContainerDisabled: {
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    backgroundColor: '#1E2024',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.04)',
     alignItems: 'center',
     justifyContent: 'center',
   },

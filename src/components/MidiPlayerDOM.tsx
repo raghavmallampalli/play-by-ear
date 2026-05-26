@@ -1,6 +1,8 @@
 'use dom';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '../constants/theme';
 import { useAudioEngine } from '../hooks/useAudioEngine';
 import { buildLevel, EXERCISE_HASHES, getAnswerChoices, getPreloadMidi, isQueuedLevel, LevelSetup } from '../levels';
 import { displayLabel } from '../levels/labels';
@@ -39,6 +41,17 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
   const setActiveTab = onTabChange ?? setLocalActiveTab;
   const [isLandscape, setIsLandscape] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    setTheme(media.matches ? 'dark' : 'light');
+    const listener = (e: MediaQueryListEvent) => setTheme(e.matches ? 'dark' : 'light');
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  }, []);
+
+  const themeColors = Colors[theme];
 
   useEffect(() => {
     const handleResize = () => {
@@ -412,9 +425,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
           {audio.hasStarted ? (
             <IconRestart />
           ) : (
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-              <polygon points="6 4 20 12 6 20 6 4" />
-            </svg>
+            <Ionicons name="play" size={16} color="currentColor" />
           )}
         </button>
       </div>
@@ -571,17 +582,12 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
         <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '13px', fontWeight: '800', color: '#81C784' }}>{correctCount}</span>
-              <svg viewBox="0 0 24 24" width="12" height="12" stroke="#81C784" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
+              <span style={{ fontSize: '13px', fontWeight: '800', color: themeColors.correct }}>{correctCount}</span>
+              <Ionicons name="checkmark" size={12} color={themeColors.correct} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '13px', fontWeight: '800', color: '#E57373' }}>{wrongCount}</span>
-              <svg viewBox="0 0 24 24" width="12" height="12" stroke="#E57373" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
+              <span style={{ fontSize: '13px', fontWeight: '800', color: themeColors.wrong }}>{wrongCount}</span>
+              <Ionicons name="close" size={12} color={themeColors.wrong} />
             </div>
           </div>
 
@@ -611,10 +617,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
               }}
               onClick={handleNextClick}
             >
-              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
+              <Ionicons name="arrow-forward" size={16} color="currentColor" />
             </button>
           </div>
         </div>
@@ -835,27 +838,9 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
           zIndex: 9999,
           boxSizing: 'border-box',
         }}>
-          {renderTabButton('practice', (
-            <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 18V5l12-2v13" />
-              <circle cx="6" cy="18" r="3" />
-              <circle cx="18" cy="16" r="3" />
-            </svg>
-          ), 'Practice')}
-
-          {renderTabButton('theory', (
-            <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-            </svg>
-          ), 'Theory')}
-
-          {renderTabButton('settings', (
-            <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-          ), 'Settings')}
+          {renderTabButton('practice', <Ionicons name="musical-notes" size={22} color="currentColor" />, 'Practice')}
+          {renderTabButton('theory', <Ionicons name="book" size={22} color="currentColor" />, 'Theory')}
+          {renderTabButton('settings', <Ionicons name="settings" size={22} color="currentColor" />, 'Settings')}
         </div>
 
       </div>
@@ -880,11 +865,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
           <div style={domStyles.modalCard}>
             {/* Warning Icon */}
             <div style={domStyles.modalIconContainer}>
-              <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
+              <Ionicons name="warning" size={28} color="currentColor" />
             </div>
 
             {/* Title & Desc */}

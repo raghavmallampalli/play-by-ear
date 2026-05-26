@@ -1,6 +1,7 @@
 'use dom';
 
 import React, { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { buildLevel } from '../levels';
 import { domStyles } from './styles/domStyles';
 import { AppSettings, LevelConfig } from '../types/settings';
@@ -138,13 +139,7 @@ export default function SettingsTab({
             }}
             onClick={() => saveSettings({ ...settings, instrumentMode: 'piano' })}
           >
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="3" width="20" height="18" rx="2" ry="2" />
-              <line x1="6" y1="3" x2="6" y2="21" />
-              <line x1="10" y1="3" x2="10" y2="21" />
-              <line x1="14" y1="3" x2="14" y2="21" />
-              <line x1="18" y1="3" x2="18" y2="21" />
-            </svg>
+            <Ionicons name="keypad" size={14} color="currentColor" />
             Piano
           </button>
           <button
@@ -159,9 +154,7 @@ export default function SettingsTab({
               gap: '6px',
             }}
           >
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-            </svg>
+            <Ionicons name="musical-notes" size={14} color="currentColor" />
             Guitar
           </button>
         </div>
