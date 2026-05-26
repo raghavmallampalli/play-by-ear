@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, Text, ScrollView, Pressable, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons as MaterialDesignIcons } from '@expo/vector-icons';
 import { log } from '@/utils/logger';
 
 // Definition of the 9 groups of 3 levels (27 levels total)
@@ -110,7 +110,7 @@ export default function DifficultyScreen() {
         {/* Header navigation bar */}
         <View style={styles.headerBar}>
           <Pressable style={styles.backBtn} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={18} color="#C2C7CF" />
+            <MaterialDesignIcons name="arrow-left" size={18} color="#C2C7CF" />
           </Pressable>
           <Text style={styles.screenTitle}>Select Trainer Level</Text>
         </View>
@@ -165,9 +165,9 @@ export default function DifficultyScreen() {
                       
                       <View style={isInteractive ? styles.activeIndicator : styles.lockedIndicator}>
                         {isInteractive ? (
-                          <Ionicons name="play" size={10} color="#0A305F" />
+                          <MaterialDesignIcons name="play" size={10} color="#0A305F" />
                         ) : (
-                          <Ionicons name="construct-outline" size={12} color="#8A92A6" />
+                          <MaterialDesignIcons name="wrench" size={12} color="#8A92A6" />
                         )}
                       </View>
                     </Pressable>

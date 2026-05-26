@@ -1,7 +1,7 @@
 import { PropsWithChildren, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons as MaterialDesignIcons } from '@expo/vector-icons';
 
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
@@ -16,8 +16,8 @@ export function Collapsible({ children, title }: PropsWithChildren & { title: st
         style={({ pressed }) => [styles.heading, pressed && styles.pressedHeading]}
         onPress={() => setIsOpen((value) => !value)}>
         <View style={[styles.button, { backgroundColor: theme.backgroundElement }]}>
-          <Ionicons
-            name="chevron-forward"
+          <MaterialDesignIcons
+            name="chevron-right"
             size={14}
             color={theme.text}
             style={{ transform: [{ rotate: isOpen ? '90deg' : '0deg' }] }}

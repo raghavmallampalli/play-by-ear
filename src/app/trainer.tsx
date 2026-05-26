@@ -1,5 +1,5 @@
 import MidiPlayerDOM from '@/components/MidiPlayerDOM';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons as MaterialDesignIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -30,7 +30,7 @@ export default function TrainerScreen() {
           isActive && styles.segTabActive
         ]}
       >
-        <Ionicons 
+        <MaterialDesignIcons 
           name={iconName} 
           size={16} 
           color={isActive ? '#E2E2E6' : '#8A92A6'} 
@@ -53,7 +53,7 @@ export default function TrainerScreen() {
         <View style={styles.headerBar}>
           <View style={styles.headerLeft}>
             <Pressable style={styles.backBtn} onPress={() => router.back()}>
-              <Ionicons name="arrow-back" size={18} color="#C2C7CF" />
+              <MaterialDesignIcons name="arrow-left" size={18} color="#C2C7CF" />
             </Pressable>
             <Text style={styles.screenTitle}>
               {isLandscape ? `Level ${levelNum}` : getHeaderTitle()}
@@ -62,9 +62,9 @@ export default function TrainerScreen() {
 
           {isLandscape && (
             <View style={styles.segmentedControl}>
-              {renderHeaderTab('practice', 'musical-notes', 'Practice')}
-              {renderHeaderTab('theory', 'book', 'Theory')}
-              {renderHeaderTab('settings', 'settings', 'Settings')}
+              {renderHeaderTab('practice', 'piano', 'Practice')}
+              {renderHeaderTab('theory', 'book-open', 'Theory')}
+              {renderHeaderTab('settings', 'cog', 'Settings')}
             </View>
           )}
         </View>
