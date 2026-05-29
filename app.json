@@ -2,7 +2,7 @@
   "expo": {
     "name": "Play by Ear",
     "slug": "play-by-ear",
-    "version": "0.1.0",
+    "version": "2026.05.4",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "playbyear",

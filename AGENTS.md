@@ -96,6 +96,20 @@ Due to the import boundary, icons are split into two files:
 
 ---
 
+## 🏷️ Versioning Policy (Date-Based Semantic Versioning)
+
+This project uses a calendar-based semantic versioning scheme of the form `YEAR.MONTH.PATCH` (e.g. `2026.05.1`) in `package.json` and `app.json`.
+- **Year (Major)**: The current calendar year (e.g., `2026`).
+- **Month (Minor)**: The current calendar month (e.g., `05`).
+- **Patch (Patch)**: The sequential version/build identifier.
+
+### Rules for Updating Versions:
+1. **Features**: Increment the **minor version** (month component) when releasing features (or update to the current calendar month if it has changed).
+2. **Bugfixes & Refactors**: Increment the **patch version** for bugfixes, refactors, and performance optimizations.
+3. **Sync Requirements**: Always update the `version` field in both `package.json` and `app.json` simultaneously.
+
+---
+
 ## ⚠️ Mistakes to Avoid
 1. **Monolithic Layout Bloat**:
    - Do NOT construct new features (such as custom settings tabs, dashboard controls, or heavy forms) directly inside active controller coordinates like `MidiPlayerDOM.tsx`. 

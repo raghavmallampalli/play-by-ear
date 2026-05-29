@@ -128,6 +128,7 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
 - [ ] Shift to expo-fs, make sure save and load works fine
 
 ## More exercises
+- [ ] Happy birthday notes are in level 6 wrong, pull midi and base edxcercise on it
 - [ ] Minor, augmented, dimnished, 7th, suspended
 - [ ] More useful notes for chord recognition
 - [ ] Difficult selection page should include best performance
@@ -139,7 +140,8 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
 
 ### V0.1 release
 - [ ] Build the app, check apk size and verify it works on phone without wifi, has correct icon, name etc.
-- [ ] Tag commit, set up semantic versioning system
+- [x] Tag commit, set up semantic versioning system
+- [ ] Exports logs written by app as a debug packet - persist error logs in a separate file with rotation, info logs for current session (dump at end), debug log if setting is turned on for current session
 - [ ] Hook up build and push to F-droid so app is available automatically on tagged commits
 
 ## V0.2
