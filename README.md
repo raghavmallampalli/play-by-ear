@@ -29,6 +29,8 @@ src/
 ### 1. Prerequisites
 Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
 
+This app is tested for Android and Web. Install Expo Go on your device to test on a mobile device. Ensure Supported SDK is 54 - if you see a newer version, raise an issue.
+ 
 ### 2. Installation
 Clone the repository and install the dependencies:
 ```bash
@@ -38,7 +40,7 @@ npm install
 ### 3. Run the Development Server
 To start the Expo development server:
 ```bash
-npm run start
+npm start
 ```
 From the interactive terminal output, you can choose where to run your application:
 - Press `w` to run in the **Web Browser**
