@@ -27,10 +27,14 @@ src/
 ## 🚀 Development Instructions
 
 ### 1. Prerequisites
-Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
+- **Node.js**: Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
+- **ImageMagick**: The local asset generation script uses `convert` (ImageMagick) to render the high-fidelity SVG assets into PNG. Ensure ImageMagick is installed on your system if you plan to regenerate assets:
+  - *Ubuntu/Debian*: `sudo apt-get install imagemagick`
+  - *macOS*: `brew install imagemagick`
+  - *Windows*: Download from the official website.
 
 This app is tested for Android and Web. Install Expo Go on your device to test on a mobile device. Ensure Supported SDK is 54 - if you see a newer version, raise an issue.
- 
+
 ### 2. Installation
 Clone the repository and install the dependencies:
 ```bash
@@ -104,7 +108,6 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
   - [x] **Note Labels**: 
     - *Melody*: Carnatic vs. Solfege vs. Note Numbers vs. Absolute pitches.
     - *Chords*: Roman Numerals vs. Absolute chord names.
-  - [ ] **Timeline Display Style**: Toggle between **DAW** vs. standard **Staff** vs. **Guitar Tabs** timeline modes.
   - [x] **Visualizer Control**: Add a setting to toggle the active Keyboard Visualizer on/off.
   - [x] **Chord mode**: Currently, chord definitions use root plus inversion. Instead use standard. Make a todo to introduce inversions as a new excercise group after minor chords, i.e in group 4. Tonic can continue to use the slash chords.
 
@@ -116,7 +119,37 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
 
 ### 🎹 MIDI Sandbox & Audio Engines
 - [ ] **Feature**: Fully hook up, wire, and integrate the MIDI Sandbox page.
-- [ ] **Feature**: Add a high-fidelity guitar synthesizer voice for audio synthesis.
+- [ ] Remember recent midis - cache the midi files so user can reload the midis automatically
+- [ ] Pre-save 30-40 midis of different genres in the app - find from open source
 
-### V1 release
+## Working export and import
+- [ ] Do a true invariant slug for each experiment for export
+- [ ] Incorporate user notes
+- [ ] Shift to expo-fs, make sure save and load works fine
+
+## More exercises
+- [ ] Minor, augmented, dimnished, 7th, suspended
+- [ ] More useful notes for chord recognition
+- [ ] Difficult selection page should include best performance
+- [ ] Lock later levels until earlier levels are passed (with a "pass" threshold, i.e 80%)
+
+## User onboarding
+- [ ] Add a demo of UI that auto launches the first launch, wire it up behind a help button on the trainer screen.
+- [ ] Ask user about their level and accordingly unlock levels.
+
+### V0.1 release
 - [ ] Build the app, check apk size and verify it works on phone without wifi, has correct icon, name etc.
+- [ ] Tag commit, set up semantic versioning system
+- [ ] Hook up build and push to F-droid so app is available automatically on tagged commits
+
+## V0.2
+- [ ] **Feature**: Add a high-fidelity guitar synthesizer voice for audio synthesis.
+  - [ ] **Timeline Display Style**: Toggle between **DAW** vs. standard **Staff** vs. **Guitar Tabs** timeline modes. 
+
+---
+
+## 🎨 Asset Attributions & Licenses
+
+This project uses the following high-quality, open-source graphic assets:
+- **Treble Clef Vector Shape**: Pulled from [Wikimedia Commons - File:Treble clef.svg](https://commons.wikimedia.org/wiki/File:Treble_clef.svg). This asset was originally uploaded by user *Tlusťa* and has been released into the **Public Domain (CC0 / MIT compatible)**.
+- **Launcher Icons & Favicons**: Custom-rendered in high fidelity onto Material 3-inspired glowing gradients using our standard asset builder pipeline.
