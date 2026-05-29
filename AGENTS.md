@@ -31,6 +31,44 @@ Keep the codebase modular, decoupled, and clean. Avoid long monolithic files (es
 
 ---
 
+## 🌐 `'use dom'` Architecture (CRITICAL)
+
+This app uses Expo's **`'use dom'`** directive, creating a **two-layer architecture**. Understand this before writing any code.
+
+### How it works
+- Files with `'use dom'` at the top render inside a **WebView** on Android/iOS (using the device's built-in Chromium engine).
+- Files **without** `'use dom'` (primarily `src/app/` screens) render as **native React Native** UI.
+- On web, both layers render identically as standard web content.
+
+### The two layers
+
+| Layer | Files | UI Primitives | APIs Available |
+|---|---|---|---|
+| **Native RN** | `src/app/*.tsx` | `View`, `Text`, `Pressable`, `StyleSheet` | `useColorScheme`, `expo-router`, `react-native` |
+| **DOM (WebView)** | `src/components/*.tsx`, `src/hooks/useAudioEngine.ts` | `<div>`, `<button>`, `<span>`, CSS inline styles | `localStorage`, `window.*`, `Tone.js`, `navigator.clipboard`, `dangerouslySetInnerHTML` |
+
+### Import rules (NEVER VIOLATE)
+1. **DOM files can import from other DOM files** and from plain TS/JS modules (`src/types/`, `src/utils/`, `src/constants/`, `src/levels/`).
+2. **Native RN files CANNOT import from `'use dom'` files** as utilities. They can only render a DOM component as a child (Expo handles the WebView bridge).
+3. **DOM files CANNOT use React Native primitives** (`View`, `Text`, `Pressable`, `StyleSheet`, etc.).
+4. **Each `'use dom'` component file must have exactly one default export** (the component). Named-export-only utility files with `'use dom'` (like `TrainerIcons.tsx`) are an exception — they work when imported by other DOM files.
+5. **Props crossing the native→DOM boundary must be serializable** (strings, numbers, booleans, plain objects/arrays). Function props must be top-level (not nested) and are always async.
+6. **No shared React Context** between native and DOM layers. Data must be passed explicitly via props.
+
+### Icons: Two separate files
+Due to the import boundary, icons are split into two files:
+- `src/components/icons/DOMIcons.tsx` — `'use dom'`, for DOM components
+- `src/components/icons/NativeIcons.tsx` — no directive, for native RN screens in `src/app/`
+
+**Never import `@expo/vector-icons` directly in a component.** Always use the centralized icon files.
+
+### When to use `'use dom'`
+- Any new component that needs Web Audio (Tone.js), HTML rendering, or DOM APIs → **must** use `'use dom'`
+- Any new component that needs native mobile feel, native navigation, or RN-specific APIs → **must NOT** use `'use dom'`
+- Pure logic files (`src/types/`, `src/utils/`, `src/constants/`) → **never** use `'use dom'`
+
+---
+
 ## 🧪 Testing Standards (`src/tests/`)
 
 - **Jest Testing**: All unit and integration tests must be placed in the `src/tests/` folder.
