@@ -1,5 +1,5 @@
 import MidiPlayerDOM from '@/components/MidiPlayerDOM';
-import { MaterialCommunityIcons as MaterialDesignIcons } from '@expo/vector-icons';
+import { IconArrowLeft, IconPiano, IconBookOpen, IconCog } from '@/components/icons/NativeIcons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -20,8 +20,15 @@ export default function TrainerScreen() {
     return `Level ${levelNum}: ${tabLabel}`;
   };
 
+  const renderTabIcon = (name: string, color: string) => {
+    if (name === 'piano') return <IconPiano size={16} color={color} />;
+    if (name === 'book-open') return <IconBookOpen size={16} color={color} />;
+    return <IconCog size={16} color={color} />;
+  };
+
   const renderHeaderTab = (tab: 'practice' | 'theory' | 'settings', iconName: any, label: string) => {
     const isActive = activeTab === tab;
+    const iconColor = isActive ? '#E2E2E6' : '#8A92A6';
     return (
       <Pressable
         onPress={() => setActiveTab(tab)}
@@ -30,11 +37,7 @@ export default function TrainerScreen() {
           isActive && styles.segTabActive
         ]}
       >
-        <MaterialDesignIcons 
-          name={iconName} 
-          size={16} 
-          color={isActive ? '#E2E2E6' : '#8A92A6'} 
-        />
+        {renderTabIcon(iconName, iconColor)}
         <Text style={[
           styles.segTabText,
           isActive && styles.segTabTextActive
@@ -53,7 +56,7 @@ export default function TrainerScreen() {
         <View style={styles.headerBar}>
           <View style={styles.headerLeft}>
             <Pressable style={styles.backBtn} onPress={() => router.back()}>
-              <MaterialDesignIcons name="arrow-left" size={18} color="#C2C7CF" />
+              <IconArrowLeft size={18} color="#C2C7CF" />
             </Pressable>
             <Text style={styles.screenTitle}>
               {isLandscape ? `Level ${levelNum}` : getHeaderTitle()}

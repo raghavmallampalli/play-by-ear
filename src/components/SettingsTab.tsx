@@ -1,7 +1,7 @@
 'use dom';
 
 import React, { useState } from 'react';
-import { MaterialCommunityIcons as MaterialDesignIcons } from '@expo/vector-icons';
+import { IconPiano, IconGuitar } from './icons/DOMIcons';
 import { buildLevel } from '../levels';
 import { domStyles } from './styles/domStyles';
 import { AppSettings, LevelConfig } from '../types/settings';
@@ -139,7 +139,7 @@ export default function SettingsTab({
             }}
             onClick={() => saveSettings({ ...settings, instrumentMode: 'piano' })}
           >
-            <MaterialDesignIcons name="piano" size={14} color="currentColor" />
+            <IconPiano size={14} color="currentColor" />
             Piano
           </button>
           <button
@@ -154,7 +154,7 @@ export default function SettingsTab({
               gap: '6px',
             }}
           >
-            <MaterialDesignIcons name="guitar-acoustic" size={14} color="currentColor" />
+            <IconGuitar size={14} color="currentColor" />
             Guitar
           </button>
         </div>

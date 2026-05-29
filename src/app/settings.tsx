@@ -1,5 +1,5 @@
 import MidiPlayerDOM from '@/components/MidiPlayerDOM';
-import { MaterialCommunityIcons as MaterialDesignIcons } from '@expo/vector-icons';
+import { IconArrowLeft } from '@/components/icons/NativeIcons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -19,7 +19,7 @@ export default function SettingsScreen() {
               router.back();
             }}
           >
-            <MaterialDesignIcons name="arrow-left" size={18} color="#C2C7CF" />
+            <IconArrowLeft size={18} color="#C2C7CF" />
           </Pressable>
           <Text style={styles.screenTitle}>Settings & Preferences</Text>
         </View>

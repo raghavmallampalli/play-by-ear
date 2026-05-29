@@ -1,7 +1,6 @@
 'use dom';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MaterialCommunityIcons as MaterialDesignIcons } from '@expo/vector-icons';
 import { Colors } from '../constants/theme';
 import { useAudioEngine } from '../hooks/useAudioEngine';
 import { buildLevel, EXERCISE_HASHES, getAnswerChoices, getPreloadMidi, isQueuedLevel, LevelSetup } from '../levels';
@@ -11,7 +10,7 @@ import { TimelineSlot } from '../types/levels';
 import { PlayedChord, PlayedNote } from '../types/music';
 import { NoteConverter } from '../utils/note_converter';
 import DawTimeline from './DawTimeline';
-import { IconKeyboard, IconMelody, IconRestart, IconTuningFork } from './icons/TrainerIcons';
+import { IconKeyboard, IconMelody, IconRestart, IconTuningFork, IconPlay, IconPause, IconCheck, IconClose, IconArrowRight, IconPiano, IconBookOpen, IconCog, IconAlert } from './icons/DOMIcons';
 import KeyboardVisualizer from './KeyboardVisualizer';
 import { domStyles } from './styles/domStyles';
 import TheoryTab from './TheoryTab';
@@ -425,7 +424,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
           {audio.hasStarted ? (
             <IconRestart />
           ) : (
-            <MaterialDesignIcons name="play" size={16} color="currentColor" />
+            <IconPlay size={16} color="currentColor" />
           )}
         </button>
       </div>
@@ -583,11 +582,11 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <span style={{ fontSize: '13px', fontWeight: '800', color: themeColors.correct }}>{correctCount}</span>
-              <MaterialDesignIcons name="check" size={12} color={themeColors.correct} />
+              <IconCheck size={12} color={themeColors.correct} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <span style={{ fontSize: '13px', fontWeight: '800', color: themeColors.wrong }}>{wrongCount}</span>
-              <MaterialDesignIcons name="close" size={12} color={themeColors.wrong} />
+              <IconClose size={12} color={themeColors.wrong} />
             </div>
           </div>
 
@@ -617,7 +616,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
               }}
               onClick={handleNextClick}
             >
-              <MaterialDesignIcons name="arrow-right" size={16} color="currentColor" />
+              <IconArrowRight size={16} color="currentColor" />
             </button>
           </div>
         </div>
@@ -838,9 +837,9 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
           zIndex: 9999,
           boxSizing: 'border-box',
         }}>
-          {renderTabButton('practice', <MaterialDesignIcons name="piano" size={22} color="currentColor" />, 'Practice')}
-          {renderTabButton('theory', <MaterialDesignIcons name="book-open" size={22} color="currentColor" />, 'Theory')}
-          {renderTabButton('settings', <MaterialDesignIcons name="cog" size={22} color="currentColor" />, 'Settings')}
+          {renderTabButton('practice', <IconPiano size={22} color="currentColor" />, 'Practice')}
+          {renderTabButton('theory', <IconBookOpen size={22} color="currentColor" />, 'Theory')}
+          {renderTabButton('settings', <IconCog size={22} color="currentColor" />, 'Settings')}
         </div>
 
       </div>
@@ -865,7 +864,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
           <div style={domStyles.modalCard}>
             {/* Warning Icon */}
             <div style={domStyles.modalIconContainer}>
-              <MaterialDesignIcons name="alert" size={28} color="currentColor" />
+              <IconAlert size={28} color="currentColor" />
             </div>
 
             {/* Title & Desc */}

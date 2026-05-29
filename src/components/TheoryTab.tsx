@@ -2,14 +2,14 @@
 
 import { marked } from 'marked';
 import React, { useState } from 'react';
-import { MaterialCommunityIcons as MaterialDesignIcons } from '@expo/vector-icons';
+import { IconInfoOutline, IconPencil, IconCheck } from './icons/DOMIcons';
 import { EXERCISE_HASHES } from '../constants/exercises';
 import { EXERCISE_TO_THEORY_MAP } from '../theory/theory_registry';
 import { getRepoEditUrl } from '../constants/links';
 import { domStyles } from './styles/domStyles';
 
 const IconInfo = () => (
-  <MaterialDesignIcons name="information-outline" size={20} color="#A8C7FA" style={{ flexShrink: 0 }} />
+  <IconInfoOutline size={20} color="#A8C7FA" style={{ flexShrink: 0 }} />
 );
 
 const renderMarkdown = (text: string) => {
@@ -112,7 +112,7 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
           style={domStyles.dashedBtn}
           onClick={() => setIsEditingNotes(true)}
         >
-          <MaterialDesignIcons name="pencil" size={15} color="currentColor" style={domStyles.iconSpacingRight} />
+          <IconPencil size={15} color="currentColor" style={domStyles.iconSpacingRight} />
           Add Notes
         </button>
       ) : isEditingNotes ? (
@@ -129,7 +129,7 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
             style={domStyles.primaryBtn}
             onClick={() => setIsEditingNotes(false)}
           >
-            <MaterialDesignIcons name="check" size={14} color="currentColor" style={domStyles.iconSpacingRightSmall} />
+            <IconCheck size={14} color="currentColor" style={domStyles.iconSpacingRightSmall} />
             Done Editing
           </button>
         </div>
@@ -146,7 +146,7 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
           }}>
             <span style={{ fontSize: '11px', color: '#8A92A6', fontWeight: 700 }}>YOUR NOTES</span>
             <span style={{ fontSize: '10px', color: '#A8C7FA', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
-              <MaterialDesignIcons name="pencil" size={11} color="currentColor" style={{ marginRight: 3 }} />
+              <IconPencil size={11} color="currentColor" style={{ marginRight: 3 }} />
               CLICK TO EDIT
             </span>
           </div>

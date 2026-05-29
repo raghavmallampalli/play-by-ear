@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet, View, Text, Pressable, ScrollView, Linking, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { MaterialCommunityIcons as MaterialDesignIcons } from '@expo/vector-icons';
+import { IconPiano, IconWrench, IconCog } from '@/components/icons/NativeIcons';
 import { log } from '@/utils/logger';
 import { REPO_BASE_URL } from '../constants/links';
 
@@ -55,7 +55,7 @@ export default function DashboardScreen() {
             >
               
               <View style={styles.iconContainerPrimary}>
-                <MaterialDesignIcons name="piano" size={36} color="#0A305F" />
+                <IconPiano size={36} color="#0A305F" />
               </View>
 
               <Text style={styles.cardTitle}>Relative Pitch Trainer</Text>
@@ -70,7 +70,7 @@ export default function DashboardScreen() {
             >
               <View style={styles.cardHeaderRow}>
                 <View style={styles.iconContainerDisabled}>
-                  <MaterialDesignIcons name="wrench" size={36} color="#53565F" />
+                  <IconWrench size={36} color="#53565F" />
                 </View>
                 <View style={styles.grayBadge}>
                   <Text style={styles.grayBadgeText}>COMING SOON</Text>
@@ -93,7 +93,7 @@ export default function DashboardScreen() {
             >
               <View style={styles.cardHeaderRow}>
                 <View style={styles.iconContainerSecondary}>
-                  <MaterialDesignIcons name="cog" size={36} color="#A8C7FA" />
+                  <IconCog size={36} color="#A8C7FA" />
                 </View>
               </View>
               <Text style={styles.smallCardTitle}>Settings & Preferences</Text>

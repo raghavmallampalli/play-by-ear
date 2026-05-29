@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { MaterialCommunityIcons as MaterialDesignIcons } from '@expo/vector-icons';
+import { IconArrowLeft } from '@/components/icons/NativeIcons';
 import MidiPlayerDOM from '@/components/MidiPlayerDOM';
 
 export default function MidiPlayerScreen() {
@@ -15,7 +15,7 @@ export default function MidiPlayerScreen() {
         {/* Header navigation bar */}
         <View style={styles.headerBar}>
           <Pressable style={styles.backBtn} onPress={() => router.back()}>
-            <MaterialDesignIcons name="arrow-left" size={18} color="#C2C7CF" />
+            <IconArrowLeft size={18} color="#C2C7CF" />
           </Pressable>
           <Text style={styles.screenTitle}>MIDI Sandbox</Text>
         </View>
