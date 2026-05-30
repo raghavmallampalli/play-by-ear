@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, View, Text, Pressable, ScrollView, Linking, useWindowDimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { IconPiano, IconWrench, IconCog } from '@/components/icons/NativeIcons';
+import { IconCog, IconPiano, IconMusic } from '@/components/icons/NativeIcons';
 import { log } from '@/utils/logger';
+import { useRouter } from 'expo-router';
+import React, { useEffect } from 'react';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { REPO_BASE_URL } from '../constants/links';
 
 export default function DashboardScreen() {
@@ -18,15 +18,15 @@ export default function DashboardScreen() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView 
+        <ScrollView
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,
             isLandscape && styles.scrollContentLandscape
-          ]} 
+          ]}
           showsVerticalScrollIndicator={false}
         >
-          
+
           {/* Header Section */}
           <View style={[styles.headerContainer, isLandscape && styles.headerContainerLandscape]}>
             <View style={[styles.header, isLandscape && styles.headerLandscape]}>
@@ -40,9 +40,9 @@ export default function DashboardScreen() {
             styles.grid,
             isLandscape && styles.gridLandscape
           ]}>
-            
+
             {/* Primary Action Card: Trainer */}
-            <Pressable 
+            <Pressable
               style={({ pressed }) => [
                 styles.primaryCard,
                 isLandscape && styles.cardLandscape,
@@ -53,7 +53,7 @@ export default function DashboardScreen() {
                 router.push('/difficulty');
               }}
             >
-              
+
               <View style={styles.iconContainerPrimary}>
                 <IconPiano size={36} color="#0A305F" />
               </View>
@@ -61,26 +61,28 @@ export default function DashboardScreen() {
               <Text style={styles.cardTitle}>Relative Pitch Trainer</Text>
             </Pressable>
 
-            {/* Dummy Screen C: MIDI Sandbox */}
-            <Pressable 
-              style={[styles.disabledCard, isLandscape && styles.cardLandscape]}
+            {/* Screen C: MIDI Player */}
+            <Pressable
+              style={({ pressed }) => [
+                styles.smallPrimaryCard,
+                isLandscape && styles.cardLandscape,
+                pressed && styles.cardPressed
+              ]}
               onPress={() => {
-                log.debug("Dashboard: User clicked locked MIDI Sandbox card (Coming Soon).");
+                log.info("Dashboard: Navigating to MIDI Player screen.");
+                router.push('/midi_player');
               }}
             >
               <View style={styles.cardHeaderRow}>
-                <View style={styles.iconContainerDisabled}>
-                  <IconWrench size={36} color="#53565F" />
-                </View>
-                <View style={styles.grayBadge}>
-                  <Text style={styles.grayBadgeText}>COMING SOON</Text>
+                <View style={styles.iconContainerSecondary}>
+                  <IconMusic size={36} color="#A8C7FA" />
                 </View>
               </View>
-              <Text style={[styles.smallCardTitle, { color: '#53565F' }]}>MIDI Sandbox</Text>
+              <Text style={styles.smallCardTitle}>MIDI Player</Text>
             </Pressable>
 
             {/* Screen D: Settings & Preferences */}
-            <Pressable 
+            <Pressable
               style={({ pressed }) => [
                 styles.smallPrimaryCard,
                 isLandscape && styles.cardLandscape,

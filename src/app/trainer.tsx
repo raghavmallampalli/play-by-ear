@@ -1,5 +1,5 @@
 import MidiPlayerDOM from '@/components/MidiPlayerDOM';
-import { IconArrowLeft, IconPiano, IconBookOpen, IconCog } from '@/components/icons/NativeIcons';
+import { IconArrowLeft, IconBookOpen, IconCog, IconPiano } from '@/components/icons/NativeIcons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -74,11 +74,11 @@ export default function TrainerScreen() {
 
         {/* DOM Trainer Component */}
         <View style={styles.playerWrapper}>
-          <MidiPlayerDOM 
-            mode="trainer" 
-            level={levelNum} 
+          <MidiPlayerDOM
+            mode="trainer"
+            level={levelNum}
             activeTab={activeTab}
-            onTabChange={setActiveTab}
+            onTabChange={(tab) => setActiveTab(tab as 'practice' | 'theory' | 'settings')}
             onNextLevel={() => {
               if (levelNum < 27) {
                 router.replace({
