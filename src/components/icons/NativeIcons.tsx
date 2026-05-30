@@ -30,3 +30,11 @@ export const IconPlay = ({ size = 10, color = '#0A305F', style }: IconProps) => 
 export const IconBookOpen = ({ size = 16, color = 'currentColor', style }: IconProps) => (
   <MaterialDesignIcons name="book-open" size={size} color={color} style={style} />
 );
+
+export const IconMusic = ({ size = 36, color = '#A8C7FA', style }: IconProps) => (
+  <MaterialDesignIcons name="music" size={size} color={color} style={style} />
+);
+
+export const IconFolder = ({ size = 20, color = 'currentColor', style }: IconProps) => (
+  <MaterialDesignIcons name="folder" size={size} color={color} style={style} />
+);

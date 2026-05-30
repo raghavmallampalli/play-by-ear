@@ -74,3 +74,19 @@ export const IconCog = ({ size = 22, color = 'currentColor', style }: IconProps)
 export const IconAlert = ({ size = 28, color = 'currentColor', style }: IconProps) => (
   <MaterialDesignIcons name="alert" size={size} color={color} style={style} />
 );
+
+export const IconMusic = ({ size = 20, color = 'currentColor', style }: IconProps) => (
+  <MaterialDesignIcons name="music" size={size} color={color} style={style} />
+);
+
+export const IconHistory = ({ size = 20, color = 'currentColor', style }: IconProps) => (
+  <MaterialDesignIcons name="history" size={size} color={color} style={style} />
+);
+
+export const IconUpload = ({ size = 20, color = 'currentColor', style }: IconProps) => (
+  <MaterialDesignIcons name="upload" size={size} color={color} style={style} />
+);
+
+export const IconFolder = ({ size = 20, color = 'currentColor', style }: IconProps) => (
+  <MaterialDesignIcons name="folder" size={size} color={color} style={style} />
+);

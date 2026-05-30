@@ -6,6 +6,7 @@ export interface AppSettings {
   chordLabelSystem: ChordLabelSystem;
   visualizerEnabled: boolean;
   tempoMap: Record<number, number>;
+  midiTempoMap?: Record<string, number>;
   confirmRestartLevel: boolean;
 }
 

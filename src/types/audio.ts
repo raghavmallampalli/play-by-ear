@@ -1,8 +1,8 @@
-import { PlayedNote, PlayedChord } from './music';
 import { NoteConverter } from '../utils/note_converter';
+import { PlayedChord, PlayedNote } from './music';
 
 export interface AudioEngineOptions {
-  mode: 'trainer' | 'sandbox' | 'progress';
+  mode: 'trainer' | 'progress' | 'midi_player';
   level: number;
   preloadMidi: number[];
 }
@@ -24,4 +24,6 @@ export interface AudioEngine {
   playMelodyOnly: (melody: PlayedNote[], converter: NoteConverter) => void;
   resetStartFlags: () => void;
   setPlayheadTime: (t: number) => void;
+  seekPlayback?: (time: number) => void;
+  startDirectMidiPlayback?: (notes: { midi: number; time: number; duration: number; velocity: number }[], speed?: number) => void;
 }
