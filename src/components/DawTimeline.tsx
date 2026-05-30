@@ -1,12 +1,12 @@
 'use dom';
 
 import React from 'react';
+import { displayLabel } from '../levels/labels';
+import { ChordLabelSystem, MelodyLabelSystem } from '../types/labels';
 import { TimelineSlot } from '../types/levels';
 import { NoteConverter } from '../utils/note_converter';
-import { domStyles } from './styles/domStyles';
 import { setupHorizontalWheelScroll } from '../utils/scroll_helper';
-import { displayLabel } from '../levels/labels';
-import { MelodyLabelSystem, ChordLabelSystem } from '../types/labels';
+import { domStyles } from './styles/domStyles';
 
 import { isQueuedLevel } from '../levels';
 
@@ -22,6 +22,8 @@ interface DawTimelineProps {
   onPlayPause: () => void;
   melodyLabelSystem?: MelodyLabelSystem;
   chordLabelSystem?: ChordLabelSystem;
+  onSeek?: (time: number) => void;
+  revealAllLabels?: boolean;
 }
 
 const dawStyles = {
@@ -48,16 +50,43 @@ export default function DawTimeline({
   onPlayPause,
   melodyLabelSystem = 'carnatic',
   chordLabelSystem = 'roman',
+  onSeek,
+  revealAllLabels = false,
 }: DawTimelineProps) {
   // Derive timeline width from the last slot's time, falling back to a level default
   const isQueued = isQueuedLevel(level);
-  const lastSlotTime = timelineSlots.length > 0 
-    ? Math.max(...timelineSlots.map(s => converter.ticksToSeconds(s.beat))) + 2.5 
+  const lastSlotTime = timelineSlots.length > 0
+    ? Math.max(...timelineSlots.map(s => converter.ticksToSeconds(s.beat))) + 2.5
     : 3.0;
   const maxDuration = isQueued
     ? lastSlotTime
     : Math.max(lastSlotTime, level === 3 ? 18.0 : (level >= 6 ? 20.0 : (level >= 4 ? 15.0 : 3.0)));
   const barCount = Math.ceil(maxDuration);
+
+  // Enforce dynamic width based on median difference of note times to prevent overlaps
+  const uniqueTimes = Array.from(new Set(timelineSlots.map(s => converter.ticksToSeconds(s.beat)))).sort((a, b) => a - b);
+  const diffs: number[] = [];
+  for (let i = 1; i < uniqueTimes.length; i++) {
+    const diff = uniqueTimes[i] - uniqueTimes[i - 1];
+    if (diff > 0.001) {
+      diffs.push(diff);
+    }
+  }
+  let medianDiff = 0.5;
+  if (diffs.length > 0) {
+    const sorted = [...diffs].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    medianDiff = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  }
+  const minPixelsPerNote = 50;
+  const derivedScale = minPixelsPerNote / Math.max(0.01, medianDiff);
+  const pixelsPerSecond = Math.min(600, Math.max(120, derivedScale));
+
+  // Determine beat grid subdivisions dynamically
+  const oneBeatTicks = converter.ticksPerBeat;
+  const oneBeatSecs = oneBeatTicks > 0 ? converter.ticksToSeconds(oneBeatTicks) : 0.5;
+  const beatWidth = oneBeatSecs * pixelsPerSecond;
+  const tickGridSpacing = beatWidth / 4;
 
 
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
@@ -68,27 +97,27 @@ export default function DawTimeline({
 
   React.useEffect(() => {
     if (scrollContainerRef.current && playheadTime > 0) {
-      const playheadX = 54 + playheadTime * 120;
+      const playheadX = 54 + playheadTime * pixelsPerSecond;
       const containerWidth = scrollContainerRef.current.clientWidth;
       scrollContainerRef.current.scrollLeft = playheadX - containerWidth / 2;
     } else if (scrollContainerRef.current && playheadTime === 0 && isPlaying) {
       scrollContainerRef.current.scrollLeft = 0;
     }
-  }, [playheadTime, isPlaying]);
+  }, [playheadTime, isPlaying, pixelsPerSecond]);
 
   React.useEffect(() => {
     if (!isPlaying && scrollContainerRef.current && focusedSlotIndex !== null && timelineSlots[focusedSlotIndex]) {
       const slot = timelineSlots[focusedSlotIndex];
       const slotTime = converter.ticksToSeconds(slot.beat);
-      const slotX = 54 + slotTime * 120;
+      const slotX = 54 + slotTime * pixelsPerSecond;
       const containerWidth = scrollContainerRef.current.clientWidth;
-      
+
       scrollContainerRef.current.scrollTo({
         left: slotX - containerWidth / 2,
         behavior: 'smooth',
       });
     }
-  }, [focusedSlotIndex, timelineSlots, converter, isPlaying]);
+  }, [focusedSlotIndex, timelineSlots, converter, isPlaying, pixelsPerSecond]);
 
   const [hasOverflow, setHasOverflow] = React.useState(false);
 
@@ -97,19 +126,19 @@ export default function DawTimeline({
       const { clientWidth } = scrollContainerRef.current;
       if (clientWidth <= 0) return;
 
-      const lastSlotTime = timelineSlots.length > 0 
+      const lastSlotTime = timelineSlots.length > 0
         ? Math.max(...timelineSlots.map(s => converter.ticksToSeconds(s.beat)))
         : 0;
-      const maxNoteWidth = 54 + lastSlotTime * 120 + 54;
-      
-      const playheadX = 54 + playheadTime * 120 + 54;
+      const maxNoteWidth = 54 + lastSlotTime * pixelsPerSecond + 54;
+
+      const playheadX = 54 + playheadTime * pixelsPerSecond + 54;
       const isPlayheadOut = playheadX > clientWidth;
-      
+
       const needsOverflow = maxNoteWidth > clientWidth || (playheadTime > 0 && isPlayheadOut);
-      
+
       setHasOverflow(needsOverflow);
     }
-  }, [timelineSlots, playheadTime, converter]);
+  }, [timelineSlots, playheadTime, converter, pixelsPerSecond]);
 
   React.useEffect(() => {
     checkOverflow();
@@ -146,11 +175,19 @@ export default function DawTimeline({
             backgroundColor: '#111318', borderRadius: '12px',
             border: '1px solid rgba(255,255,255,0.03)',
             padding: '7px 0', boxSizing: 'border-box', userSelect: 'none',
+            cursor: onSeek ? 'pointer' : 'default',
+          }}
+          onClick={(e) => {
+            if (!onSeek) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const clickX = e.clientX - rect.left + e.currentTarget.scrollLeft;
+            const targetSeconds = (clickX - 54) / pixelsPerSecond;
+            onSeek(Math.max(0, Math.min(maxDuration, targetSeconds)));
           }}
         >
           <div style={{
             height: '52px',
-            width: `${108 + barCount * 120}px`,
+            width: `${108 + barCount * pixelsPerSecond}px`,
             position: 'relative', display: 'flex', alignItems: 'center',
           }}>
             {/* Beat grid lines */}
@@ -163,7 +200,7 @@ export default function DawTimeline({
                     borderLeft: i % 4 === 0
                       ? '1px dashed rgba(255,255,255,0.12)'
                       : '1px dotted rgba(255,255,255,0.04)',
-                    left: `${54 + i * 30}px`,
+                    left: `${54 + i * tickGridSpacing}px`,
                   }}
                 />
               ))}
@@ -175,23 +212,27 @@ export default function DawTimeline({
                 position: 'absolute', top: 0, bottom: 0, width: '1.5px',
                 backgroundColor: '#A8C7FA', zIndex: 105,
                 boxShadow: '0 0 8px rgba(168, 199, 250, 0.4)',
-                left: `${54 + playheadTime * 120}px`,
+                left: `${54 + playheadTime * pixelsPerSecond}px`,
               }} />
             )}
 
             {/* Interactive Slots */}
             {timelineSlots.map((slot, index) => {
-              const isSolved = slot.answer !== null;
-              const isFocused = focusedSlotIndex === index && !isSolved;
+              const isSolved = slot.answer !== null || revealAllLabels;
+              const isFocused = focusedSlotIndex === index && !isSolved && !revealAllLabels;
               const slotTime = converter.ticksToSeconds(slot.beat);
 
-              const slotStyle = !hasStarted
+              const slotStyle = (!hasStarted && !revealAllLabels)
                 ? domStyles.disabledBtn
                 : (isFocused
-                    ? domStyles.primaryBtn
-                    : (isSolved
-                        ? (slot.correct ? domStyles.correctBtn : domStyles.wrongBtn)
-                        : domStyles.secondaryBtn));
+                  ? domStyles.primaryBtn
+                  : (isSolved
+                    ? (slot.correct ? domStyles.correctBtn : domStyles.wrongBtn)
+                    : domStyles.secondaryBtn));
+
+              const displayVal = isSolved
+                ? displayLabel(slot.answer || '', melodyLabelSystem, chordLabelSystem, converter.tonicPitchClass)
+                : '';
 
               return (
                 <div
@@ -199,7 +240,7 @@ export default function DawTimeline({
                   style={{
                     ...slotStyle,
                     position: 'absolute',
-                    left: `${54 + slotTime * 120}px`,
+                    left: `${54 + slotTime * pixelsPerSecond}px`,
                     transform: 'translateX(-50%)',
                     height: '32px',
                     minWidth: '32px',
@@ -207,14 +248,12 @@ export default function DawTimeline({
                     padding: '0 8px',
                     borderRadius: '10px',
                     zIndex: isFocused ? 110 : 100,
-                    cursor: !hasStarted ? 'default' : 'pointer',
-                    pointerEvents: !hasStarted ? 'none' : 'auto',
+                    cursor: (!hasStarted && !revealAllLabels) ? 'default' : 'pointer',
+                    pointerEvents: (!hasStarted && !revealAllLabels) ? 'none' : 'auto',
                   }}
-                  onClick={() => hasStarted && onSlotClick(index, slot)}
+                  onClick={() => (hasStarted || revealAllLabels) && onSlotClick(index, slot)}
                 >
-                  {isSolved 
-                    ? displayLabel(slot.answer || '', melodyLabelSystem, chordLabelSystem, converter.tonicPitchClass) 
-                    : ''}
+                  {displayVal}
                 </div>
               );
             })}

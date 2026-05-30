@@ -11,9 +11,11 @@ interface SettingsTabProps {
   saveSettings: (newSettings: AppSettings) => void;
   isFromTrainer?: boolean;
   level: number;
-  mode: 'trainer' | 'sandbox' | 'progress' | 'settings';
+  mode: 'trainer' | 'progress' | 'settings' | 'midi_player';
   levelConfig: LevelConfig;
   setLevelConfig: React.Dispatch<React.SetStateAction<LevelConfig>>;
+  midiFileName?: string;
+  defaultMidiBpm?: number;
 }
 
 export default function SettingsTab({
@@ -24,6 +26,8 @@ export default function SettingsTab({
   mode,
   levelConfig,
   setLevelConfig,
+  midiFileName,
+  defaultMidiBpm,
 }: SettingsTabProps) {
   const [copiedExport, setCopiedExport] = useState(false);
   const [importJson, setImportJson] = useState('');
@@ -62,15 +66,20 @@ export default function SettingsTab({
       {/* BPM controls only if from trainer */}
       {isFromTrainer && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}>
-          <h4 style={domStyles.settingTitle}>Trainer Tempo (BPM)</h4>
+          <h4 style={domStyles.settingTitle}>{midiFileName ? 'Song Tempo (BPM)' : 'Trainer Tempo (BPM)'}</h4>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
               style={{ ...domStyles.secondaryBtn, width: '40px', height: '40px', padding: 0, minWidth: '40px' }}
               onClick={() => {
                 const nextBpm = Math.max(40, levelConfig.bpm - 5);
                 setLevelConfig(prev => ({ ...prev, bpm: nextBpm }));
-                const nextMap = { ...settings.tempoMap, [level]: nextBpm };
-                saveSettings({ ...settings, tempoMap: nextMap });
+                if (midiFileName) {
+                  const nextMidiMap = { ...(settings.midiTempoMap || {}), [midiFileName]: nextBpm };
+                  saveSettings({ ...settings, midiTempoMap: nextMidiMap });
+                } else {
+                  const nextMap = { ...settings.tempoMap, [level]: nextBpm };
+                  saveSettings({ ...settings, tempoMap: nextMap });
+                }
               }}
             >
               -
@@ -83,8 +92,13 @@ export default function SettingsTab({
               onClick={() => {
                 const nextBpm = Math.min(240, levelConfig.bpm + 5);
                 setLevelConfig(prev => ({ ...prev, bpm: nextBpm }));
-                const nextMap = { ...settings.tempoMap, [level]: nextBpm };
-                saveSettings({ ...settings, tempoMap: nextMap });
+                if (midiFileName) {
+                  const nextMidiMap = { ...(settings.midiTempoMap || {}), [midiFileName]: nextBpm };
+                  saveSettings({ ...settings, midiTempoMap: nextMidiMap });
+                } else {
+                  const nextMap = { ...settings.tempoMap, [level]: nextBpm };
+                  saveSettings({ ...settings, tempoMap: nextMap });
+                }
               }}
             >
               +
@@ -92,12 +106,21 @@ export default function SettingsTab({
             <button
               style={{ ...domStyles.dashedBtn, height: '36px', minWidth: '80px', padding: '0 10px', fontSize: '11px', marginLeft: 'auto' }}
               onClick={() => {
-                const defaultSetup = buildLevel(mode === 'settings' ? 'trainer' : mode, level);
-                const defaultBpm = defaultSetup.bpm;
-                setLevelConfig(prev => ({ ...prev, bpm: defaultBpm }));
-                const nextMap = { ...settings.tempoMap };
-                delete nextMap[level];
-                saveSettings({ ...settings, tempoMap: nextMap });
+                if (midiFileName) {
+                  const defaultBpm = defaultMidiBpm ?? 120;
+                  setLevelConfig(prev => ({ ...prev, bpm: defaultBpm }));
+                  const nextMidiMap = { ...(settings.midiTempoMap || {}) };
+                  delete nextMidiMap[midiFileName];
+                  saveSettings({ ...settings, midiTempoMap: nextMidiMap });
+                } else {
+                  const buildMode = (mode === 'settings' || mode === 'midi_player') ? 'trainer' as const : mode;
+                  const defaultSetup = buildLevel(buildMode, level);
+                  const defaultBpm = defaultSetup.bpm;
+                  setLevelConfig(prev => ({ ...prev, bpm: defaultBpm }));
+                  const nextMap = { ...settings.tempoMap };
+                  delete nextMap[level];
+                  saveSettings({ ...settings, tempoMap: nextMap });
+                }
               }}
             >
               Reset Default
@@ -111,8 +134,13 @@ export default function SettingsTab({
             onChange={(e) => {
               const nextBpm = Number(e.target.value);
               setLevelConfig(prev => ({ ...prev, bpm: nextBpm }));
-              const nextMap = { ...settings.tempoMap, [level]: nextBpm };
-              saveSettings({ ...settings, tempoMap: nextMap });
+              if (midiFileName) {
+                const nextMidiMap = { ...(settings.midiTempoMap || {}), [midiFileName]: nextBpm };
+                saveSettings({ ...settings, midiTempoMap: nextMidiMap });
+              } else {
+                const nextMap = { ...settings.tempoMap, [level]: nextBpm };
+                saveSettings({ ...settings, tempoMap: nextMap });
+              }
             }}
             style={{
               width: '100%',
