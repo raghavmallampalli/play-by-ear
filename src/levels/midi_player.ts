@@ -7,8 +7,8 @@ const TONIC = 0;
 const OCTAVE = 4;
 const converter = new NoteConverter(TONIC, OCTAVE, BPM, TICKS_PER_BEAT);
 
-/** Full sandbox demo: chord + melody layers across 4 bars. */
-export function buildSandboxNotes(): { melody: PlayedNote[], chords: PlayedChord[] } {
+/** Full midi_player demo: chord + melody layers across 4 bars. */
+export function buildMidiPlayerDemoNotes(): { melody: PlayedNote[], chords: PlayedChord[] } {
   const melody: PlayedNote[] = [];
   const chords: PlayedChord[] = [];
 
@@ -50,7 +50,7 @@ export function buildSandboxNotes(): { melody: PlayedNote[], chords: PlayedChord
   return { melody, chords };
 }
 
-export const SANDBOX_PRELOAD_MIDI = [
+export const MIDI_PLAYER_PRELOAD_MIDI = [
   48, 55, 60, 64, 67, 71, 72, 76, 79, 83,
   45, 52, 57, 81,
   41, 48, 53, 69, 77, 84, 88,

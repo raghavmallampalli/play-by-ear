@@ -42,13 +42,13 @@ describe('Levels System', () => {
   });
 
   describe('buildLevel & getPreloadMidi', () => {
-    test('builds sandbox level and preload midi successfully', () => {
-      const sandbox = buildLevel('sandbox', 1);
-      expect(sandbox).toBeDefined();
-      expect(sandbox.bpm).toBe(120);
-      expect(sandbox.preloadMidi.length).toBeGreaterThan(0);
+    test('builds midi_player level and preload midi successfully', () => {
+      const midiPlayer = buildLevel('midi_player', 1);
+      expect(midiPlayer).toBeDefined();
+      expect(midiPlayer.bpm).toBe(120);
+      expect(midiPlayer.preloadMidi.length).toBeGreaterThan(0);
 
-      const preloadMidi = getPreloadMidi('sandbox', 1);
+      const preloadMidi = getPreloadMidi('midi_player', 1);
       expect(preloadMidi.length).toBeGreaterThan(0);
     });
 

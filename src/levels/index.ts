@@ -4,7 +4,7 @@ import { buildLevel3 } from './level3';
 import { buildLevel4 } from './level4';
 import { buildLevel5 } from './level5';
 import { buildLevel6 } from './level6';
-import { buildSandboxNotes, SANDBOX_PRELOAD_MIDI } from './sandbox';
+import { buildMidiPlayerDemoNotes, MIDI_PLAYER_PRELOAD_MIDI } from './midi_player';
 import { LevelSetup } from '../types/levels';
 import { NoteConverter } from '../utils/note_converter';
 
@@ -38,8 +38,8 @@ export function getAnswerChoices(level: number): string[] {
 }
 
 /** All MIDI notes that should be warm-cached for the given mode/level. */
-export function getPreloadMidi(mode: 'trainer' | 'sandbox' | 'progress', level: number): number[] {
-  if (mode === 'sandbox') return SANDBOX_PRELOAD_MIDI;
+export function getPreloadMidi(mode: 'trainer' | 'midi_player' | 'progress', level: number): number[] {
+  if (mode === 'midi_player') return MIDI_PLAYER_PRELOAD_MIDI;
   try {
     const setup = buildLevel(mode, level);
     const converter = new NoteConverter(setup.tonicPitchClass, setup.baseOctave, setup.bpm, setup.ticksPerBeat);
@@ -103,11 +103,11 @@ export function getPreloadMidi(mode: 'trainer' | 'sandbox' | 'progress', level: 
 
 /** Build the full exercise (notes + slots + bpm) for a trainer level. */
 export function buildLevel(
-  mode: 'trainer' | 'sandbox' | 'progress',
+  mode: 'trainer' | 'midi_player' | 'progress',
   level: number,
 ): LevelSetup {
-  if (mode === 'sandbox') {
-    const { melody, chords } = buildSandboxNotes();
+  if (mode === 'midi_player') {
+    const { melody, chords } = buildMidiPlayerDemoNotes();
     return {
       melody,
       chords,
@@ -116,7 +116,7 @@ export function buildLevel(
       ticksPerBeat: 480,
       tonicPitchClass: 0,
       baseOctave: 4,
-      preloadMidi: SANDBOX_PRELOAD_MIDI
+      preloadMidi: MIDI_PLAYER_PRELOAD_MIDI
     };
   }
   switch (level) {
