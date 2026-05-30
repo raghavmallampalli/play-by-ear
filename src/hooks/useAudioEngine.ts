@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { pianoSamples } from '../constants/piano_samples';
-import { PlayedNote, PlayedChord } from '../types/music';
+import { PlayedChord, PlayedNote } from '../types/music';
 import { NoteConverter } from '../utils/note_converter';
 
-import { AudioEngineOptions, AudioEngine } from '../types/audio';
+import { AudioEngine, AudioEngineOptions } from '../types/audio';
 
-export function useAudioEngine({ preloadMidi }: AudioEngineOptions): AudioEngine {
+export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): AudioEngine {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playheadTime, setPlayheadTime] = useState(0);
   const [activeNotes, setActiveNotes] = useState<number[]>([]);
@@ -21,9 +21,9 @@ export function useAudioEngine({ preloadMidi }: AudioEngineOptions): AudioEngine
   const startTimeoutRef = useRef<any>(null);
   const lastTickTimeRef = useRef<number>(0);
   const nextNoteIndexRef = useRef<number>(0);
-  
+
   // Refactor: Store flat list of absolute notes for the scheduler to minimize runtime overhead
-  const scheduledNotesRef = useRef<{midi: number, time: number, duration: number, velocity: number}[]>([]);
+  const scheduledNotesRef = useRef<{ midi: number, time: number, duration: number, velocity: number }[]>([]);
   const playheadRef = useRef<number>(0);
 
   useEffect(() => { playheadRef.current = playheadTime; }, [playheadTime]);
@@ -64,7 +64,7 @@ export function useAudioEngine({ preloadMidi }: AudioEngineOptions): AudioEngine
       .then(r => r.arrayBuffer())
       .then(ab => audioCtxRef.current?.decodeAudioData(ab))
       .then(buf => { if (buf) audioBuffersRef.current.set(midi, buf); })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   // ─── Synthesis ─────────────────────────────────────────────────────────────
@@ -133,6 +133,7 @@ export function useAudioEngine({ preloadMidi }: AudioEngineOptions): AudioEngine
     const lastNoteEnd = notes.length > 0 ? Math.max(...notes.map(n => n.time + n.duration)) + 0.5 : 3.0;
 
     if (newPlayhead >= lastNoteEnd) {
+
       stopPlayback();
       return;
     }
@@ -155,12 +156,14 @@ export function useAudioEngine({ preloadMidi }: AudioEngineOptions): AudioEngine
   // ─── Playback Control ──────────────────────────────────────────────────────
 
   const pausePlayback = useCallback(() => {
+
     if (startTimeoutRef.current) { clearTimeout(startTimeoutRef.current); startTimeoutRef.current = null; }
     if (schedulerTimerRef.current) { clearInterval(schedulerTimerRef.current); schedulerTimerRef.current = null; }
     setIsPlaying(false);
   }, []);
 
   const stopPlayback = useCallback(() => {
+
     pausePlayback();
     setPlayheadTime(0);
     playheadRef.current = 0;
@@ -169,12 +172,13 @@ export function useAudioEngine({ preloadMidi }: AudioEngineOptions): AudioEngine
   }, [pausePlayback]);
 
   const startPlayback = useCallback(async (melody: PlayedNote[], chords: PlayedChord[], converter: NoteConverter, skipCadence = false) => {
+
     await initAudio();
     if (isPlaying) return;
 
     // Prepare scheduled notes (convert Relative -> MIDI and Ticks -> Seconds)
-    const absoluteNotes: {midi: number, time: number, duration: number, velocity: number}[] = [];
-    
+    const absoluteNotes: { midi: number, time: number, duration: number, velocity: number }[] = [];
+
     melody.forEach(n => {
       absoluteNotes.push({
         midi: converter.toMidi(n.note),
@@ -196,26 +200,31 @@ export function useAudioEngine({ preloadMidi }: AudioEngineOptions): AudioEngine
     });
 
     scheduledNotesRef.current = absoluteNotes.sort((a, b) => a.time - b.time);
+
     setIsPlaying(true);
     setHasStarted(true);
 
     const ctx = audioCtxRef.current!;
     const doStart = () => {
+
       lastTickTimeRef.current = ctx.currentTime;
       let idx = 0;
       while (idx < scheduledNotesRef.current.length && scheduledNotesRef.current[idx].time < playheadRef.current) idx++;
       nextNoteIndexRef.current = idx;
       schedulerTimerRef.current = setInterval(runScheduler, 25);
+
     };
 
-    if (playheadRef.current === 0 && !hasPlayedCadence && !skipCadence) {
+    if (playheadRef.current === 0 && !hasPlayedCadence && !skipCadence && mode !== 'midi_player') {
+
       playGroundingCadenceInternal(ctx, converter);
       setHasPlayedCadence(true);
       startTimeoutRef.current = setTimeout(doStart, 3700);
     } else {
+
       doStart();
     }
-  }, [isPlaying, hasPlayedCadence, runScheduler, initAudio]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isPlaying, hasPlayedCadence, runScheduler, initAudio, mode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Convenience Playback ──────────────────────────────────────────────────
 
@@ -233,13 +242,15 @@ export function useAudioEngine({ preloadMidi }: AudioEngineOptions): AudioEngine
   };
 
   const playGroundingCadence = useCallback((converter: NoteConverter) => {
+    stopPlayback();
     initAudio().then(() => {
       const ctx = audioCtxRef.current;
       if (ctx) playGroundingCadenceInternal(ctx, converter);
     });
-  }, [initAudio]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initAudio, stopPlayback]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const playTonicRootChord = useCallback((converter: NoteConverter) => {
+    stopPlayback();
     initAudio().then(() => {
       const ctx = audioCtxRef.current;
       if (!ctx) return;
@@ -250,7 +261,7 @@ export function useAudioEngine({ preloadMidi }: AudioEngineOptions): AudioEngine
         playSynthNote(ctx, converter.toMidi(relNote), now + i * 0.02, 1.8, 0.8);
       });
     });
-  }, [initAudio, playSynthNote]);
+  }, [initAudio, playSynthNote, stopPlayback]);
 
   const triggerLiveNote = useCallback((midi: number, showHighlight = true) => {
     initAudio().then(() => {
@@ -264,26 +275,27 @@ export function useAudioEngine({ preloadMidi }: AudioEngineOptions): AudioEngine
       const ctx = audioCtxRef.current;
       if (!ctx) return;
       const now = ctx.currentTime;
-      const chord = (relNotes: {degree: number, offset: number}[]) =>
+      const chord = (relNotes: { degree: number, offset: number }[]) =>
         relNotes.forEach((n, i) => playSynthNote(ctx, converter.toMidi(n), now + i * 0.02, 1.2, 0.7, showHighlight));
-      
+
       switch (choice) {
-        case '1': playSynthNote(ctx, converter.toMidi({degree:0, offset:0}), now, 0.6, 0.85, showHighlight); break;
-        case '2': playSynthNote(ctx, converter.toMidi({degree:2, offset:0}), now, 0.6, 0.85, showHighlight); break;
-        case '3': playSynthNote(ctx, converter.toMidi({degree:4, offset:0}), now, 0.6, 0.85, showHighlight); break;
-        case '4': playSynthNote(ctx, converter.toMidi({degree:5, offset:0}), now, 0.6, 0.85, showHighlight); break;
-        case '5': playSynthNote(ctx, converter.toMidi({degree:7, offset:0}), now, 0.6, 0.85, showHighlight); break;
-        case '6': playSynthNote(ctx, converter.toMidi({degree:9, offset:0}), now, 0.6, 0.85, showHighlight); break;
-        case '7': playSynthNote(ctx, converter.toMidi({degree:11, offset:0}), now, 0.6, 0.85, showHighlight); break;
-        case '8': playSynthNote(ctx, converter.toMidi({degree:0, offset:1}), now, 0.6, 0.85, showHighlight); break;
-        case 'I':  chord([{degree:0, offset:-1}, {degree:4, offset:-1}, {degree:7, offset:-1}]); break;
-        case 'IV': chord([{degree:5, offset:-1}, {degree:9, offset:-1}, {degree:0, offset:0}]); break;
-        case 'V':  chord([{degree:7, offset:-1}, {degree:11, offset:-1}, {degree:2, offset:0}]); break;
+        case '1': playSynthNote(ctx, converter.toMidi({ degree: 0, offset: 0 }), now, 0.6, 0.85, showHighlight); break;
+        case '2': playSynthNote(ctx, converter.toMidi({ degree: 2, offset: 0 }), now, 0.6, 0.85, showHighlight); break;
+        case '3': playSynthNote(ctx, converter.toMidi({ degree: 4, offset: 0 }), now, 0.6, 0.85, showHighlight); break;
+        case '4': playSynthNote(ctx, converter.toMidi({ degree: 5, offset: 0 }), now, 0.6, 0.85, showHighlight); break;
+        case '5': playSynthNote(ctx, converter.toMidi({ degree: 7, offset: 0 }), now, 0.6, 0.85, showHighlight); break;
+        case '6': playSynthNote(ctx, converter.toMidi({ degree: 9, offset: 0 }), now, 0.6, 0.85, showHighlight); break;
+        case '7': playSynthNote(ctx, converter.toMidi({ degree: 11, offset: 0 }), now, 0.6, 0.85, showHighlight); break;
+        case '8': playSynthNote(ctx, converter.toMidi({ degree: 0, offset: 1 }), now, 0.6, 0.85, showHighlight); break;
+        case 'I': chord([{ degree: 0, offset: -1 }, { degree: 4, offset: -1 }, { degree: 7, offset: -1 }]); break;
+        case 'IV': chord([{ degree: 5, offset: -1 }, { degree: 9, offset: -1 }, { degree: 0, offset: 0 }]); break;
+        case 'V': chord([{ degree: 7, offset: -1 }, { degree: 11, offset: -1 }, { degree: 2, offset: 0 }]); break;
       }
     });
   }, [initAudio, playSynthNote]);
 
   const playBackingChordsOnly = useCallback((chords: PlayedChord[], converter: NoteConverter) => {
+    stopPlayback();
     initAudio().then(() => {
       const ctx = audioCtxRef.current;
       if (!ctx) return;
@@ -294,9 +306,10 @@ export function useAudioEngine({ preloadMidi }: AudioEngineOptions): AudioEngine
         });
       });
     });
-  }, [initAudio, playSynthNote]);
+  }, [initAudio, playSynthNote, stopPlayback]);
 
   const playMelodyOnly = useCallback((melody: PlayedNote[], converter: NoteConverter) => {
+    stopPlayback();
     initAudio().then(() => {
       const ctx = audioCtxRef.current;
       if (!ctx) return;
@@ -305,12 +318,64 @@ export function useAudioEngine({ preloadMidi }: AudioEngineOptions): AudioEngine
         playSynthNote(ctx, converter.toMidi(n.note), now + converter.ticksToSeconds(n.beat), converter.ticksToSeconds(n.duration), 0.85, false);
       });
     });
-  }, [initAudio, playSynthNote]);
+  }, [initAudio, playSynthNote, stopPlayback]);
 
   const resetStartFlags = useCallback(() => {
     setHasStarted(false);
     setHasPlayedCadence(false);
   }, []);
+
+  const startDirectMidiPlayback = useCallback((notes: { midi: number; time: number; duration: number; velocity: number }[], speed = 1.0) => {
+
+    initAudio().then(() => {
+      if (startTimeoutRef.current) { clearTimeout(startTimeoutRef.current); startTimeoutRef.current = null; }
+      if (schedulerTimerRef.current) { clearInterval(schedulerTimerRef.current); schedulerTimerRef.current = null; }
+
+      scheduledNotesRef.current = notes.map(n => ({
+        midi: n.midi,
+        time: n.time / speed,
+        duration: n.duration / speed,
+        velocity: n.velocity,
+      })).sort((a, b) => a.time - b.time);
+  
+      nextNoteIndexRef.current = scheduledNotesRef.current.findIndex(n => n.time >= playheadRef.current);
+      if (nextNoteIndexRef.current === -1) {
+        nextNoteIndexRef.current = scheduledNotesRef.current.length;
+      }
+  
+      setIsPlaying(true);
+      setHasStarted(true);
+
+      const ctx = audioCtxRef.current!;
+      lastTickTimeRef.current = ctx.currentTime;
+      schedulerTimerRef.current = setInterval(runScheduler, 25);
+  
+    });
+  }, [initAudio, runScheduler]);
+
+  const seekPlayback = useCallback((time: number) => {
+    const wasPlaying = isPlaying;
+    if (wasPlaying) {
+      pausePlayback();
+    }
+    setPlayheadTime(time);
+    playheadRef.current = time;
+    if (wasPlaying) {
+      setTimeout(() => {
+        initAudio().then(() => {
+          setIsPlaying(true);
+          const ctx = audioCtxRef.current!;
+          lastTickTimeRef.current = ctx.currentTime;
+          
+          let idx = 0;
+          while (idx < scheduledNotesRef.current.length && scheduledNotesRef.current[idx].time < playheadRef.current) idx++;
+          nextNoteIndexRef.current = idx;
+          
+          schedulerTimerRef.current = setInterval(runScheduler, 25);
+        });
+      }, 50);
+    }
+  }, [isPlaying, pausePlayback, initAudio, runScheduler]);
 
   return {
     isPlaying, playheadTime, activeNotes, hasStarted, hasPlayedCadence,
@@ -319,5 +384,6 @@ export function useAudioEngine({ preloadMidi }: AudioEngineOptions): AudioEngine
     playTonicRootChord, playGroundingCadence,
     playBackingChordsOnly, playMelodyOnly,
     resetStartFlags, setPlayheadTime,
+    seekPlayback, startDirectMidiPlayback,
   };
 }
