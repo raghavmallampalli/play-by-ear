@@ -5,7 +5,7 @@ import { MIDI_PRESETS } from '../constants/midi_presets';
 import { Colors } from '../constants/theme';
 import { useAudioEngine } from '../hooks/useAudioEngine';
 import { buildLevel, EXERCISE_HASHES, getAnswerChoices, getPreloadMidi, isQueuedLevel, LevelSetup } from '../levels';
-import { displayLabel } from '../levels/labels';
+import { displayLabel, DEFAULT_MELODY_LABELS, DEFAULT_CHORD_LABELS } from '../levels/labels';
 import { TimelineSlot } from '../types/levels';
 import { PlayedChord, PlayedNote, RelativeNote } from '../types/music';
 import { AppSettings } from '../types/settings';
@@ -19,8 +19,8 @@ import TheoryTab from './TheoryTab';
 
 const DEFAULT_SETTINGS: AppSettings = {
   instrumentMode: 'piano',
-  melodyLabelSystem: 'carnatic',
-  chordLabelSystem: 'roman',
+  melodyLabelSystem: DEFAULT_MELODY_LABELS,
+  chordLabelSystem: DEFAULT_CHORD_LABELS,
   visualizerEnabled: true,
   tempoMap: {},
   midiTempoMap: {},
