@@ -4,6 +4,18 @@ import { buildLevel3 } from './level3';
 import { buildLevel4 } from './level4';
 import { buildLevel5 } from './level5';
 import { buildLevel6 } from './level6';
+import { buildLevel7 } from './level7';
+import { buildLevel8 } from './level8';
+import { buildLevel9 } from './level9';
+import { buildLevel10 } from './level10';
+import { buildLevel11 } from './level11';
+import { buildLevel12 } from './level12';
+import { buildLevel13 } from './level13';
+import { buildLevel14 } from './level14';
+import { buildLevel15 } from './level15';
+import { buildLevel16 } from './level16';
+import { buildLevel17 } from './level17';
+import { buildLevel18 } from './level18';
 import { buildMidiPlayerDemoNotes, MIDI_PLAYER_PRELOAD_MIDI } from './midi_player';
 import { LevelSetup } from '../types/levels';
 import { NoteConverter } from '../utils/note_converter';
@@ -31,6 +43,18 @@ const ANSWER_CHOICES_MAP: Record<number, string[]> = {
   4: ['I', 'IV', 'V'],
   5: ['I', 'IV', 'V'],
   6: ['I', 'IV', 'V'],
+  7: ['I', 'IV', 'V', 'ii', 'iii', 'vi'],
+  8: ['I', 'IV', 'V', 'ii', 'iii', 'vi'],
+  9: ['I', 'IV', 'V', 'ii', 'iii', 'vi'],
+  10: ['I', 'i_dim', 'I_aug'],
+  11: ['I', 'i_dim', 'I_aug'],
+  12: ['I', 'i_dim', 'I_aug'],
+  13: ['I', 'Isus2', 'Isus4'],
+  14: ['I', 'Isus2', 'Isus4'],
+  15: ['I', 'Isus2', 'Isus4'],
+  16: ['IMaj7', 'V7', 'ii_m7', 'vi_m7'],
+  17: ['IMaj7', 'V7', 'ii_m7', 'vi_m7'],
+  18: ['IMaj7', 'V7', 'ii_m7', 'vi_m7'],
 };
 
 /** Answer button labels shown to the user for a given level. */
@@ -107,6 +131,18 @@ export function buildLevel(
     case 4: return buildLevel4();
     case 5: return buildLevel5();
     case 6: return buildLevel6();
+    case 7: return buildLevel7();
+    case 8: return buildLevel8();
+    case 9: return buildLevel9();
+    case 10: return buildLevel10();
+    case 11: return buildLevel11();
+    case 12: return buildLevel12();
+    case 13: return buildLevel13();
+    case 14: return buildLevel14();
+    case 15: return buildLevel15();
+    case 16: return buildLevel16();
+    case 17: return buildLevel17();
+    case 18: return buildLevel18();
     default:
       return {
         melody: [],

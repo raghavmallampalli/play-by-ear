@@ -20,6 +20,16 @@ export const CHORD_DICTIONARY: Record<string, RelativeNote[]> = {
     { degree: 4, offset: -1 }, // E3 (Third)
     { degree: 7, offset: -1 }, // G3 (Fifth)
   ],
+  ii: [
+    { degree: 2, offset: -1 }, // D3
+    { degree: 5, offset: -1 }, // F3
+    { degree: 9, offset: -1 }, // A3
+  ],
+  iii: [
+    { degree: 4, offset: -1 }, // E3
+    { degree: 7, offset: -1 }, // G3
+    { degree: 11, offset: -1 }, // B3
+  ],
   IV: [
     { degree: 5, offset: -1 }, // F3 (Root)
     { degree: 9, offset: -1 }, // A3 (Third)
@@ -29,6 +39,55 @@ export const CHORD_DICTIONARY: Record<string, RelativeNote[]> = {
     { degree: 7, offset: -1 }, // G3 (Root)
     { degree: 11, offset: -1 },// B3 (Third)
     { degree: 2, offset: 0 },  // D4 (Fifth)
+  ],
+  vi: [
+    { degree: 9, offset: -1 }, // A3
+    { degree: 0, offset: 0 },  // C4
+    { degree: 4, offset: 0 },  // E4
+  ],
+  I_aug: [
+    { degree: 0, offset: -1 }, // C3
+    { degree: 4, offset: -1 }, // E3
+    { degree: 8, offset: -1 }, // G#3
+  ],
+  i_dim: [
+    { degree: 0, offset: -1 }, // C3
+    { degree: 3, offset: -1 }, // Eb3
+    { degree: 6, offset: -1 }, // Gb3
+  ],
+  Isus2: [
+    { degree: 0, offset: -1 }, // C3
+    { degree: 2, offset: -1 }, // D3
+    { degree: 7, offset: -1 }, // G3
+  ],
+  Isus4: [
+    { degree: 0, offset: -1 }, // C3
+    { degree: 5, offset: -1 }, // F3
+    { degree: 7, offset: -1 }, // G3
+  ],
+  IMaj7: [
+    { degree: 0, offset: -1 }, // C3
+    { degree: 4, offset: -1 }, // E3
+    { degree: 7, offset: -1 }, // G3
+    { degree: 11, offset: -1 },// B3
+  ],
+  V7: [
+    { degree: 7, offset: -1 }, // G3
+    { degree: 11, offset: -1 },// B3
+    { degree: 2, offset: 0 },  // D4
+    { degree: 5, offset: 0 },  // F4
+  ],
+  ii_m7: [
+    { degree: 2, offset: -1 }, // D3
+    { degree: 5, offset: -1 }, // F3
+    { degree: 9, offset: -1 }, // A3
+    { degree: 0, offset: 0 },  // C4
+  ],
+  vi_m7: [
+    { degree: 9, offset: -1 }, // A3
+    { degree: 0, offset: 0 },  // C4
+    { degree: 4, offset: 0 },  // E4
+    { degree: 7, offset: 0 },  // G4
   ],
 };
 
@@ -103,7 +162,7 @@ const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'] as con
 // ── Public API ────────────────────────────────────────────────────────────────
 
 const DEGREE_RE = /^[b#]?[1-8](_high|_low)?$/;
-const CHORD_RE  = /^(I{1,3}|I?V|VI{0,2}|VII)$/;
+const CHORD_RE  = /^[a-zA-Z0-9_]+$/; // Relaxed to allow our new identifiers like I_aug, IMaj7, vi_m7
 
 /**
  * Convert an internal label to its display string.
