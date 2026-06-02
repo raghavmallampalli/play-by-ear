@@ -15,6 +15,7 @@ describe('Icon Inventories', () => {
       'IconCheck',
       'IconClose',
       'IconCog',
+      'IconFastForward',
       'IconFolder',
       'IconGuitar',
       'IconHistory',
@@ -36,10 +37,12 @@ describe('Icon Inventories', () => {
   test('NativeIcons exports exactly the expected components', () => {
     const exportedKeys = Object.keys(NativeIcons).sort();
     expect(exportedKeys).toEqual([
+      'IconAlert',
       'IconArrowLeft',
       'IconBookOpen',
       'IconCog',
       'IconFolder',
+      'IconLock',
       'IconMusic',
       'IconPiano',
       'IconPlay',

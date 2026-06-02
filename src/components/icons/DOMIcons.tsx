@@ -63,6 +63,10 @@ export const IconArrowRight = ({ size = 16, color = 'currentColor', style }: Ico
   <MaterialDesignIcons name="arrow-right" size={size} color={color} style={style} />
 );
 
+export const IconFastForward = ({ size = 16, color = 'currentColor', style }: IconProps) => (
+  <MaterialDesignIcons name="fast-forward" size={size} color={color} style={style} />
+);
+
 export const IconBookOpen = ({ size = 22, color = 'currentColor', style }: IconProps) => (
   <MaterialDesignIcons name="book-open" size={size} color={color} style={style} />
 );

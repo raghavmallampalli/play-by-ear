@@ -19,6 +19,14 @@ export const IconWrench = ({ size = 36, color = '#53565F', style }: IconProps) =
   <MaterialDesignIcons name="wrench" size={size} color={color} style={style} />
 );
 
+export const IconLock = ({ size = 18, color = '#C2C7CF', style }: IconProps) => (
+  <MaterialDesignIcons name="lock" size={size} color={color} style={style} />
+);
+
+export const IconAlert = ({ size = 28, color = '#E9A117', style }: IconProps) => (
+  <MaterialDesignIcons name="alert" size={size} color={color} style={style} />
+);
+
 export const IconCog = ({ size = 36, color = '#A8C7FA', style }: IconProps) => (
   <MaterialDesignIcons name="cog" size={size} color={color} style={style} />
 );
