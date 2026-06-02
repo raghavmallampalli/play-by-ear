@@ -2,7 +2,7 @@ export interface MidiPreset {
   id: string;
   title: string;
   composer: string;
-  genre: 'Classical' | 'Traditional' | 'Video Games';
+  genre: 'Classical' | 'Traditional';
   asset: string;
 }
 
@@ -66,48 +66,5 @@ export const MIDI_PRESETS: MidiPreset[] = [
     genre: 'Traditional',
     asset: '/assets/assets/midis/we_wish.mid',
   },
-
-  // Video Games
-  {
-    id: 'mario',
-    title: 'Super Mario Bros. Theme',
-    composer: 'Koji Kondo',
-    genre: 'Video Games',
-    asset: '/assets/assets/midis/mario.mid',
-  },
-  {
-    id: 'zelda',
-    title: 'The Legend of Zelda Theme',
-    composer: 'Koji Kondo',
-    genre: 'Video Games',
-    asset: '/assets/assets/midis/zelda.mid',
-  },
-  {
-    id: 'tetris',
-    title: 'Tetris Theme (Korobeiniki)',
-    composer: 'Traditional Russian',
-    genre: 'Video Games',
-    asset: '/assets/assets/midis/tetris.mid',
-  },
-  {
-    id: 'dr_mario',
-    title: 'Dr. Mario Theme (Fever)',
-    composer: 'Hirokazu Tanaka',
-    genre: 'Video Games',
-    asset: '/assets/assets/midis/dr_mario.mid',
-  },
-  {
-    id: 'contra',
-    title: 'Contra Theme',
-    composer: 'Hidenori Maezawa',
-    genre: 'Video Games',
-    asset: '/assets/assets/midis/contra.mid',
-  },
-  {
-    id: 'popeye',
-    title: 'Popeye the Sailor Man Theme',
-    composer: 'Sammy Lerner',
-    genre: 'Video Games',
-    asset: '/assets/assets/midis/popeye.mid',
-  },
 ];
+

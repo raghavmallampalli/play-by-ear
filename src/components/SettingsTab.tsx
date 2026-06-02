@@ -238,6 +238,33 @@ export default function SettingsTab({
         </div>
       </div>
 
+      {/* MIDI Timeline Display Layer Selection */}
+      {mode === 'midi_player' && (
+        <div>
+          <h4 style={domStyles.settingTitle}>Timeline Display Layer</h4>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              style={{ flex: 1, ...(settings.midiDisplayLayer === 'chords' ? domStyles.activeTabBtn : domStyles.secondaryBtn) }}
+              onClick={() => saveSettings({ ...settings, midiDisplayLayer: 'chords' })}
+            >
+              Chords
+            </button>
+            <button
+              style={{ flex: 1, ...(settings.midiDisplayLayer === 'melody' ? domStyles.activeTabBtn : domStyles.secondaryBtn) }}
+              onClick={() => saveSettings({ ...settings, midiDisplayLayer: 'melody' })}
+            >
+              Melody
+            </button>
+            <button
+              style={{ flex: 1, ...(settings.midiDisplayLayer === 'both' ? domStyles.activeTabBtn : domStyles.secondaryBtn) }}
+              onClick={() => saveSettings({ ...settings, midiDisplayLayer: 'both' })}
+            >
+              Both
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Piano Visualizer Toggle */}
       <div style={domStyles.settingRow}>
         <div>

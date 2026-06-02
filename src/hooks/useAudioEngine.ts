@@ -9,6 +9,7 @@ import { AudioEngine, AudioEngineOptions } from '../types/audio';
 
 export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): AudioEngine {
   const [isPlaying, setIsPlaying] = useState(false);
+  const isPlayingRef = useRef(false);
   const [playheadTime, setPlayheadTime] = useState(0);
   const [activeNotes, setActiveNotes] = useState<number[]>([]);
   const [hasStarted, setHasStarted] = useState(false);
@@ -118,6 +119,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
   // ─── Scheduler ─────────────────────────────────────────────────────────────
 
   const runScheduler = useCallback(() => {
+    const tStart = performance.now();
     const ctx = audioCtxRef.current;
     if (!ctx) return;
 
@@ -141,6 +143,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
     playheadRef.current = newPlayhead;
 
     const scheduleEnd = newPlayhead + lookahead;
+    let scheduledCount = 0;
     while (
       nextNoteIndexRef.current < notes.length &&
       notes[nextNoteIndexRef.current].time < scheduleEnd
@@ -148,8 +151,14 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
       const note = notes[nextNoteIndexRef.current];
       if (note.time >= playheadRef.current - lookahead) {
         playSynthNote(ctx, note.midi, now + Math.max(0, note.time - playheadRef.current), note.duration, note.velocity, false);
+        scheduledCount++;
       }
       nextNoteIndexRef.current++;
+    }
+
+    const tEnd = performance.now();
+    if (tEnd - tStart > 2) {
+      console.warn(`[PROFILE runScheduler] took ${(tEnd - tStart).toFixed(2)}ms to schedule ${scheduledCount} notes. Playhead: ${newPlayhead.toFixed(2)}`);
     }
   }, [playSynthNote]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -160,6 +169,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
     if (startTimeoutRef.current) { clearTimeout(startTimeoutRef.current); startTimeoutRef.current = null; }
     if (schedulerTimerRef.current) { clearInterval(schedulerTimerRef.current); schedulerTimerRef.current = null; }
     setIsPlaying(false);
+    isPlayingRef.current = false;
   }, []);
 
   const stopPlayback = useCallback(() => {
@@ -169,12 +179,25 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
     playheadRef.current = 0;
     setActiveNotes([]);
     nextNoteIndexRef.current = 0;
+
+    if (audioCtxRef.current && mainGainRef.current) {
+      const oldGain = mainGainRef.current;
+      oldGain.gain.cancelScheduledValues(audioCtxRef.current.currentTime);
+      oldGain.gain.setValueAtTime(oldGain.gain.value || 1.6, audioCtxRef.current.currentTime);
+      oldGain.gain.linearRampToValueAtTime(0.0001, audioCtxRef.current.currentTime + 0.05);
+      setTimeout(() => oldGain.disconnect(), 100);
+
+      const newGain = audioCtxRef.current.createGain();
+      newGain.gain.setValueAtTime(1.6, audioCtxRef.current.currentTime);
+      newGain.connect(audioCtxRef.current.destination);
+      mainGainRef.current = newGain;
+    }
   }, [pausePlayback]);
 
   const startPlayback = useCallback(async (melody: PlayedNote[], chords: PlayedChord[], converter: NoteConverter, skipCadence = false) => {
 
     await initAudio();
-    if (isPlaying) return;
+    if (isPlayingRef.current) return;
 
     // Prepare scheduled notes (convert Relative -> MIDI and Ticks -> Seconds)
     const absoluteNotes: { midi: number, time: number, duration: number, velocity: number }[] = [];
@@ -202,6 +225,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
     scheduledNotesRef.current = absoluteNotes.sort((a, b) => a.time - b.time);
 
     setIsPlaying(true);
+    isPlayingRef.current = true;
     setHasStarted(true);
 
     const ctx = audioCtxRef.current!;
@@ -271,6 +295,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
   }, [initAudio, playSynthNote]);
 
   const playChoiceAudio = useCallback((choice: string, converter: NoteConverter, showHighlight = true) => {
+    stopPlayback();
     initAudio().then(() => {
       const ctx = audioCtxRef.current;
       if (!ctx) return;
@@ -296,29 +321,13 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
 
   const playBackingChordsOnly = useCallback((chords: PlayedChord[], converter: NoteConverter) => {
     stopPlayback();
-    initAudio().then(() => {
-      const ctx = audioCtxRef.current;
-      if (!ctx) return;
-      const now = ctx.currentTime;
-      chords.forEach(c => {
-        c.notes.forEach(n => {
-          playSynthNote(ctx, converter.toMidi(n), now + converter.ticksToSeconds(c.beat), converter.ticksToSeconds(c.duration), 0.75, false);
-        });
-      });
-    });
-  }, [initAudio, playSynthNote, stopPlayback]);
+    startPlayback([], chords, converter, true);
+  }, [startPlayback, stopPlayback]);
 
   const playMelodyOnly = useCallback((melody: PlayedNote[], converter: NoteConverter) => {
     stopPlayback();
-    initAudio().then(() => {
-      const ctx = audioCtxRef.current;
-      if (!ctx) return;
-      const now = ctx.currentTime;
-      melody.forEach(n => {
-        playSynthNote(ctx, converter.toMidi(n.note), now + converter.ticksToSeconds(n.beat), converter.ticksToSeconds(n.duration), 0.85, false);
-      });
-    });
-  }, [initAudio, playSynthNote, stopPlayback]);
+    startPlayback(melody, [], converter, true);
+  }, [startPlayback, stopPlayback]);
 
   const resetStartFlags = useCallback(() => {
     setHasStarted(false);
@@ -344,6 +353,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
       }
   
       setIsPlaying(true);
+      isPlayingRef.current = true;
       setHasStarted(true);
 
       const ctx = audioCtxRef.current!;
@@ -364,6 +374,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
       setTimeout(() => {
         initAudio().then(() => {
           setIsPlaying(true);
+          isPlayingRef.current = true;
           const ctx = audioCtxRef.current!;
           lastTickTimeRef.current = ctx.currentTime;
           

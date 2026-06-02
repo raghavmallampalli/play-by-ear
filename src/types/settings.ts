@@ -7,6 +7,7 @@ export interface AppSettings {
   visualizerEnabled: boolean;
   tempoMap: Record<number, number>;
   midiTempoMap?: Record<string, number>;
+  midiDisplayLayer?: 'chords' | 'melody' | 'both';
   confirmRestartLevel: boolean;
 }
 

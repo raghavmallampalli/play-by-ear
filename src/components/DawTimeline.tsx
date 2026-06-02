@@ -10,6 +10,91 @@ import { domStyles } from './styles/domStyles';
 
 import { isQueuedLevel } from '../levels';
 
+interface MemoizedSlotsProps {
+  timelineSlots: TimelineSlot[];
+  revealAllLabels: boolean;
+  focusedSlotIndex: number | null;
+  converter: NoteConverter;
+  hasStarted: boolean;
+  melodyLabelSystem: MelodyLabelSystem;
+  chordLabelSystem: ChordLabelSystem;
+  pixelsPerSecond: number;
+  onSlotClick: (index: number, slot: TimelineSlot) => void;
+}
+
+const MemoizedSlotsInner = ({
+  timelineSlots,
+  revealAllLabels,
+  focusedSlotIndex,
+  converter,
+  hasStarted,
+  melodyLabelSystem,
+  chordLabelSystem,
+  pixelsPerSecond,
+  onSlotClick
+}: MemoizedSlotsProps) => {
+  return (
+    <>
+      {timelineSlots.map((slot, index) => {
+        const isSolved = slot.answer !== null || revealAllLabels;
+        const isFocused = focusedSlotIndex === index && !isSolved && !revealAllLabels;
+        const slotTime = converter.ticksToSeconds(slot.beat);
+
+        const slotStyle = (!hasStarted && !revealAllLabels)
+          ? domStyles.disabledBtn
+          : (isFocused
+            ? domStyles.primaryBtn
+            : (isSolved
+              ? (slot.correct ? domStyles.correctBtn : domStyles.wrongBtn)
+              : domStyles.secondaryBtn));
+
+        const displayVal = isSolved
+          ? displayLabel(slot.answer || '', melodyLabelSystem, chordLabelSystem, converter.tonicPitchClass)
+          : '';
+
+        return (
+          <div
+            key={index}
+            style={{
+              ...slotStyle,
+              position: 'absolute',
+              left: `${54 + slotTime * pixelsPerSecond}px`,
+              transform: 'translateX(-50%)',
+              height: '32px',
+              minWidth: '32px',
+              width: 'auto',
+              padding: '0 8px',
+              borderRadius: '10px',
+              zIndex: isFocused ? 110 : 100,
+              cursor: (!hasStarted && !revealAllLabels) ? 'default' : 'pointer',
+              pointerEvents: (!hasStarted && !revealAllLabels) ? 'none' : 'auto',
+            }}
+            onClick={() => (hasStarted || revealAllLabels) && onSlotClick(index, slot)}
+          >
+            {displayVal}
+          </div>
+        );
+      })}
+    </>
+  );
+};
+
+const areSlotsEqual = (prev: MemoizedSlotsProps, next: MemoizedSlotsProps) => {
+  return (
+    prev.timelineSlots === next.timelineSlots &&
+    prev.revealAllLabels === next.revealAllLabels &&
+    prev.focusedSlotIndex === next.focusedSlotIndex &&
+    prev.converter === next.converter &&
+    prev.hasStarted === next.hasStarted &&
+    prev.melodyLabelSystem === next.melodyLabelSystem &&
+    prev.chordLabelSystem === next.chordLabelSystem &&
+    prev.pixelsPerSecond === next.pixelsPerSecond
+    // Explicitly ignoring onSlotClick since it's an inline function that triggers unnecessary re-renders
+  );
+};
+
+const MemoizedSlots = React.memo(MemoizedSlotsInner, areSlotsEqual);
+
 interface DawTimelineProps {
   level: number;
   timelineSlots: TimelineSlot[];
@@ -53,40 +138,54 @@ export default function DawTimeline({
   onSeek,
   revealAllLabels = false,
 }: DawTimelineProps) {
-  // Derive timeline width from the last slot's time, falling back to a level default
-  const isQueued = isQueuedLevel(level);
-  const lastSlotTime = timelineSlots.length > 0
-    ? Math.max(...timelineSlots.map(s => converter.ticksToSeconds(s.beat))) + 2.5
-    : 3.0;
-  const maxDuration = isQueued
-    ? lastSlotTime
-    : Math.max(lastSlotTime, level === 3 ? 18.0 : (level >= 6 ? 20.0 : (level >= 4 ? 15.0 : 3.0)));
-  const barCount = Math.ceil(maxDuration);
+  const renderStart = React.useMemo(() => performance.now(), [
+    level, timelineSlots, focusedSlotIndex, playheadTime, isPlaying,
+    hasStarted, converter, melodyLabelSystem, chordLabelSystem, onSeek, revealAllLabels
+  ]);
 
-  // Enforce dynamic width based on median difference of note times to prevent overlaps
-  const uniqueTimes = Array.from(new Set(timelineSlots.map(s => converter.ticksToSeconds(s.beat)))).sort((a, b) => a - b);
-  const diffs: number[] = [];
-  for (let i = 1; i < uniqueTimes.length; i++) {
-    const diff = uniqueTimes[i] - uniqueTimes[i - 1];
-    if (diff > 0.001) {
-      diffs.push(diff);
+  React.useEffect(() => {
+    const renderEnd = performance.now();
+    if (renderEnd - renderStart > 2) {
+      console.warn(`[PROFILE DawTimeline] Render took ${(renderEnd - renderStart).toFixed(2)}ms (Slots: ${timelineSlots.length}, playhead: ${playheadTime.toFixed(2)})`);
     }
-  }
-  let medianDiff = 0.5;
-  if (diffs.length > 0) {
-    const sorted = [...diffs].sort((a, b) => a - b);
-    const mid = Math.floor(sorted.length / 2);
-    medianDiff = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-  }
-  const minPixelsPerNote = 50;
-  const derivedScale = minPixelsPerNote / Math.max(0.01, medianDiff);
-  const pixelsPerSecond = Math.min(600, Math.max(120, derivedScale));
+  });
 
-  // Determine beat grid subdivisions dynamically
-  const oneBeatTicks = converter.ticksPerBeat;
-  const oneBeatSecs = oneBeatTicks > 0 ? converter.ticksToSeconds(oneBeatTicks) : 0.5;
-  const beatWidth = oneBeatSecs * pixelsPerSecond;
-  const tickGridSpacing = beatWidth / 4;
+  // Memoize all timeline width and scale calculations
+  const { maxDuration, barCount, pixelsPerSecond, tickGridSpacing } = React.useMemo(() => {
+    const isQueued = isQueuedLevel(level);
+    const lastSlotTime = timelineSlots.length > 0
+      ? Math.max(...timelineSlots.map(s => converter.ticksToSeconds(s.beat))) + 2.5
+      : 3.0;
+    const maxDur = isQueued
+      ? lastSlotTime
+      : Math.max(lastSlotTime, level === 3 ? 18.0 : (level >= 6 ? 20.0 : (level >= 4 ? 15.0 : 3.0)));
+    const bCount = Math.ceil(maxDur);
+
+    const uniqueTimes = Array.from(new Set(timelineSlots.map(s => converter.ticksToSeconds(s.beat)))).sort((a, b) => a - b);
+    const diffs: number[] = [];
+    for (let i = 1; i < uniqueTimes.length; i++) {
+      const diff = uniqueTimes[i] - uniqueTimes[i - 1];
+      if (diff > 0.001) {
+        diffs.push(diff);
+      }
+    }
+    let medianDiff = 0.5;
+    if (diffs.length > 0) {
+      const sorted = [...diffs].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      medianDiff = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+    const minPixelsPerNote = 50;
+    const derivedScale = minPixelsPerNote / Math.max(0.01, medianDiff);
+    const pPerSecond = Math.min(600, Math.max(120, derivedScale));
+
+    const oneBeatTicks = converter.ticksPerBeat;
+    const oneBeatSecs = oneBeatTicks > 0 ? converter.ticksToSeconds(oneBeatTicks) : 0.5;
+    const beatWidth = oneBeatSecs * pPerSecond;
+    const tGridSpacing = beatWidth / 4;
+
+    return { maxDuration: maxDur, barCount: bCount, pixelsPerSecond: pPerSecond, tickGridSpacing: tGridSpacing };
+  }, [level, timelineSlots, converter]);
 
 
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
@@ -126,19 +225,10 @@ export default function DawTimeline({
       const { clientWidth } = scrollContainerRef.current;
       if (clientWidth <= 0) return;
 
-      const lastSlotTime = timelineSlots.length > 0
-        ? Math.max(...timelineSlots.map(s => converter.ticksToSeconds(s.beat)))
-        : 0;
-      const maxNoteWidth = 54 + lastSlotTime * pixelsPerSecond + 54;
-
-      const playheadX = 54 + playheadTime * pixelsPerSecond + 54;
-      const isPlayheadOut = playheadX > clientWidth;
-
-      const needsOverflow = maxNoteWidth > clientWidth || (playheadTime > 0 && isPlayheadOut);
-
-      setHasOverflow(needsOverflow);
+      const totalContentWidth = 108 + barCount * pixelsPerSecond;
+      setHasOverflow(totalContentWidth > clientWidth);
     }
-  }, [timelineSlots, playheadTime, converter, pixelsPerSecond]);
+  }, [barCount, pixelsPerSecond]);
 
   React.useEffect(() => {
     checkOverflow();
@@ -191,20 +281,22 @@ export default function DawTimeline({
             position: 'relative', display: 'flex', alignItems: 'center',
           }}>
             {/* Beat grid lines */}
-            <div style={dawStyles.gridOverlay}>
-              {Array.from({ length: barCount * 4 + 1 }).map((_, i) => (
-                <div
-                  key={i}
-                  style={{
-                    ...dawStyles.gridLine,
-                    borderLeft: i % 4 === 0
-                      ? '1px dashed rgba(255,255,255,0.12)'
-                      : '1px dotted rgba(255,255,255,0.04)',
-                    left: `${54 + i * tickGridSpacing}px`,
-                  }}
-                />
-              ))}
-            </div>
+            {React.useMemo(() => (
+              <div style={dawStyles.gridOverlay}>
+                {Array.from({ length: barCount * 4 + 1 }).map((_, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      ...dawStyles.gridLine,
+                      borderLeft: i % 4 === 0
+                        ? '1px dashed rgba(255,255,255,0.12)'
+                        : '1px dotted rgba(255,255,255,0.04)',
+                      left: `${54 + i * tickGridSpacing}px`,
+                    }}
+                  />
+                ))}
+              </div>
+            ), [barCount, tickGridSpacing])}
 
             {/* Playhead */}
             {playheadTime > 0 && (
@@ -217,46 +309,17 @@ export default function DawTimeline({
             )}
 
             {/* Interactive Slots */}
-            {timelineSlots.map((slot, index) => {
-              const isSolved = slot.answer !== null || revealAllLabels;
-              const isFocused = focusedSlotIndex === index && !isSolved && !revealAllLabels;
-              const slotTime = converter.ticksToSeconds(slot.beat);
-
-              const slotStyle = (!hasStarted && !revealAllLabels)
-                ? domStyles.disabledBtn
-                : (isFocused
-                  ? domStyles.primaryBtn
-                  : (isSolved
-                    ? (slot.correct ? domStyles.correctBtn : domStyles.wrongBtn)
-                    : domStyles.secondaryBtn));
-
-              const displayVal = isSolved
-                ? displayLabel(slot.answer || '', melodyLabelSystem, chordLabelSystem, converter.tonicPitchClass)
-                : '';
-
-              return (
-                <div
-                  key={index}
-                  style={{
-                    ...slotStyle,
-                    position: 'absolute',
-                    left: `${54 + slotTime * pixelsPerSecond}px`,
-                    transform: 'translateX(-50%)',
-                    height: '32px',
-                    minWidth: '32px',
-                    width: 'auto',
-                    padding: '0 8px',
-                    borderRadius: '10px',
-                    zIndex: isFocused ? 110 : 100,
-                    cursor: (!hasStarted && !revealAllLabels) ? 'default' : 'pointer',
-                    pointerEvents: (!hasStarted && !revealAllLabels) ? 'none' : 'auto',
-                  }}
-                  onClick={() => (hasStarted || revealAllLabels) && onSlotClick(index, slot)}
-                >
-                  {displayVal}
-                </div>
-              );
-            })}
+            <MemoizedSlots
+              timelineSlots={timelineSlots}
+              revealAllLabels={revealAllLabels}
+              focusedSlotIndex={focusedSlotIndex}
+              converter={converter}
+              hasStarted={hasStarted}
+              melodyLabelSystem={melodyLabelSystem}
+              chordLabelSystem={chordLabelSystem}
+              pixelsPerSecond={pixelsPerSecond}
+              onSlotClick={onSlotClick}
+            />
           </div>
         </div>
 
