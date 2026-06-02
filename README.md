@@ -116,16 +116,23 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
 - [x] **Feature**: Add trainer-specific controls (like **Tempo/BPM**) at the top of this settings pane (only show this trainer settings section when accessed from the training screen).
 - [x] **Feature**: Persist modified tempo values directly into the active level setup so they remain configured for subsequent runs of that exercise.
 - [x] **Feature**: Add a "Reset to Default" button to revert the tempo back to the level's standard BPM value.
+- [x] Chore: group the 4 button row and call it 'TrackControls'. Define the behavior of each, alongside the next excercise and play/pause button in comments to avoid regressions.
+- [x] Bugfix: restart level button no longer restarts level
+- [x] Bugfix: A note after being revealed should show up on keyboard visualizer
+- [x] Bugfix: sharps and flats not cleanly represented in carnatic. Use the variant system. Use single letter symbols, not two letter. Similarly use the dot above/below to represent octaves above/below (in label and in the excercise options). Example: S R₁ G₃ M₁ P D₁ N₃ Ṡ => re flat and la flat.
+
 
 ### 🎹 MIDI Sandbox & Audio Engines
-- [ ] **Feature**: Fully hook up, wire, and integrate the MIDI Sandbox page.
-- [ ] Remember recent midis - cache the midi files so user can reload the midis automatically
-- [ ] Pre-save 30-40 midis of different genres in the app - find from open source
+- [x] **Feature**: Fully hook up, wire, and integrate the MIDI Sandbox page.
+- [x] Remember recent midis - cache the midi files so user can reload the midis automatically
+- [x] Pre-save ~~30-40~~ **8** midis of different genres in the app (we can't keep orchestral midis)
+- [ ] Fur elise is still weird
+- [ ] Where did the play melody guide and play chord guide buttons go in midi player?
 
 ## Working export and import
 - [ ] Do a true invariant slug for each experiment for export
 - [ ] Incorporate user notes
-- [ ] Shift to expo-fs, make sure save and load works fine
+- [ ] Shift to expo-fs (similarly all expo variants instead of react variants), make sure save and load works fine
 
 ## More exercises
 - [ ] Happy birthday notes are in level 6 wrong, pull midi and base edxcercise on it
@@ -145,6 +152,7 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
 - [ ] Hook up build and push to F-droid so app is available automatically on tagged commits
 
 ## V0.2
+- [ ] Keyboard shortcuts for web player
 - [ ] **Feature**: Add a high-fidelity guitar synthesizer voice for audio synthesis.
   - [ ] **Timeline Display Style**: Toggle between **DAW** vs. standard **Staff** vs. **Guitar Tabs** timeline modes. 
 

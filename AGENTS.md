@@ -92,7 +92,7 @@ Due to the import boundary, icons are split into two files:
 
 - **Comments & Docstrings**: Maintain code documentation integrity. Do not strip out existing comments or JSDocs that are unrelated to your edits. Add meaningful inline documentation for complex logic.
 - **Type Safety**: Strictly avoid `any`. Ensure all TypeScript compilation checks pass with zero warnings.
-- **Semantic Commit Messages**: When presenting or committing changes, structure them cleanly using standard semantic prefixes (e.g., `feat:`, `fix:`, `refactor:`, `test:`, `docs:`).
+- **Semantic Commit Messages**: When presenting or committing changes, structure them cleanly using standard semantic prefixes (e.g., `feat:`, `fix:`, `refactor:`, `test:`, `docs:`). Club changes for each task and only commit them together. NEVER blindly commit the entire worktree unless all changes are related to the same task.
 
 ---
 
