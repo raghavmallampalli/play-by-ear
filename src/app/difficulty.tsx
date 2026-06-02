@@ -1,14 +1,17 @@
-import React from 'react';
-import { StyleSheet, View, Text, ScrollView, Pressable, useWindowDimensions } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, Text, ScrollView, Pressable, useWindowDimensions, ActivityIndicator, Platform, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { IconArrowLeft, IconPlay, IconWrench } from '@/components/icons/NativeIcons';
+import { useRouter, useNavigation } from 'expo-router';
+import { IconArrowLeft, IconPlay, IconLock, IconAlert, IconWrench } from '@/components/icons/NativeIcons';
 import { log } from '@/utils/logger';
+import { useAppData } from '@/hooks/useAppData';
+import { EXERCISE_HASHES } from '@/constants/exercises';
+import { UserProgressData } from '@/types/storage';
 
 // Definition of the 9 groups of 3 levels (27 levels total)
-const LEVEL_GROUPS = [
+const LEVEL_STAGES = [
   {
-    title: 'Group A: Scale Degree Ear Training',
+    title: 'Stage A: Scale Degree Ear Training',
     desc: 'Identify individual notes by their position in the major scale.',
     levels: [
       { id: 1, name: 'Level 1: Do Re Mi Fa (Degrees 1–4)', detail: 'Lower tetrachord — C D E F in C major' },
@@ -17,7 +20,7 @@ const LEVEL_GROUPS = [
     ]
   },
   {
-    title: 'Group B: Chord Recognition',
+    title: 'Stage B: Chord Recognition',
     desc: 'Identify I, IV, V chords and hear them in musical context.',
     levels: [
       { id: 4, name: 'Level 4: I · IV · V Chords', detail: 'Pure chord recognition — no melody, root position triads' },
@@ -26,74 +29,74 @@ const LEVEL_GROUPS = [
     ]
   },
   {
-    title: 'Group C: Triads in Root Position',
-    desc: 'Identify chord qualities with simple root bass voicing.',
+    title: 'Stage C: Minor vs Major',
+    desc: 'Focus on distinguishing I, IV, V from ii, iii, vi.',
     levels: [
-      { id: 7, name: 'Level 7: Major & Minor Triads', detail: 'I (Major) vs vi (minor) chords' },
-      { id: 8, name: 'Level 8: Full Diatonic Triads', detail: 'I, ii, iii, IV, V, vi triads' },
-      { id: 9, name: 'Level 9: Chromatic / Borrowed Triads', detail: 'Introducing bVI, bVII, bIII chords' },
+      { id: 7, name: 'Level 7: Minor vs Major Triads', detail: 'Pure chord recognition — distinguishing major and minor' },
+      { id: 8, name: 'Level 8: Chords With Melody', detail: 'Chord recognition with a diatonic melody note on top' },
+      { id: 9, name: 'Level 9: Real Song Recognition', detail: 'Identify chords from a real song excerpt' },
     ]
   },
   {
-    title: 'Group D: Triad Inversions',
-    desc: 'Train your ear to recognize chords regardless of voicing.',
+    title: 'Stage D: Diminished & Augmented',
+    desc: 'Introduce dim and aug triads.',
     levels: [
-      { id: 10, name: 'Level 10: First Inversion Chords', detail: 'Root position vs 1st Inversion (6)' },
-      { id: 11, name: 'Level 11: Second Inversion Chords', detail: 'Adding 2nd Inversions (6/4)' },
-      { id: 12, name: 'Level 12: Mixed Inversions', detail: 'Randomized diatonic chord inversions' },
+      { id: 10, name: 'Level 10: Diminished & Augmented Triads', detail: 'Pure chord recognition — dim and aug triads' },
+      { id: 11, name: 'Level 11: Chords With Melody', detail: 'Chord recognition with a diatonic melody note on top' },
+      { id: 12, name: 'Level 12: Real Song Recognition', detail: 'Identify chords from a real song excerpt' },
     ]
   },
   {
-    title: 'Group E: Diatonic Seventh Chords',
-    desc: 'Master dense, rich 4-note jazz harmonies.',
+    title: 'Stage E: Suspended Chords',
+    desc: 'Introduce sus2 and sus4.',
     levels: [
-      { id: 13, name: 'Level 13: Major 7th & Dominant 7th', detail: 'IMaj7, IVMaj7 vs V7 chords' },
-      { id: 14, name: 'Level 14: Minor 7th Chords', detail: 'iim7, iiim7, vim7 chords' },
-      { id: 15, name: 'Level 15: Full Diatonic 7th Mix', detail: 'Randomized diatonic 7ths' },
+      { id: 13, name: 'Level 13: Suspended Chords', detail: 'Pure chord recognition — sus2 and sus4' },
+      { id: 14, name: 'Level 14: Chords With Melody', detail: 'Chord recognition with a diatonic melody note on top' },
+      { id: 15, name: 'Level 15: Real Song Recognition', detail: 'Identify chords from a real song excerpt' },
     ]
   },
   {
-    title: 'Group F: Roman Numeral Progressions',
-    desc: 'Track functional changes inside backing loops.',
+    title: 'Stage F: 7th Chords',
+    desc: 'Introduce maj7, min7, and dom7.',
     levels: [
-      { id: 16, name: 'Level 16: Plagal & Authentic Cadences', detail: 'I - IV - V - I chord changes' },
-      { id: 17, name: 'Level 17: Classic 4-Chord Pop Loop', detail: 'I - V - vi - IV progressions' },
-      { id: 18, name: 'Level 18: Standard Jazz ii - V - I', detail: 'Standard ii - V - I progressions' },
-    ]
-  },
-  {
-    title: 'Group G: Secondary Dominants & Modal Interchange',
-    desc: 'Advanced voice-leading transitions.',
-    levels: [
-      { id: 19, name: 'Level 19: Secondary Dominants', detail: 'V/V and V/vi transitions' },
-      { id: 20, name: 'Level 20: Modal Interchange', detail: 'Borrowed minor iv and bVI chords' },
-      { id: 21, name: 'Level 21: Mixed Advanced Cadences', detail: 'Neapolitan & Augmented 6th chords' },
-    ]
-  },
-  {
-    title: 'Group H: Melodic Dictation - Diatonic',
-    desc: 'Listen and write down diatonic melodic phrases.',
-    levels: [
-      { id: 22, name: 'Level 22: Stepwise Melodies', detail: 'Melodies on scale degrees 1 to 5' },
-      { id: 23, name: 'Level 23: Diatonic Leaps', detail: 'Melodies with triads leaps (1-3-5-8)' },
-      { id: 24, name: 'Level 24: Complete Diatonic Melody', detail: 'Full diatonic melodies (degrees 1-7)' },
-    ]
-  },
-  {
-    title: 'Group I: Melodic Dictation - Chromatic',
-    desc: 'The ultimate pitch challenge - write advanced chromatic melodies.',
-    levels: [
-      { id: 25, name: 'Level 25: Passing Chromatics', detail: 'Melodies with chromatic passing tones' },
-      { id: 26, name: 'Level 26: Modulation Melodies', detail: 'Melodies that modulate to relative keys' },
-      { id: 27, name: 'Level 27: Free Chromaticism Dictation', detail: 'Complex chromatic leaps' },
+      { id: 16, name: 'Level 16: 7th Chords', detail: 'Pure chord recognition — maj7, min7, dom7' },
+      { id: 17, name: 'Level 17: Chords With Melody', detail: 'Chord recognition with a diatonic melody note on top' },
+      { id: 18, name: 'Level 18: Real Song Recognition', detail: 'Identify chords from a real song excerpt' },
     ]
   }
 ];
 
+function checkIfUnlocked(levelId: number, progress: UserProgressData, bypassedLevels: number[]): boolean {
+  if (levelId === 1) return true;
+  if (bypassedLevels.includes(levelId)) return true;
+  
+  // Find the predecessor level that the user actually has to pass.
+  // If the previous level is a structurally locked "real song" level (9, 12, 15, 18),
+  // then the unlock condition depends on the level before it (8, 11, 14, 17).
+  const prevId = [9, 12, 15, 18].includes(levelId - 1) ? levelId - 2 : levelId - 1;
+  if (bypassedLevels.includes(prevId)) return true;
+  
+  const prevHash = EXERCISE_HASHES[prevId];
+  if (!prevHash) return false;
+  
+  const prevProgress = progress[prevHash];
+  return prevProgress ? prevProgress.bestSuccess >= 80 : false;
+}
+
 export default function DifficultyScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
+
+  const { appData, loading, reloadData, handleSaveProgress } = useAppData();
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      reloadData();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const handleSelectLevel = (levelId: number) => {
     log.info(`Level Selected: Launching training level #${levelId}`);
@@ -102,6 +105,43 @@ export default function DifficultyScreen() {
       params: { level: levelId }
     });
   };
+
+  const [bypassedLevels, setBypassedLevels] = useState<number[]>([]);
+  const [unlockModalVisible, setUnlockModalVisible] = useState(false);
+  const [levelToUnlock, setLevelToUnlock] = useState<number | null>(null);
+
+  const handlePressLevel = (lvlId: number, isInteractive: boolean) => {
+    if (isInteractive) {
+      handleSelectLevel(lvlId);
+    } else {
+      setLevelToUnlock(lvlId);
+      setUnlockModalVisible(true);
+    }
+  };
+
+  const handleConfirmUnlock = () => {
+    if (levelToUnlock === null) return;
+    setUnlockModalVisible(false);
+    
+    // Add all levels up to levelToUnlock to bypassedLevels in memory
+    const newBypassed = [...bypassedLevels];
+    for (let i = 1; i <= levelToUnlock; i++) {
+      if (!newBypassed.includes(i)) {
+        newBypassed.push(i);
+      }
+    }
+    setBypassedLevels(newBypassed);
+    handleSelectLevel(levelToUnlock);
+    setLevelToUnlock(null);
+  };
+
+  if (loading || !appData) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#A8C7FA" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -123,26 +163,32 @@ export default function DifficultyScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Text style={styles.introText}>
-            Progress through the 9 progressive training groups below. To begin, let's play the first levels!
+            Progress through the progressive training stages below. To begin, let's play the first levels!
           </Text>
 
           <View style={[styles.grid, isLandscape && styles.gridLandscape]}>
-            {LEVEL_GROUPS.map((group, groupIdx) => (
+            {LEVEL_STAGES.map((stage, stageIdx) => (
               <View 
-                key={groupIdx} 
+                key={stageIdx} 
                 style={[
-                  styles.groupCard, 
-                  isLandscape && styles.groupCardLandscape
+                  styles.stageCard, 
+                  isLandscape && styles.stageCardLandscape
                 ]}
               >
-              <View style={styles.groupHeader}>
-                <Text style={styles.groupTitle}>{group.title}</Text>
-                <Text style={styles.groupDesc}>{group.desc}</Text>
+              <View style={styles.stageHeader}>
+                <Text style={styles.stageTitle}>{stage.title}</Text>
+                <Text style={styles.stageDesc}>{stage.desc}</Text>
               </View>
 
               <View style={styles.levelsList}>
-                {group.levels.map((lvl) => {
-                  const isInteractive = lvl.id <= 6; // Levels 1-6 are implemented
+                {stage.levels.map((lvl) => {
+                  const levelHash = EXERCISE_HASHES[lvl.id];
+                  const progress = levelHash && appData ? appData.progress[levelHash] : null;
+                  const bestScore = progress ? progress.bestSuccess : 0;
+                  
+                  const isTbd = [9, 12, 15, 18].includes(lvl.id);
+                  const isUnlocked = checkIfUnlocked(lvl.id, appData?.progress || {}, bypassedLevels);
+                  const isInteractive = lvl.id <= 18 && !isTbd && isUnlocked;
                   return (
                     <Pressable
                       key={lvl.id}
@@ -151,8 +197,8 @@ export default function DifficultyScreen() {
                         !isInteractive && styles.levelItemDisabled,
                         pressed && isInteractive && styles.levelItemPressed
                       ]}
-                      disabled={!isInteractive}
-                      onPress={() => handleSelectLevel(lvl.id)}
+                      disabled={isTbd}
+                      onPress={() => handlePressLevel(lvl.id, isInteractive)}
                     >
                       <View style={styles.levelMeta}>
                         <Text style={[styles.levelName, !isInteractive && styles.textDisabled]}>
@@ -163,12 +209,23 @@ export default function DifficultyScreen() {
                         </Text>
                       </View>
                       
-                      <View style={isInteractive ? styles.activeIndicator : styles.lockedIndicator}>
-                        {isInteractive ? (
-                          <IconPlay size={10} color="#0A305F" />
-                        ) : (
-                          <IconWrench size={12} color="#8A92A6" />
+                      <View style={styles.rightContainer}>
+                        {bestScore > 0 && !isTbd && (
+                          <Text style={[styles.bestScoreText, !isInteractive && styles.textDisabled]}>
+                            Best: {bestScore}%
+                          </Text>
                         )}
+                        <View style={isInteractive ? styles.activeIndicator : styles.lockedIndicator}>
+                          {isInteractive ? (
+                            <IconPlay size={10} color="#0A305F" />
+                          ) : (
+                            isTbd ? (
+                              <IconWrench size={12} color="#8A92A6" />
+                            ) : (
+                              <IconLock size={12} color="#8A92A6" />
+                            )
+                          )}
+                        </View>
                       </View>
                     </Pressable>
                   );
@@ -180,6 +237,51 @@ export default function DifficultyScreen() {
         </ScrollView>
 
       </SafeAreaView>
+
+      {/* Custom Unlock Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={unlockModalVisible}
+        onRequestClose={() => {
+          setUnlockModalVisible(false);
+          setLevelToUnlock(null);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalIconContainer}>
+              <IconAlert size={28} color="#E9A117" />
+            </View>
+
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Unlock Level?</Text>
+              <Text style={styles.modalDesc}>
+                Level {levelToUnlock} is currently locked. Would you like to bypass the lock and play it?
+              </Text>
+            </View>
+
+            <View style={styles.modalActions}>
+              <Pressable
+                style={[styles.modalButton, styles.modalButtonSecondary]}
+                onPress={() => {
+                  setUnlockModalVisible(false);
+                  setLevelToUnlock(null);
+                }}
+              >
+                <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
+              </Pressable>
+              
+              <Pressable
+                style={[styles.modalButton, styles.modalButtonPrimary]}
+                onPress={handleConfirmUnlock}
+              >
+                <Text style={styles.modalButtonTextPrimary}>Unlock & Play</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -241,7 +343,7 @@ const styles = StyleSheet.create({
     maxWidth: 960,
     width: '100%',
   },
-  groupCard: {
+  stageCard: {
     backgroundColor: '#1D2024', // Material 3 Card Container
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.04)',
@@ -249,21 +351,21 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 16,
   },
-  groupCardLandscape: {
+  stageCardLandscape: {
     width: '48.5%',
   },
-  groupHeader: {
+  stageHeader: {
     gap: 4,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.04)',
     paddingBottom: 12,
   },
-  groupTitle: {
+  stageTitle: {
     fontSize: 16,
     fontWeight: '800',
     color: '#A8C7FA', // Material 3 Primary Light Accent
   },
-  groupDesc: {
+  stageDesc: {
     fontSize: 12,
     color: '#8A92A6',
     lineHeight: 16,
@@ -323,5 +425,93 @@ const styles = StyleSheet.create({
   },
   textDisabled: {
     color: '#434753',
+  },
+  rightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  bestScoreText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#A8C7FA',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(10, 11, 14, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    backgroundColor: '#1E2025',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 24,
+    padding: 28,
+    maxWidth: 380,
+    width: '100%',
+    alignItems: 'center',
+    gap: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.5,
+    shadowRadius: 40,
+    elevation: 10,
+  },
+  modalIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(233, 161, 23, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#E2E2E6',
+    textAlign: 'center',
+  },
+  modalDesc: {
+    fontSize: 13,
+    color: '#9AA0A6',
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+    marginTop: 4,
+  },
+  modalButton: {
+    flex: 1,
+    height: 42,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalButtonSecondary: {
+    backgroundColor: '#25282F',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  modalButtonPrimary: {
+    backgroundColor: '#E9A117',
+  },
+  modalButtonTextSecondary: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#E2E2E6',
+  },
+  modalButtonTextPrimary: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0A0B0E',
   },
 });
