@@ -41,11 +41,44 @@ export const MELODY_DICTIONARY: Record<string, RelativeNote> = {
   '6': { degree: 9, offset: 0 },
   '7': { degree: 11, offset: 0 },
   '8': { degree: 0, offset: 1 },
+  
+  // High Octave
+  '1_high': { degree: 0, offset: 1 },
+  '2_high': { degree: 2, offset: 1 },
+  '3_high': { degree: 4, offset: 1 },
+  '4_high': { degree: 5, offset: 1 },
+  '5_high': { degree: 7, offset: 1 },
+  '6_high': { degree: 9, offset: 1 },
+  '7_high': { degree: 11, offset: 1 },
+  
+  // Low Octave
+  '1_low': { degree: 0, offset: -1 },
+  '2_low': { degree: 2, offset: -1 },
+  '3_low': { degree: 4, offset: -1 },
+  '4_low': { degree: 5, offset: -1 },
+  '5_low': { degree: 7, offset: -1 },
+  '6_low': { degree: 9, offset: -1 },
+  '7_low': { degree: 11, offset: -1 },
 };
 
 // ── Melody maps (relative — tonicPitchClass not needed) ──────────────────────
 
-const MELODY_CARNATIC:  Record<string, string> = { '1':'Sa','2':'Re','3':'Ga','4':'Ma','5':'Pa','6':'Dha','7':'Ni','8':'Sa' };
+const MELODY_CARNATIC:  Record<string, string> = {
+  '1': 'S',
+  'b2': 'R₁',
+  '2': 'R₂',
+  '#2': 'R₃',
+  'b3': 'G₂',
+  '3': 'G₃',
+  '4': 'M₁',
+  '#4': 'M₂',
+  '5': 'P',
+  'b6': 'D₁',
+  '6': 'D₂',
+  '#6': 'D₃',
+  'b7': 'N₂',
+  '7': 'N₃',
+};
 const MELODY_NUMERICAL: Record<string, string> = { '1':'1', '2':'2', '3':'3', '4':'4', '5':'5', '6':'6',  '7':'7', '8':'8' };
 const MELODY_SOLFEGE:   Record<string, string> = { '1':'Do','2':'Re','3':'Mi','4':'Fa','5':'Sol','6':'La','7':'Ti','8':'Do' };
 
@@ -69,7 +102,7 @@ const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'] as con
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-const DEGREE_RE = /^[1-8]$/;
+const DEGREE_RE = /^[b#]?[1-8](_high|_low)?$/;
 const CHORD_RE  = /^(I{1,3}|I?V|VI{0,2}|VII)$/;
 
 /**
@@ -91,7 +124,31 @@ export function displayLabel(
       const pc = (tonicPitchClass + (DEGREE_SEMITONES[internal] ?? 0)) % 12;
       return NOTE_NAMES[pc];
     }
-    if (melody === 'carnatic')  return MELODY_CARNATIC[internal]  ?? internal;
+    if (melody === 'carnatic') {
+      let baseInternal = internal;
+      let offset = 0;
+      if (MELODY_DICTIONARY[internal]) {
+        const rel = MELODY_DICTIONARY[internal];
+        const baseKey = Object.keys(MELODY_DICTIONARY).find(
+          k => MELODY_DICTIONARY[k].degree === rel.degree && MELODY_DICTIONARY[k].offset === 0
+        );
+        if (baseKey) {
+          baseInternal = baseKey;
+          offset = rel.offset;
+        }
+      }
+      const baseStr = MELODY_CARNATIC[baseInternal] ?? internal;
+      if (offset === 0) return baseStr;
+
+      const firstChar = baseStr.charAt(0);
+      const rest = baseStr.slice(1);
+      
+      if (offset > 0) {
+        return firstChar + '\u0307'.repeat(offset) + rest;
+      } else {
+        return firstChar + '\u0323'.repeat(Math.abs(offset)) + rest;
+      }
+    }
     if (melody === 'solfege')   return MELODY_SOLFEGE[internal]   ?? internal;
     if (melody === 'numerical') return MELODY_NUMERICAL[internal] ?? internal;
   }

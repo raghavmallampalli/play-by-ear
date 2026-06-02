@@ -3,14 +3,34 @@ import { displayLabel } from '../levels/labels';
 describe('displayLabel', () => {
   describe('Melody labels', () => {
     test('renders Carnatic system correctly', () => {
-      expect(displayLabel('1', 'carnatic', 'roman')).toBe('Sa');
-      expect(displayLabel('2', 'carnatic', 'roman')).toBe('Re');
-      expect(displayLabel('3', 'carnatic', 'roman')).toBe('Ga');
-      expect(displayLabel('4', 'carnatic', 'roman')).toBe('Ma');
-      expect(displayLabel('5', 'carnatic', 'roman')).toBe('Pa');
-      expect(displayLabel('6', 'carnatic', 'roman')).toBe('Dha');
-      expect(displayLabel('7', 'carnatic', 'roman')).toBe('Ni');
-      expect(displayLabel('8', 'carnatic', 'roman')).toBe('Sa');
+      expect(displayLabel('1', 'carnatic', 'roman')).toBe('S');
+      expect(displayLabel('2', 'carnatic', 'roman')).toBe('R₂');
+      expect(displayLabel('3', 'carnatic', 'roman')).toBe('G₃');
+      expect(displayLabel('4', 'carnatic', 'roman')).toBe('M₁');
+      expect(displayLabel('5', 'carnatic', 'roman')).toBe('P');
+      expect(displayLabel('6', 'carnatic', 'roman')).toBe('D₂');
+      expect(displayLabel('7', 'carnatic', 'roman')).toBe('N₃');
+      expect(displayLabel('8', 'carnatic', 'roman')).toBe('S\u0307');
+    });
+
+    test('applies Carnatic unicode dots correctly for all 7 symbols (high octave)', () => {
+      expect(displayLabel('1_high', 'carnatic', 'roman')).toBe('S\u0307');
+      expect(displayLabel('2_high', 'carnatic', 'roman')).toBe('R\u0307₂');
+      expect(displayLabel('3_high', 'carnatic', 'roman')).toBe('G\u0307₃');
+      expect(displayLabel('4_high', 'carnatic', 'roman')).toBe('M\u0307₁');
+      expect(displayLabel('5_high', 'carnatic', 'roman')).toBe('P\u0307');
+      expect(displayLabel('6_high', 'carnatic', 'roman')).toBe('D\u0307₂');
+      expect(displayLabel('7_high', 'carnatic', 'roman')).toBe('N\u0307₃');
+    });
+
+    test('applies Carnatic unicode dots correctly for all 7 symbols (low octave)', () => {
+      expect(displayLabel('1_low', 'carnatic', 'roman')).toBe('S\u0323');
+      expect(displayLabel('2_low', 'carnatic', 'roman')).toBe('R\u0323₂');
+      expect(displayLabel('3_low', 'carnatic', 'roman')).toBe('G\u0323₃');
+      expect(displayLabel('4_low', 'carnatic', 'roman')).toBe('M\u0323₁');
+      expect(displayLabel('5_low', 'carnatic', 'roman')).toBe('P\u0323');
+      expect(displayLabel('6_low', 'carnatic', 'roman')).toBe('D\u0323₂');
+      expect(displayLabel('7_low', 'carnatic', 'roman')).toBe('N\u0323₃');
     });
 
     test('renders Solfege system correctly', () => {
