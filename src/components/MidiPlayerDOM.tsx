@@ -12,7 +12,7 @@ import { AppSettings } from '../types/settings';
 import { UserProgressData, UserNotesData, RecentTrack, ActiveTrackState } from '../types/storage';
 import { NoteConverter } from '../utils/note_converter';
 import DawTimeline from './DawTimeline';
-import { IconAlert, IconArrowRight, IconBookOpen, IconCheck, IconClose, IconCog, IconFolder, IconHistory, IconKeyboard, IconMelody, IconMusic, IconPiano, IconPlay, IconRestart, IconTuningFork, IconUpload } from './icons/DOMIcons';
+import { IconAlert, IconArrowRight, IconBookOpen, IconCheck, IconClose, IconCog, IconFastForward, IconFolder, IconHistory, IconKeyboard, IconMelody, IconMusic, IconPiano, IconPlay, IconRestart, IconTuningFork, IconUpload } from './icons/DOMIcons';
 import KeyboardVisualizer from './KeyboardVisualizer';
 import SettingsTab from './SettingsTab';
 import { domStyles } from './styles/domStyles';
@@ -652,6 +652,26 @@ export default function MidiPlayerDOM({
     return new Set(timelineSlots.filter(s => s.answer !== null).map(s => s.beat));
   }, [timelineSlots]);
 
+  const accuracy = useMemo(() => {
+    const totalAnswered = correctCount + wrongCount;
+    return totalAnswered > 0 ? (correctCount / totalAnswered) * 100 : 100;
+  }, [correctCount, wrongCount]);
+
+  const skipButtonEnabled = useMemo(() => {
+    if (currentExerciseIndex < 3) return false;
+    const totalAnswered = correctCount + wrongCount;
+    if (totalAnswered === 0) return false;
+    return accuracy >= 80;
+  }, [currentExerciseIndex, accuracy, correctCount, wrongCount]);
+
+  const handleFastForwardClick = () => {
+    audio.stopPlayback();
+    saveProgressStats(accuracy);
+    if (onNextLevel) {
+      onNextLevel();
+    }
+  };
+
   const handleNextClick = () => {
     if (!isCurrentExerciseComplete) return;
 
@@ -667,7 +687,7 @@ export default function MidiPlayerDOM({
 
       // Stop running audio and immediately start the next queued exercise (skipping cadence)
       audio.stopPlayback();
-      audio.startPlayback(nextEx.melody, nextEx.chords, converter, true, new Set());
+      audio.startPlayback(nextEx.melody, nextEx.chords, converter, true, { melody: new Map(), chord: new Map() });
     } else {
       // Completed the entire level/queue!
       // 1. Calculate and save progress stats to props
@@ -833,7 +853,7 @@ export default function MidiPlayerDOM({
         <button
           disabled={!isInteractable}
           style={{
-            ...(!isInteractable ? domStyles.disabledBtn : domStyles.secondaryBtn),
+            ...(!isInteractable ? domStyles.disabledBtn : domStyles.primaryBtn),
             ...domStyles.practiceControlBtn,
             pointerEvents: !isInteractable ? 'none' : 'auto',
           }}
@@ -853,11 +873,11 @@ export default function MidiPlayerDOM({
         <button
           disabled={!isInteractable || chords.length === 0}
           style={{
-            ...((!isInteractable || chords.length === 0) ? domStyles.disabledBtn : domStyles.secondaryBtn),
+            ...((!isInteractable || chords.length === 0) ? domStyles.disabledBtn : domStyles.primaryBtn),
             ...domStyles.practiceControlBtn,
             pointerEvents: (!isInteractable || chords.length === 0) ? 'none' : 'auto',
           }}
-          onClick={() => audio.playBackingChordsOnly(chords, converter)}
+          onClick={() => audio.playBackingChordsOnly(chords, converter, revealedBeats)}
         >
           <IconKeyboard />
         </button>
@@ -873,11 +893,11 @@ export default function MidiPlayerDOM({
         <button
           disabled={!isInteractable || melodyNotes.length === 0}
           style={{
-            ...((!isInteractable || melodyNotes.length === 0) ? domStyles.disabledBtn : domStyles.secondaryBtn),
+            ...((!isInteractable || melodyNotes.length === 0) ? domStyles.disabledBtn : domStyles.primaryBtn),
             ...domStyles.practiceControlBtn,
             pointerEvents: (!isInteractable || melodyNotes.length === 0) ? 'none' : 'auto',
           }}
-          onClick={() => audio.playMelodyOnly(melodyNotes, converter)}
+          onClick={() => audio.playMelodyOnly(melodyNotes, converter, revealedBeats)}
         >
           <IconMelody />
         </button>
@@ -1030,6 +1050,32 @@ export default function MidiPlayerDOM({
               onClick={handleNextClick}
             >
               <IconArrowRight size={16} color="currentColor" />
+            </button>
+          </div>
+
+          <div
+            onMouseEnter={(e) => showTooltip(skipButtonEnabled ? 'Skip Exercise (Fast Forward)' : 'Requires >80% accuracy after Ex 3', e)}
+            onMouseLeave={hideTooltip}
+            style={{ display: 'flex' }}
+          >
+            <button
+              disabled={!skipButtonEnabled}
+              style={{
+                ...(skipButtonEnabled ? domStyles.primaryBtn : domStyles.disabledBtn),
+                height: '36px',
+                width: '36px',
+                padding: 0,
+                minWidth: 'auto',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                pointerEvents: skipButtonEnabled ? 'auto' : 'none',
+                borderColor: skipButtonEnabled ? 'rgba(168, 199, 250, 0.4)' : 'transparent',
+              }}
+              onClick={handleFastForwardClick}
+            >
+              <IconFastForward size={16} color={skipButtonEnabled ? "currentColor" : "#4A4D54"} />
             </button>
           </div>
         </div>
@@ -1561,7 +1607,7 @@ export default function MidiPlayerDOM({
                       hasStarted={audio.hasStarted}
                       converter={converter}
                       onSlotClick={handleSlotClick}
-                      onPlayPause={audio.isPlaying ? audio.pausePlayback : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence)}
+                      onPlayPause={audio.isPlaying ? audio.pausePlayback : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence, revealedBeats)}
                       melodyLabelSystem={settings.melodyLabelSystem}
                       chordLabelSystem={settings.chordLabelSystem}
                     />
@@ -1617,7 +1663,7 @@ export default function MidiPlayerDOM({
                       hasStarted={audio.hasStarted}
                       converter={converter}
                       onSlotClick={handleSlotClick}
-                      onPlayPause={audio.isPlaying ? audio.pausePlayback : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence)}
+                      onPlayPause={audio.isPlaying ? audio.pausePlayback : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence, revealedBeats)}
                       melodyLabelSystem={settings.melodyLabelSystem}
                       chordLabelSystem={settings.chordLabelSystem}
                     />
