@@ -4,9 +4,31 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAppData } from '@/hooks/useAppData';
+import { NativeHandlers } from '@/utils/nativeHandlers';
+import { ActivityIndicator } from 'react-native';
 
 export default function SettingsScreen() {
   const router = useRouter();
+
+  const {
+    appData,
+    loading,
+    reloadData,
+    handleSaveSettings,
+    handleSaveProgress,
+    handleSaveNotes,
+    handleSaveRecentTracks,
+    handleSaveActiveTrack,
+  } = useAppData();
+
+  if (loading || !appData) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#A8C7FA" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -26,7 +48,22 @@ export default function SettingsScreen() {
 
         {/* DOM settings Component */}
         <View style={styles.playerWrapper}>
-          <MidiPlayerDOM mode="settings" />
+          <MidiPlayerDOM 
+            mode="settings" 
+            settingsProp={appData.settings}
+            progressProp={appData.progress}
+            notesProp={appData.notes}
+            recentTracksProp={appData.recentMidis}
+            activeTrackProp={appData.activeTrack}
+            onSaveSettings={handleSaveSettings}
+            onSaveProgress={handleSaveProgress}
+            onSaveUserNotes={handleSaveNotes}
+            onSaveRecentTracks={handleSaveRecentTracks}
+            onSaveActiveTrack={handleSaveActiveTrack}
+            onExportProgress={NativeHandlers.handleExportBackup}
+            onImportProgress={() => NativeHandlers.handleImportBackup(reloadData)}
+            onLoadCustomMidi={NativeHandlers.handleLoadCustomMidi}
+          />
         </View>
       </SafeAreaView>
     </View>

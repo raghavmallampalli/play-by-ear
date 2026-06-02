@@ -4,6 +4,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAppData } from '@/hooks/useAppData';
+import { NativeHandlers } from '@/utils/nativeHandlers';
+import { ActivityIndicator } from 'react-native';
 
 export default function TrainerScreen() {
   const router = useRouter();
@@ -13,7 +16,26 @@ export default function TrainerScreen() {
   const levelNum = Number(level || 1);
   const [activeTab, setActiveTab] = React.useState<'practice' | 'theory' | 'settings'>('practice');
 
+  const {
+    appData,
+    loading,
+    reloadData,
+    handleSaveSettings,
+    handleSaveProgress,
+    handleSaveNotes,
+    handleSaveRecentTracks,
+    handleSaveActiveTrack,
+  } = useAppData();
+
   const isLandscape = width > height && width >= 600;
+
+  if (loading || !appData) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#A8C7FA" />
+      </View>
+    );
+  }
 
   const getHeaderTitle = () => {
     const tabLabel = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
@@ -89,6 +111,19 @@ export default function TrainerScreen() {
                 router.replace('/difficulty');
               }
             }}
+            settingsProp={appData.settings}
+            progressProp={appData.progress}
+            notesProp={appData.notes}
+            recentTracksProp={appData.recentMidis}
+            activeTrackProp={appData.activeTrack}
+            onSaveSettings={handleSaveSettings}
+            onSaveProgress={handleSaveProgress}
+            onSaveUserNotes={handleSaveNotes}
+            onSaveRecentTracks={handleSaveRecentTracks}
+            onSaveActiveTrack={handleSaveActiveTrack}
+            onExportProgress={NativeHandlers.handleExportBackup}
+            onImportProgress={() => NativeHandlers.handleImportBackup(reloadData)}
+            onLoadCustomMidi={NativeHandlers.handleLoadCustomMidi}
           />
         </View>
 

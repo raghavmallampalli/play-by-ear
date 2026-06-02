@@ -4,13 +4,35 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAppData } from '@/hooks/useAppData';
+import { NativeHandlers } from '@/utils/nativeHandlers';
+import { ActivityIndicator } from 'react-native';
 
 export default function MidiPlayerScreen() {
   const router = useRouter();
   const { width, height } = useWindowDimensions();
   const [activeTab, setActiveTab] = React.useState<'practice' | 'theory' | 'settings' | 'loader'>('loader');
 
+  const {
+    appData,
+    loading,
+    reloadData,
+    handleSaveSettings,
+    handleSaveProgress,
+    handleSaveNotes,
+    handleSaveRecentTracks,
+    handleSaveActiveTrack,
+  } = useAppData();
+
   const isLandscape = width > height && width >= 600;
+
+  if (loading || !appData) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#A8C7FA" />
+      </View>
+    );
+  }
 
   const getHeaderTitle = () => {
     if (activeTab === 'loader') return 'MIDI Player: Loader';
@@ -76,6 +98,19 @@ export default function MidiPlayerScreen() {
             mode="midi_player"
             activeTab={activeTab}
             onTabChange={(tab) => setActiveTab(tab)}
+            settingsProp={appData.settings}
+            progressProp={appData.progress}
+            notesProp={appData.notes}
+            recentTracksProp={appData.recentMidis}
+            activeTrackProp={appData.activeTrack}
+            onSaveSettings={handleSaveSettings}
+            onSaveProgress={handleSaveProgress}
+            onSaveUserNotes={handleSaveNotes}
+            onSaveRecentTracks={handleSaveRecentTracks}
+            onSaveActiveTrack={handleSaveActiveTrack}
+            onExportProgress={NativeHandlers.handleExportBackup}
+            onImportProgress={() => NativeHandlers.handleImportBackup(reloadData)}
+            onLoadCustomMidi={NativeHandlers.handleLoadCustomMidi}
           />
         </View>
       </SafeAreaView>

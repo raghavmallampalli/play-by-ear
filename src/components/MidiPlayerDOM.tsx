@@ -9,6 +9,7 @@ import { displayLabel, DEFAULT_MELODY_LABELS, DEFAULT_CHORD_LABELS } from '../le
 import { TimelineSlot } from '../types/levels';
 import { PlayedChord, PlayedNote, RelativeNote } from '../types/music';
 import { AppSettings } from '../types/settings';
+import { UserProgressData, UserNotesData, RecentTrack, ActiveTrackState } from '../types/storage';
 import { NoteConverter } from '../utils/note_converter';
 import DawTimeline from './DawTimeline';
 import { IconAlert, IconArrowRight, IconBookOpen, IconCheck, IconClose, IconCog, IconFolder, IconHistory, IconKeyboard, IconMelody, IconMusic, IconPiano, IconPlay, IconRestart, IconTuningFork, IconUpload } from './icons/DOMIcons';
@@ -35,14 +36,50 @@ interface MidiPlayerDOMProps {
   onTabChange?: (tab: 'practice' | 'theory' | 'settings' | 'loader') => void;
   presetId?: string;
   action?: 'play' | 'pause';
+
+  settingsProp?: AppSettings;
+  progressProp?: UserProgressData;
+  notesProp?: UserNotesData;
+  recentTracksProp?: RecentTrack[];
+  activeTrackProp?: ActiveTrackState | null;
+
+  onSaveSettings?: (settings: AppSettings) => void;
+  onSaveProgress?: (hash: string, scoreRate: number) => void;
+  onSaveUserNotes?: (level: number, text: string) => void;
+  onSaveRecentTracks?: (tracks: RecentTrack[]) => void;
+  onSaveActiveTrack?: (track: ActiveTrackState | null) => void;
+
+  onExportProgress?: () => void;
+  onImportProgress?: () => void;
+  onLoadCustomMidi?: (onMidiLoaded: (name: string, base64: string) => void) => void;
 }
 
-export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel, activeTab: propsActiveTab, onTabChange, presetId, action }: MidiPlayerDOMProps) {
+export default function MidiPlayerDOM({ 
+  mode = 'trainer', 
+  level = 1, 
+  onNextLevel, 
+  activeTab: propsActiveTab, 
+  onTabChange, 
+  presetId, 
+  action,
+  settingsProp,
+  progressProp,
+  notesProp,
+  recentTracksProp,
+  activeTrackProp,
+  onSaveSettings,
+  onSaveProgress,
+  onSaveUserNotes,
+  onSaveRecentTracks,
+  onSaveActiveTrack,
+  onExportProgress,
+  onImportProgress,
+  onLoadCustomMidi
+}: MidiPlayerDOMProps) {
   const [localActiveTab, setLocalActiveTab] = useState<'practice' | 'theory' | 'settings' | 'loader'>(mode === 'midi_player' ? 'loader' : 'practice');
   const activeTab = propsActiveTab ?? localActiveTab;
   const setActiveTab = onTabChange ?? setLocalActiveTab;
   const [isLandscape, setIsLandscape] = useState(false);
-  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
@@ -66,23 +103,17 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
 
   // ─── Settings management ────────────────────────────────────────────────────
 
+  const [settings, setSettings] = useState<AppSettings>(settingsProp ?? DEFAULT_SETTINGS);
+
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('@pbe_settings');
-      if (stored) {
-        setSettings({
-          ...DEFAULT_SETTINGS,
-          ...JSON.parse(stored)
-        });
-      }
-    } catch { }
-  }, []);
+    if (settingsProp) {
+      setSettings(settingsProp);
+    }
+  }, [settingsProp]);
 
   const saveSettings = (newSettings: AppSettings) => {
     setSettings(newSettings);
-    try {
-      localStorage.setItem('@pbe_settings', JSON.stringify(newSettings));
-    } catch { }
+    onSaveSettings?.(newSettings);
   };
 
   // ─── Level State ───────────────────────────────────────────────────────────
@@ -141,9 +172,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
     setRecentTracks(prev => {
       const filtered = prev.filter(t => t.id !== id);
       const updated = [{ id, name, isPreset }, ...filtered].slice(0, 10);
-      try {
-        localStorage.setItem('@pbe_recent_midis', JSON.stringify(updated));
-      } catch { }
+      onSaveRecentTracks?.(updated);
       return updated;
     });
   };
@@ -165,15 +194,12 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
   };
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('@pbe_recent_midis');
-      if (stored) {
-        setRecentTracks(JSON.parse(stored));
-      }
-    } catch { }
-  }, []);
+    if (recentTracksProp) {
+      setRecentTracks(recentTracksProp);
+    }
+  }, [recentTracksProp]);
 
-  const loadMidiFromBuffer = async (buffer: ArrayBuffer, name: string) => {
+  const loadMidiFromBuffer = async (buffer: ArrayBuffer, name: string, isPreset = false, presetId?: string) => {
     try {
       const { Midi } = await import('@tonejs/midi');
       const midi = new Midi(buffer);
@@ -271,20 +297,12 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
         ticksPerBeat: ppq,
       }));
 
-      try {
-        localStorage.setItem('@pbe_active_midi_track', JSON.stringify({
-          name,
-          bpm: Math.round(bpm),
-          ppq,
-          maxTime,
-          absoluteNotes,
-          slots,
-          parsedMelody,
-          parsedChords
-        }));
-      } catch (err) {
-        console.error("Failed to save track to localStorage:", err);
-      }
+      const trackState = {
+        name,
+        isPreset,
+        presetId
+      };
+      onSaveActiveTrack?.(trackState);
 
       audio.stopPlayback();
       setActiveTab('practice');
@@ -305,7 +323,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
     try {
       const res = await fetch(preset.asset);
       const ab = await res.arrayBuffer();
-      const notes = await loadMidiFromBuffer(ab, preset.title);
+      const notes = await loadMidiFromBuffer(ab, preset.title, true, preset.id);
       updateRecentTracks(preset.id, true, preset.title);
       return notes;
     } catch (err) {
@@ -327,33 +345,24 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
     }
   }, [presetId, action, mode]);
 
-  // Restore active track state from localStorage on mount
+  // Restore active track state from props on mount
   useEffect(() => {
     if (mode === 'midi_player') {
-      try {
-        const storedTrack = localStorage.getItem('@pbe_active_midi_track');
-        if (storedTrack) {
-          const track = JSON.parse(storedTrack);
-          setMidiFileName(track.name);
-          setMidiDuration(track.maxTime);
-          setMidiNotesList(track.absoluteNotes);
-          setMidiTimelineSlotsState(track.slots);
-          setMelodyNotes(track.parsedMelody);
-          setChords(track.parsedChords);
-          setDefaultMidiBpm(Math.round(track.bpm));
-
-          const savedBpm = settings.midiTempoMap?.[track.name];
-          setLevelConfig(prev => ({
-            ...prev,
-            bpm: savedBpm ?? Math.round(track.bpm),
-            ticksPerBeat: track.ppq,
-          }));
+      if (activeTrackProp) {
+        try {
+          const t = activeTrackProp;
+          if (t.name) {
+            setMidiFileName(t.name);
+            if (t.isPreset && t.presetId) {
+              loadMidiPreset(t.presetId);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to parse active track from props:", err);
         }
-      } catch (err) {
-        console.error("Error loading persisted track:", err);
       }
     }
-  }, [mode, settings.midiTempoMap]);
+  }, [mode, activeTrackProp]);
 
   // Keep a ref to stopPlayback so the unmount cleanup always calls the latest version
   const stopPlaybackRef = useRef(audio.stopPlayback);
@@ -537,22 +546,8 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
   }, [mode, settings.midiDisplayLayer, melodyNotes, chords, settings.melodyLabelSystem, settings.chordLabelSystem, converter.tonicPitchClass, midiTimelineSlotsState]);
   // ─── Progress persistence ───────────────────────────────────────────────────
 
-  const saveProgressStats = (correct: number, total: number) => {
-    const hash = EXERCISE_HASHES[level];
-    if (!hash) return;
-    const rate = Math.round((correct / total) * 100);
-    try {
-      const key = `@pbe_progress_${hash}`;
-      const existing = localStorage.getItem(key);
-      let tried = 1, average = rate, best = rate;
-      if (existing) {
-        const d = JSON.parse(existing);
-        tried = (d.timesTried || 0) + 1;
-        best = Math.max(d.bestSuccess || 0, rate);
-        average = Math.round(((d.averageSuccess || 0) * (tried - 1) + rate) / tried);
-      }
-      localStorage.setItem(key, JSON.stringify({ timesTried: tried, averageSuccess: average, bestSuccess: best }));
-    } catch { /* offline */ }
+  const saveProgressStats = (scoreRate: number) => {
+    onSaveProgress?.(EXERCISE_HASHES[level], scoreRate);
   };
 
   // ─── Interaction ───────────────────────────────────────────────────────────
@@ -675,11 +670,12 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
       audio.startPlayback(nextEx.melody, nextEx.chords, converter, true, new Set());
     } else {
       // Completed the entire level/queue!
-      // 1. Calculate and save progress stats to localStorage
+      // 1. Calculate and save progress stats to props
       const totalSlots = exerciseQueue.reduce((acc, ex) => acc + ex.slots.length, 0);
       const answeredSlots = exerciseQueue.flatMap(ex => ex.slots).filter(s => s.answer !== null);
       const totalCorrect = answeredSlots.filter(s => s.correct).length;
-      saveProgressStats(totalCorrect, totalSlots);
+      const scoreRate = Math.round((totalCorrect / (totalSlots || 1)) * 100);
+      saveProgressStats(scoreRate);
 
       // 2. Navigate to the next level
       if (onNextLevel) {
@@ -1062,6 +1058,8 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
             setLevelConfig={setLevelConfig}
             midiFileName={mode === 'midi_player' ? midiFileName : undefined}
             defaultMidiBpm={mode === 'midi_player' ? defaultMidiBpm : undefined}
+            onExportProgress={onExportProgress}
+            onImportProgress={onImportProgress}
           />
         </div>
       </div>
@@ -1069,18 +1067,21 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
   };
 
   const renderMidiLoaderView = () => {
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = async (evt) => {
-        const ab = evt.target?.result as ArrayBuffer;
-        if (ab) {
-          await loadMidiFromBuffer(ab, file.name);
-          updateRecentTracks(file.name, false, file.name);
+    const handleNativeFileSelect = () => {
+      onLoadCustomMidi?.(async (name, base64) => {
+        try {
+          const binaryString = atob(base64);
+          const len = binaryString.length;
+          const bytes = new Uint8Array(len);
+          for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          await loadMidiFromBuffer(bytes.buffer, name);
+          updateRecentTracks(name, false, name);
+        } catch (e) {
+          console.error("Error loading custom MIDI base64:", e);
         }
-      };
-      reader.readAsArrayBuffer(file);
+      });
     };
 
     const genres: ('Classical' | 'Traditional' | 'Custom & Recent')[] = [
@@ -1126,25 +1127,27 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
             <p style={{ fontSize: '14px', color: '#8A92A6', margin: 0, maxWidth: '400px' }}>
               Upload any standard MIDI track. It will be converted completely offline into interactive scale degrees.
             </p>
-            <label style={{
-              marginTop: '12px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '12px 24px',
-              backgroundColor: '#A8C7FA',
-              color: '#0A305F',
-              borderRadius: '100px',
-              cursor: 'pointer',
-              fontWeight: '700',
-              fontSize: '15px',
-              boxShadow: '0 4px 12px rgba(168, 199, 250, 0.15)',
-              transition: 'all 0.2s',
+            <button 
+              onClick={handleNativeFileSelect}
+              style={{
+                marginTop: '12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 24px',
+                backgroundColor: '#A8C7FA',
+                color: '#0A305F',
+                borderRadius: '100px',
+                cursor: 'pointer',
+                fontWeight: '700',
+                fontSize: '15px',
+                border: 'none',
+                boxShadow: '0 4px 12px rgba(168, 199, 250, 0.15)',
+                transition: 'all 0.2s',
             }}>
               <IconFolder size={18} />
               Browse Local Files
-              <input type="file" accept=".mid,.midi" onChange={handleFileUpload} style={{ display: 'none' }} />
-            </label>
+            </button>
           </div>
         </div>
 
@@ -1648,9 +1651,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
               userNotes={userNotes}
               onSaveNotes={(val) => {
                 setUserNotes(val);
-                try {
-                  localStorage.setItem(`@pbe_notes_lvl_${level}`, val);
-                } catch { /* offline */ }
+                onSaveUserNotes?.(level, val);
               }}
             />
           )}

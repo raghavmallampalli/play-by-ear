@@ -16,6 +16,8 @@ interface SettingsTabProps {
   setLevelConfig: React.Dispatch<React.SetStateAction<LevelConfig>>;
   midiFileName?: string;
   defaultMidiBpm?: number;
+  onExportProgress?: () => void;
+  onImportProgress?: () => void;
 }
 
 export default function SettingsTab({
@@ -28,38 +30,9 @@ export default function SettingsTab({
   setLevelConfig,
   midiFileName,
   defaultMidiBpm,
+  onExportProgress,
+  onImportProgress,
 }: SettingsTabProps) {
-  const [copiedExport, setCopiedExport] = useState(false);
-  const [importJson, setImportJson] = useState('');
-
-  const exportProgress = () => {
-    const data: Record<string, string> = {};
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.startsWith('@pbe_progress_') || key.startsWith('@pbe_notes_lvl_') || key === '@pbe_settings')) {
-          const val = localStorage.getItem(key);
-          if (val) data[key] = val;
-        }
-      }
-    } catch { }
-    return JSON.stringify(data, null, 2);
-  };
-
-  const importProgress = (jsonStr: string) => {
-    try {
-      const data = JSON.parse(jsonStr);
-      Object.keys(data).forEach(key => {
-        if (key.startsWith('@pbe_progress_') || key.startsWith('@pbe_notes_lvl_') || key === '@pbe_settings') {
-          localStorage.setItem(key, data[key]);
-        }
-      });
-      alert('Progress & settings imported successfully!');
-      window.location.reload();
-    } catch {
-      alert('Failed to parse progress backup. Please make sure the JSON format is correct.');
-    }
-  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -327,40 +300,16 @@ export default function SettingsTab({
         <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
           <button
             style={{ ...domStyles.primaryBtn, flex: 1, height: '40px' }}
-            onClick={() => {
-              const json = exportProgress();
-              navigator.clipboard.writeText(json).then(() => {
-                setCopiedExport(true);
-                setTimeout(() => setCopiedExport(false), 2500);
-              }).catch(() => {
-                alert('Backup copied automatically! Here is the JSON:\n\n' + json);
-              });
-            }}
+            onClick={() => onExportProgress && onExportProgress()}
           >
-            {copiedExport ? 'Copied to Clipboard!' : 'Export Progress JSON'}
+            Export Progress Backup
           </button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <textarea
-            placeholder="Paste exported Progress JSON string here to import & restore..."
-            value={importJson}
-            onChange={(e) => setImportJson(e.target.value)}
-            style={{
-              ...domStyles.theoryNotesTextarea,
-              height: '70px',
-              fontFamily: 'monospace',
-              fontSize: '11px',
-              borderColor: 'rgba(168, 199, 250, 0.15)',
-            }}
-          />
           <button
-            disabled={!importJson.trim()}
-            style={{
-              ...(!importJson.trim() ? domStyles.disabledBtn : domStyles.primaryBtn),
-              height: '40px',
-            }}
-            onClick={() => importProgress(importJson)}
+            style={{ ...domStyles.secondaryBtn, height: '40px' }}
+            onClick={() => onImportProgress && onImportProgress()}
           >
             Import & Restore Progress
           </button>
