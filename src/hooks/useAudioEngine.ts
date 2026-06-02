@@ -25,7 +25,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
   const nextNoteIndexRef = useRef<number>(0);
 
   // Refactor: Store flat list of absolute notes for the scheduler to minimize runtime overhead
-  const scheduledNotesRef = useRef<{ midi: number, time: number, duration: number, velocity: number }[]>([]);
+  const scheduledNotesRef = useRef<{ midi: number, time: number, duration: number, velocity: number, showHighlight?: boolean }[]>([]);
   const playheadRef = useRef<number>(0);
 
   useEffect(() => { playheadRef.current = playheadTime; }, [playheadTime]);
@@ -151,7 +151,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
     ) {
       const note = notes[nextNoteIndexRef.current];
       if (note.time >= playheadRef.current - lookahead) {
-        playSynthNote(ctx, note.midi, now + Math.max(0, note.time - playheadRef.current), note.duration, note.velocity, false);
+        playSynthNote(ctx, note.midi, now + Math.max(0, note.time - playheadRef.current), note.duration, note.velocity, note.showHighlight);
         scheduledCount++;
       }
       nextNoteIndexRef.current++;
@@ -195,19 +195,20 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
     }
   }, [pausePlayback]);
 
-  const startPlayback = useCallback(async (melody: PlayedNote[], chords: PlayedChord[], converter: NoteConverter, skipCadence = false) => {
+  const startPlayback = useCallback(async (melody: PlayedNote[], chords: PlayedChord[], converter: NoteConverter, skipCadence = false, revealedBeats?: Set<number>) => {
 
     await initAudio();
     if (isPlayingRef.current) return;
 
     // Prepare scheduled notes (convert Relative -> MIDI and Ticks -> Seconds)
     // We deduplicate notes that appear in both melody and chords at the same time to prevent audio phasing
-    const uniqueNotes = new Map<string, { midi: number, time: number, duration: number, velocity: number }>();
+    const uniqueNotes = new Map<string, { midi: number, time: number, duration: number, velocity: number, showHighlight?: boolean }>();
 
     // Helper to get a consistent deduplication key (rounding time to nearest ~5ms to handle floating point fuzziness)
     const getNoteKey = (midi: number, time: number) => `${midi}_${Math.round(time * 200)}`;
 
     chords.forEach(c => {
+      const isRevealed = revealedBeats?.has(c.beat);
       c.notes.forEach((n, idx) => {
         const midi = converter.toMidi(n);
         const time = converter.ticksToSeconds(c.beat) + idx * 0.015;
@@ -218,12 +219,14 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
             time,
             duration: converter.ticksToSeconds(c.duration),
             velocity: 0.75,
+            showHighlight: isRevealed,
           });
         }
       });
     });
 
     melody.forEach(n => {
+      const isRevealed = revealedBeats?.has(n.beat);
       const midi = converter.toMidi(n.note);
       const time = converter.ticksToSeconds(n.beat);
       const key = getNoteKey(midi, time);
@@ -233,6 +236,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
         time,
         duration: converter.ticksToSeconds(n.duration),
         velocity: 0.85,
+        showHighlight: isRevealed,
       });
     });
 
@@ -351,6 +355,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
         time: n.time / speed,
         duration: n.duration / speed,
         velocity: n.velocity,
+        showHighlight: true,
       })).sort((a, b) => a.time - b.time);
   
       nextNoteIndexRef.current = scheduledNotesRef.current.findIndex(n => n.time >= playheadRef.current);
