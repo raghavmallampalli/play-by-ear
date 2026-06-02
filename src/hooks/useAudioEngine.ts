@@ -195,7 +195,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
     }
   }, [pausePlayback]);
 
-  const startPlayback = useCallback(async (melody: PlayedNote[], chords: PlayedChord[], converter: NoteConverter, skipCadence = false, revealedBeats?: Set<number>) => {
+  const startPlayback = useCallback(async (melody: PlayedNote[], chords: PlayedChord[], converter: NoteConverter, skipCadence = false, slotStates?: { melody: Map<number, boolean>, chord: Map<number, boolean> }) => {
 
     await initAudio();
     if (isPlayingRef.current) return;
@@ -208,7 +208,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
     const getNoteKey = (midi: number, time: number) => `${midi}_${Math.round(time * 200)}`;
 
     chords.forEach(c => {
-      const isRevealed = revealedBeats?.has(c.beat);
+      const isRevealed = (mode !== 'trainer') || (slotStates && slotStates.chord.has(c.beat) ? slotStates.chord.get(c.beat) : true);
       c.notes.forEach((n, idx) => {
         const midi = converter.toMidi(n);
         const time = converter.ticksToSeconds(c.beat) + idx * 0.015;
@@ -226,7 +226,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
     });
 
     melody.forEach(n => {
-      const isRevealed = revealedBeats?.has(n.beat);
+      const isRevealed = (mode !== 'trainer') || (slotStates && slotStates.melody.has(n.beat) ? slotStates.melody.get(n.beat) : true);
       const midi = converter.toMidi(n.note);
       const time = converter.ticksToSeconds(n.beat);
       const key = getNoteKey(midi, time);
@@ -329,14 +329,14 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
     });
   }, [initAudio, playSynthNote]);
 
-  const playBackingChordsOnly = useCallback((chords: PlayedChord[], converter: NoteConverter) => {
+  const playBackingChordsOnly = useCallback((chords: PlayedChord[], converter: NoteConverter, slotStates?: Map<number, boolean>) => {
     stopPlayback();
-    startPlayback([], chords, converter, true);
+    startPlayback([], chords, converter, true, slotStates ? { melody: new Map(), chord: slotStates } : undefined);
   }, [startPlayback, stopPlayback]);
 
-  const playMelodyOnly = useCallback((melody: PlayedNote[], converter: NoteConverter) => {
+  const playMelodyOnly = useCallback((melody: PlayedNote[], converter: NoteConverter, slotStates?: Map<number, boolean>) => {
     stopPlayback();
-    startPlayback(melody, [], converter, true);
+    startPlayback(melody, [], converter, true, slotStates ? { melody: slotStates, chord: new Map() } : undefined);
   }, [startPlayback, stopPlayback]);
 
   const resetStartFlags = useCallback(() => {

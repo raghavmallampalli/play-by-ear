@@ -648,8 +648,19 @@ export default function MidiPlayerDOM({
     return timelineSlots.length > 0 && timelineSlots.every(s => s.answer !== null);
   }, [timelineSlots]);
 
-  const revealedBeats = useMemo(() => {
-    return new Set(timelineSlots.filter(s => s.answer !== null).map(s => s.beat));
+  const slotStates = useMemo(() => {
+    const states = {
+      melody: new Map<number, boolean>(),
+      chord: new Map<number, boolean>(),
+    };
+    timelineSlots.forEach(s => {
+      if (s.chord) {
+        states.chord.set(s.beat, s.answer !== null);
+      } else {
+        states.melody.set(s.beat, s.answer !== null);
+      }
+    });
+    return states;
   }, [timelineSlots]);
 
   const accuracy = useMemo(() => {
@@ -757,7 +768,7 @@ export default function MidiPlayerDOM({
       }
     } else {
       audio.stopPlayback();
-      audio.startPlayback(melodyNotes, chords, converter, skipCadence, revealedBeats);
+      audio.startPlayback(melodyNotes, chords, converter, skipCadence, slotStates);
     }
   };
 
@@ -877,7 +888,7 @@ export default function MidiPlayerDOM({
             ...domStyles.practiceControlBtn,
             pointerEvents: (!isInteractable || chords.length === 0) ? 'none' : 'auto',
           }}
-          onClick={() => audio.playBackingChordsOnly(chords, converter, revealedBeats)}
+          onClick={() => audio.playBackingChordsOnly(chords, converter, slotStates.chord)}
         >
           <IconKeyboard />
         </button>
@@ -897,7 +908,7 @@ export default function MidiPlayerDOM({
             ...domStyles.practiceControlBtn,
             pointerEvents: (!isInteractable || melodyNotes.length === 0) ? 'none' : 'auto',
           }}
-          onClick={() => audio.playMelodyOnly(melodyNotes, converter, revealedBeats)}
+          onClick={() => audio.playMelodyOnly(melodyNotes, converter, slotStates.melody)}
         >
           <IconMelody />
         </button>
@@ -1607,7 +1618,7 @@ export default function MidiPlayerDOM({
                       hasStarted={audio.hasStarted}
                       converter={converter}
                       onSlotClick={handleSlotClick}
-                      onPlayPause={audio.isPlaying ? audio.pausePlayback : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence, revealedBeats)}
+                      onPlayPause={audio.isPlaying ? audio.pausePlayback : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence, slotStates)}
                       melodyLabelSystem={settings.melodyLabelSystem}
                       chordLabelSystem={settings.chordLabelSystem}
                     />
@@ -1663,7 +1674,7 @@ export default function MidiPlayerDOM({
                       hasStarted={audio.hasStarted}
                       converter={converter}
                       onSlotClick={handleSlotClick}
-                      onPlayPause={audio.isPlaying ? audio.pausePlayback : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence, revealedBeats)}
+                      onPlayPause={audio.isPlaying ? audio.pausePlayback : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence, slotStates)}
                       melodyLabelSystem={settings.melodyLabelSystem}
                       chordLabelSystem={settings.chordLabelSystem}
                     />
