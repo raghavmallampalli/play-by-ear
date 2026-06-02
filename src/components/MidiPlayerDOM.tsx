@@ -653,6 +653,10 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
     return timelineSlots.length > 0 && timelineSlots.every(s => s.answer !== null);
   }, [timelineSlots]);
 
+  const revealedBeats = useMemo(() => {
+    return new Set(timelineSlots.filter(s => s.answer !== null).map(s => s.beat));
+  }, [timelineSlots]);
+
   const handleNextClick = () => {
     if (!isCurrentExerciseComplete) return;
 
@@ -668,7 +672,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
 
       // Stop running audio and immediately start the next queued exercise (skipping cadence)
       audio.stopPlayback();
-      audio.startPlayback(nextEx.melody, nextEx.chords, converter, true);
+      audio.startPlayback(nextEx.melody, nextEx.chords, converter, true, new Set());
     } else {
       // Completed the entire level/queue!
       // 1. Calculate and save progress stats to localStorage
@@ -737,21 +741,20 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
       }
     } else {
       audio.stopPlayback();
-
-      audio.startPlayback(melodyNotes, chords, converter, skipCadence);
+      audio.startPlayback(melodyNotes, chords, converter, skipCadence, revealedBeats);
     }
   };
 
   const handleRestartClick = () => {
-
     audio.stopPlayback();
     if (mode === 'midi_player') {
-      if (audio.startDirectMidiPlayback) {
-        const speedFactor = levelConfig.bpm / (defaultMidiBpm || 120);
-        audio.startDirectMidiPlayback(midiNotesList, speedFactor);
-      }
+      audio.resetStartFlags();
     } else {
-      audio.startPlayback(melodyNotes, chords, converter, skipCadence);
+      if (settings.confirmRestartLevel) {
+        setShowRestartModal(true);
+      } else {
+        setupExercise(false);
+      }
     }
   };
 
@@ -783,7 +786,26 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
 
   // ─── Play Controls row helper ────────────────────────────────────────────────
 
-  const renderPlayControlsRow = (landscapeMode: boolean = false) => {
+  /**
+   * TrackControls explicitly handles the playback interaction for the user.
+   * 
+   * BEHAVIOR SPECIFICATION:
+   * 1. Start / Restart Exercise Button:
+   *    - Initial State: "Start Exercise" (Play icon).
+   *    - Start Behavior: Stops any currently playing audio and initiates playback of the full exercise sequence. Sets hasStarted = true, converting the button into the "Restart Level" state.
+   *    - Restart Behavior: When clicked in its "Restart" state, it stops playback and initiates a full reset of the entire level (resets the 10-exercise queue and progression stats back to 0), prompting with a confirmation modal if 'confirmRestartLevel' is active.
+   * 2. Tonic Reference Button:
+   *    - Behavior: Immediately interrupts/stops any active playback and plays the foundational tonic chord. Does not advance the timeline or change the hasStarted state.
+   * 3. Chords Guide Button:
+   *    - Behavior: Immediately interrupts/stops any active playback and begins playing only the backing chords (silencing the melody).
+   * 4. Melody Guide Button:
+   *    - Behavior: Immediately interrupts/stops any active playback and begins playing only the melody (silencing the backing chords).
+   * 5. DawTimeline Play/Pause Button (External to this component):
+   *    - Behavior: Strictly disabled until hasStarted is true. Toggles the isPlaying state, pausing or resuming the active timeline.
+   * 6. Next Exercise / Progress Button (External to this component):
+   *    - Behavior: Remains disabled until all slots in the current exercise are solved. When clicked, it stops current audio and advances to the next exercise.
+   */
+  const renderTrackControls = (landscapeMode: boolean = false) => {
     const startBtn = (
       <div
         onMouseEnter={(e) => showTooltip(mode === 'midi_player' ? (audio.hasStarted ? 'Restart Track' : 'Play Track') : (audio.hasStarted ? 'Restart Level' : 'Start Exercise'), e)}
@@ -1353,7 +1375,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
         </div>
 
         {/* Play controls row */}
-        {renderPlayControlsRow(false)}
+        {renderTrackControls(false)}
 
         {/* Visualizer (if enabled) */}
         {settings.visualizerEnabled && (
@@ -1421,7 +1443,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
         </div>
 
         {/* Controls Row */}
-        {renderPlayControlsRow(true)}
+        {renderTrackControls(true)}
       </div>
     );
   };
@@ -1559,7 +1581,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
                     renderMidiControlsCard()
                   ) : (
                     <>
-                      {renderPlayControlsRow(true)}
+                      {renderTrackControls(true)}
                       {renderChoicesCard()}
                       {renderProgressCard()}
                     </>
@@ -1609,7 +1631,7 @@ export default function MidiPlayerDOM({ mode = 'trainer', level = 1, onNextLevel
 
                     {renderChoicesCard()}
                     {renderProgressCard()}
-                    {renderPlayControlsRow(false)}
+                    {renderTrackControls(false)}
                   </>
                 )}
               </div>
