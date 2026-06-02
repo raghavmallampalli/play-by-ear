@@ -73,24 +73,32 @@ export function useMidiConverter(converter: NoteConverter) {
     const melodyTrack = midi.addTrack();
     melodyTrack.name = 'Melody';
 
+    const uniqueNotes = new Set<string>();
+
     song.melody.forEach((n) => {
+      const midiPitch = converter.toMidi(n.note);
+      uniqueNotes.add(`${midiPitch}_${n.beat}`);
       melodyTrack.addNote({
-        midi: converter.toMidi(n.note),
+        midi: midiPitch,
         ticks: n.beat,
         durationTicks: n.duration,
       });
     });
 
-    // We could add chords as a separate track
     const chordTrack = midi.addTrack();
     chordTrack.name = 'Chords';
     song.chords.forEach((c) => {
       c.notes.forEach(note => {
-        chordTrack.addNote({
-          midi: converter.toMidi(note),
-          ticks: c.beat,
-          durationTicks: c.duration,
-        });
+        const midiPitch = converter.toMidi(note);
+        const key = `${midiPitch}_${c.beat}`;
+        if (!uniqueNotes.has(key)) {
+          uniqueNotes.add(key);
+          chordTrack.addNote({
+            midi: midiPitch,
+            ticks: c.beat,
+            durationTicks: c.duration,
+          });
+        }
       });
     });
 
