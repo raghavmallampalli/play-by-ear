@@ -135,11 +135,11 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
 - [ ] Shift to expo-fs (similarly all expo variants instead of react variants), make sure save and load works fine
 
 ## More exercises
-- [ ] Happy birthday notes are in level 6 wrong, pull midi and base edxcercise on it
-- [ ] Minor, augmented, dimnished, 7th, suspended
-- [ ] More useful notes for chord recognition
-- [ ] Difficult selection page should include best performance
-- [ ] Lock later levels until earlier levels are passed (with a "pass" threshold, i.e 80%)
+- [x] Happy birthday notes are in level 6 wrong, pull midi and base edxcercise on it
+- [x] Minor, augmented, dimnished, 7th, suspended
+- [x] More useful notes for chord recognition
+- [x] Difficult selection page should include best performance
+- [x] Lock later levels until earlier levels are passed (with a "pass" threshold, i.e 80%)
 
 ## User onboarding
 - [ ] Add a demo of UI that auto launches the first launch, wire it up behind a help button on the trainer screen.
