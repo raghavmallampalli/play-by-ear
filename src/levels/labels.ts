@@ -10,6 +10,38 @@
  */
 
 import { MelodyLabelSystem, ChordLabelSystem } from '../types/labels';
+import { RelativeNote } from '../types/music';
+
+// ── Internal Dictionaries (Pitch Logic) ───────────────────────────────────────
+
+export const CHORD_DICTIONARY: Record<string, RelativeNote[]> = {
+  I: [
+    { degree: 0, offset: -1 }, // C3 (Root)
+    { degree: 4, offset: -1 }, // E3 (Third)
+    { degree: 7, offset: -1 }, // G3 (Fifth)
+  ],
+  IV: [
+    { degree: 5, offset: -1 }, // F3 (Root)
+    { degree: 9, offset: -1 }, // A3 (Third)
+    { degree: 0, offset: 0 },  // C4 (Fifth)
+  ],
+  V: [
+    { degree: 7, offset: -1 }, // G3 (Root)
+    { degree: 11, offset: -1 },// B3 (Third)
+    { degree: 2, offset: 0 },  // D4 (Fifth)
+  ],
+};
+
+export const MELODY_DICTIONARY: Record<string, RelativeNote> = {
+  '1': { degree: 0, offset: 0 },
+  '2': { degree: 2, offset: 0 },
+  '3': { degree: 4, offset: 0 },
+  '4': { degree: 5, offset: 0 },
+  '5': { degree: 7, offset: 0 },
+  '6': { degree: 9, offset: 0 },
+  '7': { degree: 11, offset: 0 },
+  '8': { degree: 0, offset: 1 },
+};
 
 // ── Melody maps (relative — tonicPitchClass not needed) ──────────────────────
 

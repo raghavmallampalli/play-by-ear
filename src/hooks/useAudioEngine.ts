@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { pianoSamples } from '../constants/piano_samples';
+import { CHORD_DICTIONARY, MELODY_DICTIONARY } from '../levels/labels';
 import { PlayedChord, PlayedNote } from '../types/music';
 import { NoteConverter } from '../utils/note_converter';
 
@@ -200,29 +201,42 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
     if (isPlayingRef.current) return;
 
     // Prepare scheduled notes (convert Relative -> MIDI and Ticks -> Seconds)
-    const absoluteNotes: { midi: number, time: number, duration: number, velocity: number }[] = [];
+    // We deduplicate notes that appear in both melody and chords at the same time to prevent audio phasing
+    const uniqueNotes = new Map<string, { midi: number, time: number, duration: number, velocity: number }>();
+
+    // Helper to get a consistent deduplication key (rounding time to nearest ~5ms to handle floating point fuzziness)
+    const getNoteKey = (midi: number, time: number) => `${midi}_${Math.round(time * 200)}`;
+
+    chords.forEach(c => {
+      c.notes.forEach((n, idx) => {
+        const midi = converter.toMidi(n);
+        const time = converter.ticksToSeconds(c.beat) + idx * 0.015;
+        const key = getNoteKey(midi, time);
+        if (!uniqueNotes.has(key)) {
+          uniqueNotes.set(key, {
+            midi,
+            time,
+            duration: converter.ticksToSeconds(c.duration),
+            velocity: 0.75,
+          });
+        }
+      });
+    });
 
     melody.forEach(n => {
-      absoluteNotes.push({
-        midi: converter.toMidi(n.note),
-        time: converter.ticksToSeconds(n.beat),
+      const midi = converter.toMidi(n.note);
+      const time = converter.ticksToSeconds(n.beat);
+      const key = getNoteKey(midi, time);
+      // Melody velocities take precedence if the note overlaps with a chord
+      uniqueNotes.set(key, {
+        midi,
+        time,
         duration: converter.ticksToSeconds(n.duration),
         velocity: 0.85,
       });
     });
 
-    chords.forEach(c => {
-      c.notes.forEach((n, idx) => {
-        absoluteNotes.push({
-          midi: converter.toMidi(n),
-          time: converter.ticksToSeconds(c.beat) + idx * 0.015,
-          duration: converter.ticksToSeconds(c.duration),
-          velocity: 0.75,
-        });
-      });
-    });
-
-    scheduledNotesRef.current = absoluteNotes.sort((a, b) => a.time - b.time);
+    scheduledNotesRef.current = Array.from(uniqueNotes.values()).sort((a, b) => a.time - b.time);
 
     setIsPlaying(true);
     isPlayingRef.current = true;
@@ -303,18 +317,10 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
       const chord = (relNotes: { degree: number, offset: number }[]) =>
         relNotes.forEach((n, i) => playSynthNote(ctx, converter.toMidi(n), now + i * 0.02, 1.2, 0.7, showHighlight));
 
-      switch (choice) {
-        case '1': playSynthNote(ctx, converter.toMidi({ degree: 0, offset: 0 }), now, 0.6, 0.85, showHighlight); break;
-        case '2': playSynthNote(ctx, converter.toMidi({ degree: 2, offset: 0 }), now, 0.6, 0.85, showHighlight); break;
-        case '3': playSynthNote(ctx, converter.toMidi({ degree: 4, offset: 0 }), now, 0.6, 0.85, showHighlight); break;
-        case '4': playSynthNote(ctx, converter.toMidi({ degree: 5, offset: 0 }), now, 0.6, 0.85, showHighlight); break;
-        case '5': playSynthNote(ctx, converter.toMidi({ degree: 7, offset: 0 }), now, 0.6, 0.85, showHighlight); break;
-        case '6': playSynthNote(ctx, converter.toMidi({ degree: 9, offset: 0 }), now, 0.6, 0.85, showHighlight); break;
-        case '7': playSynthNote(ctx, converter.toMidi({ degree: 11, offset: 0 }), now, 0.6, 0.85, showHighlight); break;
-        case '8': playSynthNote(ctx, converter.toMidi({ degree: 0, offset: 1 }), now, 0.6, 0.85, showHighlight); break;
-        case 'I': chord([{ degree: 0, offset: -1 }, { degree: 4, offset: -1 }, { degree: 7, offset: -1 }]); break;
-        case 'IV': chord([{ degree: 5, offset: -1 }, { degree: 9, offset: -1 }, { degree: 0, offset: 0 }]); break;
-        case 'V': chord([{ degree: 7, offset: -1 }, { degree: 11, offset: -1 }, { degree: 2, offset: 0 }]); break;
+      if (MELODY_DICTIONARY[choice]) {
+        playSynthNote(ctx, converter.toMidi(MELODY_DICTIONARY[choice]), now, 0.6, 0.85, showHighlight);
+      } else if (CHORD_DICTIONARY[choice]) {
+        chord(CHORD_DICTIONARY[choice]);
       }
     });
   }, [initAudio, playSynthNote]);

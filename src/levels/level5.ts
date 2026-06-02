@@ -1,7 +1,7 @@
 import { BaseLevel } from './base_level';
 import { LevelSetup } from '../types/levels';
 import { PlayedNote, PlayedChord, RelativeNote } from '../types/music';
-import { CHORD_DICTIONARY } from '../constants/chords';
+import { CHORD_DICTIONARY } from './labels';
 
 const MELODY_NOTES: Record<string, RelativeNote> = {
   I: { degree: 9, offset: 0 },  // A4

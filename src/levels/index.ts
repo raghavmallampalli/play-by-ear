@@ -7,6 +7,7 @@ import { buildLevel6 } from './level6';
 import { buildMidiPlayerDemoNotes, MIDI_PLAYER_PRELOAD_MIDI } from './midi_player';
 import { LevelSetup } from '../types/levels';
 import { NoteConverter } from '../utils/note_converter';
+import { CHORD_DICTIONARY, MELODY_DICTIONARY } from './labels';
 
 export * from '../types/levels';
 
@@ -55,30 +56,10 @@ export function getPreloadMidi(mode: 'trainer' | 'midi_player' | 'progress', lev
     // 3. Add choice audio notes so they are preloaded for gameplay feedback
     const choices = getAnswerChoices(level);
     choices.forEach(choice => {
-      switch (choice) {
-        case '1': midiSet.add(converter.toMidi({degree:0, offset:0})); break;
-        case '2': midiSet.add(converter.toMidi({degree:2, offset:0})); break;
-        case '3': midiSet.add(converter.toMidi({degree:4, offset:0})); break;
-        case '4': midiSet.add(converter.toMidi({degree:5, offset:0})); break;
-        case '5': midiSet.add(converter.toMidi({degree:7, offset:0})); break;
-        case '6': midiSet.add(converter.toMidi({degree:9, offset:0})); break;
-        case '7': midiSet.add(converter.toMidi({degree:11, offset:0})); break;
-        case '8': midiSet.add(converter.toMidi({degree:0, offset:1})); break;
-        case 'I':
-          midiSet.add(converter.toMidi({degree:0, offset:-1}));
-          midiSet.add(converter.toMidi({degree:4, offset:-1}));
-          midiSet.add(converter.toMidi({degree:7, offset:-1}));
-          break;
-        case 'IV':
-          midiSet.add(converter.toMidi({degree:5, offset:-1}));
-          midiSet.add(converter.toMidi({degree:9, offset:-1}));
-          midiSet.add(converter.toMidi({degree:0, offset:0}));
-          break;
-        case 'V':
-          midiSet.add(converter.toMidi({degree:7, offset:-1}));
-          midiSet.add(converter.toMidi({degree:11, offset:-1}));
-          midiSet.add(converter.toMidi({degree:2, offset:0}));
-          break;
+      if (MELODY_DICTIONARY[choice]) {
+        midiSet.add(converter.toMidi(MELODY_DICTIONARY[choice]));
+      } else if (CHORD_DICTIONARY[choice]) {
+        CHORD_DICTIONARY[choice].forEach(n => midiSet.add(converter.toMidi(n)));
       }
     });
 

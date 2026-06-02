@@ -1,7 +1,7 @@
 import { BaseLevel } from './base_level';
 import { LevelSetup } from '../types/levels';
 import { PlayedNote, PlayedChord } from '../types/music';
-import { CHORD_DICTIONARY } from '../constants/chords';
+import { CHORD_DICTIONARY } from './labels';
 
 export class Level4 extends BaseLevel {
   public readonly isChordLevel = true;
