@@ -8,9 +8,7 @@ import { EXERCISE_TO_THEORY_MAP } from '../theory/theory_registry';
 import { getRepoEditUrl } from '../constants/links';
 import { domStyles } from './styles/domStyles';
 
-const IconInfo = () => (
-  <IconInfoOutline size={20} color="#A8C7FA" style={{ flexShrink: 0 }} />
-);
+const IconInfo = () => <IconInfoOutline size={20} color="#A8C7FA" style={{ flexShrink: 0 }} />;
 
 const renderMarkdown = (text: string) => {
   if (!text) return null;
@@ -18,8 +16,9 @@ const renderMarkdown = (text: string) => {
     const rawHtml = marked.parse(text);
     return (
       <div className="markdown-body" style={{ width: '100%' }}>
-        <style dangerouslySetInnerHTML={{
-          __html: `
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
           .markdown-body h1, .markdown-body h2, .markdown-body h3 {
             font-size: 17px; font-weight: 800; color: #E2E2E6; margin: 16px 0 8px 0; line-height: 1.3;
           }
@@ -39,12 +38,16 @@ const renderMarkdown = (text: string) => {
           }
           .markdown-body strong { color: #E2E2E6; font-weight: 700; }
           .markdown-body em { color: #E2E2E6; font-style: italic; }
-        `}} />
+        `,
+          }}
+        />
         <div dangerouslySetInnerHTML={{ __html: rawHtml }} />
       </div>
     );
   } catch {
-    return <div style={{ whiteSpace: 'pre-wrap', fontSize: '12.5px', color: '#C2C7CF' }}>{text}</div>;
+    return (
+      <div style={{ whiteSpace: 'pre-wrap', fontSize: '12.5px', color: '#C2C7CF' }}>{text}</div>
+    );
   }
 };
 
@@ -79,8 +82,10 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
 
   const getCurrentLevelTheory = () => {
     const exerciseHash = EXERCISE_HASHES[level];
-    return (exerciseHash ? EXERCISE_TO_THEORY_MAP[exerciseHash] : null)
-      || '### Under Construction\n\nThere is no theory guide mapped for this level yet.';
+    return (
+      (exerciseHash ? EXERCISE_TO_THEORY_MAP[exerciseHash] : null) ||
+      '### Under Construction\n\nThere is no theory guide mapped for this level yet.'
+    );
   };
 
   const handleCopyNotes = () => {
@@ -89,12 +94,15 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
       alert('Your notes are currently empty. Type some notes first before copying!');
       return;
     }
-    navigator.clipboard.writeText(textToCopy).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {
-      alert('Could not copy notes. Please select and copy them manually.');
-    });
+    navigator.clipboard
+      .writeText(textToCopy)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => {
+        alert('Could not copy notes. Please select and copy them manually.');
+      });
   };
 
   return (
@@ -108,10 +116,7 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
 
       {/* User notes section */}
       {!isEditingNotes && (userNotes?.trim() ?? '').length === 0 ? (
-        <button
-          style={domStyles.dashedBtn}
-          onClick={() => setIsEditingNotes(true)}
-        >
+        <button style={domStyles.dashedBtn} onClick={() => setIsEditingNotes(true)}>
           <IconPencil size={15} color="currentColor" style={domStyles.iconSpacingRight} />
           Add Notes
         </button>
@@ -125,10 +130,7 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
             onBlur={() => setIsEditingNotes(false)}
             style={domStyles.theoryNotesTextarea}
           />
-          <button
-            style={domStyles.primaryBtn}
-            onClick={() => setIsEditingNotes(false)}
-          >
+          <button style={domStyles.primaryBtn} onClick={() => setIsEditingNotes(false)}>
             <IconCheck size={14} color="currentColor" style={domStyles.iconSpacingRightSmall} />
             Done Editing
           </button>
@@ -139,13 +141,27 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
           onClick={() => setIsEditingNotes(true)}
           title="Click to edit notes"
         >
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-            paddingBottom: '8px', marginBottom: '4px',
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+              paddingBottom: '8px',
+              marginBottom: '4px',
+            }}
+          >
             <span style={{ fontSize: '11px', color: '#8A92A6', fontWeight: 700 }}>YOUR NOTES</span>
-            <span style={{ fontSize: '10px', color: '#A8C7FA', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+            <span
+              style={{
+                fontSize: '10px',
+                color: '#A8C7FA',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px',
+              }}
+            >
               <IconPencil size={11} color="currentColor" style={{ marginRight: 3 }} />
               CLICK TO EDIT
             </span>
@@ -158,35 +174,37 @@ export default function TheoryTab({ level, userNotes, onSaveNotes }: TheoryTabPr
       <div style={domStyles.openSourceBadge}>
         <IconInfo />
         <p style={{ flex: 1, fontSize: '11px', color: '#8A92A6', lineHeight: '16px', margin: 0 }}>
-          <strong>Open Source relative pitch trainer.</strong> We welcome you to improve this theory guide!{' '}
-          <span 
+          <strong>Open Source relative pitch trainer.</strong> We welcome you to improve this theory
+          guide!{' '}
+          <span
             onClick={(e) => {
               e.stopPropagation();
               handleCopyNotes();
-            }} 
-            style={{ 
-              color: '#A8C7FA', 
-              textDecoration: 'underline', 
+            }}
+            style={{
+              color: '#A8C7FA',
+              textDecoration: 'underline',
               cursor: 'pointer',
-              fontWeight: 700 
+              fontWeight: 700,
             }}
           >
             {copied ? 'Copied!' : 'Copy'}
           </span>{' '}
           your notes and submit a PR to{' '}
-          <a 
-            href={getRepoEditUrl(getGuideFilePath(level))} 
-            target="_blank" 
-            rel="noopener noreferrer" 
+          <a
+            href={getRepoEditUrl(getGuideFilePath(level))}
+            target="_blank"
+            rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            style={{ 
-              color: '#A8C7FA', 
+            style={{
+              color: '#A8C7FA',
               textDecoration: 'underline',
-              fontWeight: 700
+              fontWeight: 700,
             }}
           >
             the repository
-          </a>.
+          </a>
+          .
         </p>
       </div>
     </div>

@@ -2,7 +2,14 @@ import MidiPlayerDOM from '@/components/MidiPlayerDOM';
 import { IconArrowLeft, IconCog, IconFolder, IconPiano } from '@/components/icons/NativeIcons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions , ActivityIndicator } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppData } from '@/hooks/useAppData';
 import { NativeHandlers } from '@/utils/nativeHandlers';
@@ -10,7 +17,9 @@ import { NativeHandlers } from '@/utils/nativeHandlers';
 export default function MidiPlayerScreen() {
   const router = useRouter();
   const { width, height } = useWindowDimensions();
-  const [activeTab, setActiveTab] = React.useState<'practice' | 'theory' | 'settings' | 'loader'>('loader');
+  const [activeTab, setActiveTab] = React.useState<'practice' | 'theory' | 'settings' | 'loader'>(
+    'loader',
+  );
 
   const {
     appData,
@@ -45,24 +54,20 @@ export default function MidiPlayerScreen() {
     return <IconCog size={16} color={color} />;
   };
 
-  const renderHeaderTab = (tab: 'practice' | 'settings' | 'loader', iconName: any, label: string) => {
+  const renderHeaderTab = (
+    tab: 'practice' | 'settings' | 'loader',
+    iconName: any,
+    label: string,
+  ) => {
     const isActive = activeTab === tab;
     const iconColor = isActive ? '#E2E2E6' : '#8A92A6';
     return (
       <Pressable
         onPress={() => setActiveTab(tab)}
-        style={[
-          styles.segTab,
-          isActive && styles.segTabActive
-        ]}
+        style={[styles.segTab, isActive && styles.segTabActive]}
       >
         {renderTabIcon(iconName, iconColor)}
-        <Text style={[
-          styles.segTabText,
-          isActive && styles.segTabTextActive
-        ]}>
-          {label}
-        </Text>
+        <Text style={[styles.segTabText, isActive && styles.segTabTextActive]}>{label}</Text>
       </Pressable>
     );
   };
@@ -70,16 +75,13 @@ export default function MidiPlayerScreen() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-
         {/* Header navigation bar */}
         <View style={styles.headerBar}>
           <View style={styles.headerLeft}>
             <Pressable style={styles.backBtn} onPress={() => router.back()}>
               <IconArrowLeft size={18} color="#C2C7CF" />
             </Pressable>
-            <Text style={styles.screenTitle}>
-              {isLandscape ? 'MIDI Player' : getHeaderTitle()}
-            </Text>
+            <Text style={styles.screenTitle}>{isLandscape ? 'MIDI Player' : getHeaderTitle()}</Text>
           </View>
 
           {isLandscape && (

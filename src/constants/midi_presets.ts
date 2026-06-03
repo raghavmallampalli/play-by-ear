@@ -69,4 +69,3 @@ export const MIDI_PRESETS: MidiPreset[] = [
     asset: require('../../assets/midis/we_wish.mid'),
   },
 ];
-

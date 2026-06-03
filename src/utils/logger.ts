@@ -7,7 +7,7 @@ const config = {
   // Directs output simultaneously to console and local disk file on Android/iOS
   transport: (props: any) => {
     consoleTransport(props);
-    
+
     if (Platform.OS !== 'web' && FileSystem.documentDirectory) {
       fileAsyncTransport(props);
     }

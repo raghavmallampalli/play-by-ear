@@ -32,7 +32,7 @@ export class Level1 extends BaseLevel {
       const timeSeconds = i * 0.55;
       const beat = this.converter.secondsToTicks(timeSeconds);
       const duration = this.converter.secondsToTicks(0.4);
-      
+
       melody.push({ note: pick, beat, duration });
     }
 
@@ -41,7 +41,7 @@ export class Level1 extends BaseLevel {
       chords,
       slots: this.createSlotsFromMelody(melody),
       ...this.getCommonSetup(),
-      preloadMidi: CHOICES.map(c => this.converter.toMidi(c)),
+      preloadMidi: CHOICES.map((c) => this.converter.toMidi(c)),
     };
   }
 }

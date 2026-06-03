@@ -2,7 +2,7 @@ import MidiPlayerDOM from '@/components/MidiPlayerDOM';
 import { IconArrowLeft } from '@/components/icons/NativeIcons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View , ActivityIndicator } from 'react-native';
+import { Pressable, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppData } from '@/hooks/useAppData';
 import { NativeHandlers } from '@/utils/nativeHandlers';
@@ -34,8 +34,8 @@ export default function SettingsScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
         {/* Header navigation bar */}
         <View style={styles.headerBar}>
-          <Pressable 
-            style={styles.backBtn} 
+          <Pressable
+            style={styles.backBtn}
             onPress={() => {
               router.back();
             }}
@@ -47,8 +47,8 @@ export default function SettingsScreen() {
 
         {/* DOM settings Component */}
         <View style={styles.playerWrapper}>
-          <MidiPlayerDOM 
-            mode="settings" 
+          <MidiPlayerDOM
+            mode="settings"
             settingsProp={appData.settings}
             progressProp={appData.progress}
             notesProp={appData.notes}

@@ -34,7 +34,7 @@ export class Level11 extends BaseLevel {
         duration: this.converter.secondsToTicks(1.1),
       });
       chordLabels.push(chordLabel);
-      
+
       melody.push({
         note: { degree: notes[0].degree, offset: 0 },
         beat: baseTick,
@@ -42,7 +42,13 @@ export class Level11 extends BaseLevel {
       });
     }
 
-    const preloadMidi = [...new Set(Object.values(CHORD_DICTIONARY).flat().map(n => this.converter.toMidi(n)))];
+    const preloadMidi = [
+      ...new Set(
+        Object.values(CHORD_DICTIONARY)
+          .flat()
+          .map((n) => this.converter.toMidi(n)),
+      ),
+    ];
     return {
       melody,
       chords,

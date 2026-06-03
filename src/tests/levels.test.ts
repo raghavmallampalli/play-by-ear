@@ -3,7 +3,7 @@ import {
   getAnswerChoices,
   getLevelDuration,
   buildLevel,
-  getPreloadMidi
+  getPreloadMidi,
 } from '../levels';
 
 describe('Levels System', () => {

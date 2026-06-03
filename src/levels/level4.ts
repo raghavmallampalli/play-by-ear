@@ -36,7 +36,13 @@ export class Level4 extends BaseLevel {
       chordLabels.push(chordLabel);
     }
 
-    const preloadMidi = [...new Set(Object.values(CHORD_DICTIONARY).flat().map(n => this.converter.toMidi(n)))];
+    const preloadMidi = [
+      ...new Set(
+        Object.values(CHORD_DICTIONARY)
+          .flat()
+          .map((n) => this.converter.toMidi(n)),
+      ),
+    ];
     return {
       melody,
       chords,

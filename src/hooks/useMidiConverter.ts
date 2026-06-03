@@ -26,12 +26,12 @@ export function useMidiConverter(converter: NoteConverter) {
         const relativeNote = converter.fromMidi(note.midi);
         // Note: note.ticks is the absolute start time in ticks
         // note.durationTicks is the length in ticks
-        
+
         // We decide which notes go to melody vs chords based on track name or heuristics.
-        // For this refactor, we'll treat all tracks as contributing to melody 
-        // unless they are explicitly chordal. 
+        // For this refactor, we'll treat all tracks as contributing to melody
+        // unless they are explicitly chordal.
         // Simple heuristic: if multiple notes start at the exact same tick in a track, it's a chord.
-        
+
         melody.push({
           note: relativeNote,
           beat: note.ticks,
@@ -43,7 +43,7 @@ export function useMidiConverter(converter: NoteConverter) {
     // Heuristic to group melody into chords for the 'chords' array
     // (In a real app, this would be more sophisticated or use track metadata)
     const notesByTick: Record<number, PlayedNote[]> = {};
-    melody.forEach(n => {
+    melody.forEach((n) => {
       if (!notesByTick[n.beat]) notesByTick[n.beat] = [];
       notesByTick[n.beat].push(n);
     });
@@ -51,9 +51,9 @@ export function useMidiConverter(converter: NoteConverter) {
     Object.entries(notesByTick).forEach(([tickStr, notes]) => {
       if (notes.length > 1) {
         chords.push({
-          notes: notes.map(n => n.note),
+          notes: notes.map((n) => n.note),
           beat: parseInt(tickStr),
-          duration: Math.max(...notes.map(n => n.duration)),
+          duration: Math.max(...notes.map((n) => n.duration)),
         });
       }
     });
@@ -88,7 +88,7 @@ export function useMidiConverter(converter: NoteConverter) {
     const chordTrack = midi.addTrack();
     chordTrack.name = 'Chords';
     song.chords.forEach((c) => {
-      c.notes.forEach(note => {
+      c.notes.forEach((note) => {
         const midiPitch = converter.toMidi(note);
         const key = `${midiPitch}_${c.beat}`;
         if (!uniqueNotes.has(key)) {

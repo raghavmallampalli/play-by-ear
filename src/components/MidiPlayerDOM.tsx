@@ -4,7 +4,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MIDI_PRESETS } from '../constants/midi_presets';
 import { Colors } from '../constants/theme';
 import { useAudioEngine } from '../hooks/useAudioEngine';
-import { buildLevel, EXERCISE_HASHES, getAnswerChoices, getPreloadMidi, isQueuedLevel, LevelSetup } from '../levels';
+import {
+  buildLevel,
+  EXERCISE_HASHES,
+  getAnswerChoices,
+  getPreloadMidi,
+  isQueuedLevel,
+  LevelSetup,
+} from '../levels';
 import { displayLabel, DEFAULT_MELODY_LABELS, DEFAULT_CHORD_LABELS } from '../levels/labels';
 import { TimelineSlot } from '../types/levels';
 import { PlayedChord, PlayedNote, RelativeNote } from '../types/music';
@@ -13,7 +20,25 @@ import { UserProgressData, UserNotesData, RecentTrack, ActiveTrackState } from '
 import { NoteConverter } from '../utils/note_converter';
 import DawTimeline from './DawTimeline';
 import { log } from '../utils/logger';
-import { IconAlert, IconArrowRight, IconBookOpen, IconCheck, IconClose, IconCog, IconFastForward, IconFolder, IconHistory, IconKeyboard, IconMelody, IconMusic, IconPiano, IconPlay, IconRestart, IconTuningFork, IconUpload } from './icons/DOMIcons';
+import {
+  IconAlert,
+  IconArrowRight,
+  IconBookOpen,
+  IconCheck,
+  IconClose,
+  IconCog,
+  IconFastForward,
+  IconFolder,
+  IconHistory,
+  IconKeyboard,
+  IconMelody,
+  IconMusic,
+  IconPiano,
+  IconPlay,
+  IconRestart,
+  IconTuningFork,
+  IconUpload,
+} from './icons/DOMIcons';
 import KeyboardVisualizer from './KeyboardVisualizer';
 import SettingsTab from './SettingsTab';
 import { domStyles } from './styles/domStyles';
@@ -55,13 +80,13 @@ interface MidiPlayerDOMProps {
   onLoadCustomMidi?: (onMidiLoaded: (name: string, base64: string) => void) => void;
 }
 
-export default function MidiPlayerDOM({ 
-  mode = 'trainer', 
-  level = 1, 
-  onNextLevel, 
-  activeTab: propsActiveTab, 
-  onTabChange, 
-  presetId, 
+export default function MidiPlayerDOM({
+  mode = 'trainer',
+  level = 1,
+  onNextLevel,
+  activeTab: propsActiveTab,
+  onTabChange,
+  presetId,
   action,
   settingsProp,
   progressProp,
@@ -75,9 +100,11 @@ export default function MidiPlayerDOM({
   onSaveActiveTrack,
   onExportProgress,
   onImportProgress,
-  onLoadCustomMidi
+  onLoadCustomMidi,
 }: MidiPlayerDOMProps) {
-  const [localActiveTab, setLocalActiveTab] = useState<'practice' | 'theory' | 'settings' | 'loader'>(mode === 'midi_player' ? 'loader' : 'practice');
+  const [localActiveTab, setLocalActiveTab] = useState<
+    'practice' | 'theory' | 'settings' | 'loader'
+  >(mode === 'midi_player' ? 'loader' : 'practice');
   const activeTab = propsActiveTab ?? localActiveTab;
   const setActiveTab = onTabChange ?? setLocalActiveTab;
   const [isLandscape, setIsLandscape] = useState(false);
@@ -128,11 +155,17 @@ export default function MidiPlayerDOM({
 
   // MIDI Player state variables
   const [midiFileName, setMidiFileName] = useState<string>('');
-  const [midiNotesList, setMidiNotesList] = useState<{ midi: number, time: number, duration: number, velocity: number }[]>([]);
+  const [midiNotesList, setMidiNotesList] = useState<
+    { midi: number; time: number; duration: number; velocity: number }[]
+  >([]);
   const [midiTimelineSlotsState, setMidiTimelineSlotsState] = useState<TimelineSlot[]>([]);
   const [midiDuration, setMidiDuration] = useState<number>(0);
-  const [selectedGenreTab, setSelectedGenreTab] = useState<'Classical' | 'Traditional' | 'Custom & Recent'>('Classical');
-  const [recentTracks, setRecentTracks] = useState<{ id: string; name: string; isPreset: boolean }[]>([]);
+  const [selectedGenreTab, setSelectedGenreTab] = useState<
+    'Classical' | 'Traditional' | 'Custom & Recent'
+  >('Classical');
+  const [recentTracks, setRecentTracks] = useState<
+    { id: string; name: string; isPreset: boolean }[]
+  >([]);
   const [showRemainingTime, setShowRemainingTime] = useState(false);
   const playbackSpeed = 1.0;
   const [defaultMidiBpm, setDefaultMidiBpm] = useState<number>(120);
@@ -146,11 +179,16 @@ export default function MidiPlayerDOM({
     bpm: 120,
     tonic: 0,
     octave: 4,
-    ticksPerBeat: 480
+    ticksPerBeat: 480,
   });
 
   const converter = useMemo(() => {
-    return new NoteConverter(levelConfig.tonic, levelConfig.octave, levelConfig.bpm, levelConfig.ticksPerBeat);
+    return new NoteConverter(
+      levelConfig.tonic,
+      levelConfig.octave,
+      levelConfig.bpm,
+      levelConfig.ticksPerBeat,
+    );
   }, [levelConfig]);
 
   // Tooltip
@@ -169,14 +207,17 @@ export default function MidiPlayerDOM({
 
   // ─── MIDI Player Functions ──────────────────────────────────────────────────
 
-  const updateRecentTracks = useCallback((id: string, isPreset: boolean, name: string) => {
-    setRecentTracks(prev => {
-      const filtered = prev.filter(t => t.id !== id);
-      const updated = [{ id, name, isPreset }, ...filtered].slice(0, 10);
-      onSaveRecentTracks?.(updated);
-      return updated;
-    });
-  }, [onSaveRecentTracks]);
+  const updateRecentTracks = useCallback(
+    (id: string, isPreset: boolean, name: string) => {
+      setRecentTracks((prev) => {
+        const filtered = prev.filter((t) => t.id !== id);
+        const updated = [{ id, name, isPreset }, ...filtered].slice(0, 10);
+        onSaveRecentTracks?.(updated);
+        return updated;
+      });
+    },
+    [onSaveRecentTracks],
+  );
   const formatMidiTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -207,155 +248,169 @@ export default function MidiPlayerDOM({
     }
   }, [notesProp, level]);
 
-  const loadMidiFromBuffer = useCallback(async (buffer: ArrayBuffer, name: string, isPreset = false, presetId?: string) => {
-    try {
-      const { Midi } = await import('@tonejs/midi');
-      const midi = new Midi(buffer);
+  const loadMidiFromBuffer = useCallback(
+    async (buffer: ArrayBuffer, name: string, isPreset = false, presetId?: string) => {
+      try {
+        const { Midi } = await import('@tonejs/midi');
+        const midi = new Midi(buffer);
 
-      const absoluteNotes: { midi: number, time: number, duration: number, velocity: number }[] = [];
-      const slots: TimelineSlot[] = [];
+        const absoluteNotes: { midi: number; time: number; duration: number; velocity: number }[] =
+          [];
+        const slots: TimelineSlot[] = [];
 
-      let maxTime = 0;
+        let maxTime = 0;
 
-      midi.tracks.forEach(track => {
-        track.notes.forEach(note => {
-          absoluteNotes.push({
-            midi: note.midi,
-            time: note.time,
-            duration: note.duration,
-            velocity: note.velocity,
+        midi.tracks.forEach((track) => {
+          track.notes.forEach((note) => {
+            absoluteNotes.push({
+              midi: note.midi,
+              time: note.time,
+              duration: note.duration,
+              velocity: note.velocity,
+            });
+
+            if (note.time + note.duration > maxTime) {
+              maxTime = note.time + note.duration;
+            }
           });
-
-          if (note.time + note.duration > maxTime) {
-            maxTime = note.time + note.duration;
-          }
         });
-      });
 
-      absoluteNotes.sort((a, b) => a.time - b.time);
+        absoluteNotes.sort((a, b) => a.time - b.time);
 
-      const ppq = midi.header.ppq || 480;
-      const bpm = midi.header.tempos[0]?.bpm || 120;
-      log.info(`[loadMidiFromBuffer] Started parsing MIDI for: ${name}. Tracks: ${midi.tracks.length}, Total Notes parsed: ${absoluteNotes.length}, Max Time: ${maxTime}, PPQ: ${ppq}, BPM: ${bpm}`);
+        const ppq = midi.header.ppq || 480;
+        const bpm = midi.header.tempos[0]?.bpm || 120;
+        log.info(
+          `[loadMidiFromBuffer] Started parsing MIDI for: ${name}. Tracks: ${midi.tracks.length}, Total Notes parsed: ${absoluteNotes.length}, Max Time: ${maxTime}, PPQ: ${ppq}, BPM: ${bpm}`,
+        );
 
-      const tempConverter = new NoteConverter(
-        levelConfig.tonic,
-        levelConfig.octave,
-        bpm,
-        ppq
-      );
+        const tempConverter = new NoteConverter(levelConfig.tonic, levelConfig.octave, bpm, ppq);
 
-      // Convert absolute MIDI notes back to PlayedNote[] for melody guide
-      const parsedMelody: PlayedNote[] = absoluteNotes.map(note => {
-        const beatTicks = Math.round(note.time * ppq * (bpm / 60));
-        const durationTicks = Math.round(note.duration * ppq * (bpm / 60));
-        const relative = tempConverter.fromMidi(note.midi);
-        return {
-          note: relative,
-          beat: beatTicks,
-          duration: durationTicks,
-        };
-      });
-      setMelodyNotes(parsedMelody);
+        // Convert absolute MIDI notes back to PlayedNote[] for melody guide
+        const parsedMelody: PlayedNote[] = absoluteNotes.map((note) => {
+          const beatTicks = Math.round(note.time * ppq * (bpm / 60));
+          const durationTicks = Math.round(note.duration * ppq * (bpm / 60));
+          const relative = tempConverter.fromMidi(note.midi);
+          return {
+            note: relative,
+            beat: beatTicks,
+            duration: durationTicks,
+          };
+        });
+        setMelodyNotes(parsedMelody);
 
-      // Group notes into chords by start time (tolerance of 50ms) for chords guide
-      const parsedChords: PlayedChord[] = [];
-      const tolerance = 0.05; // 50ms
-      const sortedNotes = [...absoluteNotes].sort((a, b) => a.time - b.time);
+        // Group notes into chords by start time (tolerance of 50ms) for chords guide
+        const parsedChords: PlayedChord[] = [];
+        const tolerance = 0.05; // 50ms
+        const sortedNotes = [...absoluteNotes].sort((a, b) => a.time - b.time);
 
-      let currentChordNotes: { midi: number, time: number, duration: number }[] = [];
+        let currentChordNotes: { midi: number; time: number; duration: number }[] = [];
 
-      sortedNotes.forEach(note => {
-        if (currentChordNotes.length === 0) {
-          currentChordNotes.push(note);
-        } else {
-          const firstTime = currentChordNotes[0].time;
-          if (Math.abs(note.time - firstTime) <= tolerance) {
+        sortedNotes.forEach((note) => {
+          if (currentChordNotes.length === 0) {
             currentChordNotes.push(note);
           } else {
-            // Commit current chord
-            const beatTicks = Math.round(firstTime * ppq * (bpm / 60));
-            const durationTicks = Math.round(Math.max(...currentChordNotes.map(n => n.duration)) * ppq * (bpm / 60));
-            parsedChords.push({
-              notes: currentChordNotes.map(n => tempConverter.fromMidi(n.midi)),
-              beat: beatTicks,
-              duration: durationTicks,
-            });
-            currentChordNotes = [note];
+            const firstTime = currentChordNotes[0].time;
+            if (Math.abs(note.time - firstTime) <= tolerance) {
+              currentChordNotes.push(note);
+            } else {
+              // Commit current chord
+              const beatTicks = Math.round(firstTime * ppq * (bpm / 60));
+              const durationTicks = Math.round(
+                Math.max(...currentChordNotes.map((n) => n.duration)) * ppq * (bpm / 60),
+              );
+              parsedChords.push({
+                notes: currentChordNotes.map((n) => tempConverter.fromMidi(n.midi)),
+                beat: beatTicks,
+                duration: durationTicks,
+              });
+              currentChordNotes = [note];
+            }
           }
-        }
-      });
-
-      if (currentChordNotes.length > 0) {
-        const firstTime = currentChordNotes[0].time;
-        const beatTicks = Math.round(firstTime * ppq * (bpm / 60));
-        const durationTicks = Math.round(Math.max(...currentChordNotes.map(n => n.duration)) * ppq * (bpm / 60));
-        parsedChords.push({
-          notes: currentChordNotes.map(n => tempConverter.fromMidi(n.midi)),
-          beat: beatTicks,
-          duration: durationTicks,
         });
+
+        if (currentChordNotes.length > 0) {
+          const firstTime = currentChordNotes[0].time;
+          const beatTicks = Math.round(firstTime * ppq * (bpm / 60));
+          const durationTicks = Math.round(
+            Math.max(...currentChordNotes.map((n) => n.duration)) * ppq * (bpm / 60),
+          );
+          parsedChords.push({
+            notes: currentChordNotes.map((n) => tempConverter.fromMidi(n.midi)),
+            beat: beatTicks,
+            duration: durationTicks,
+          });
+        }
+        setChords(parsedChords);
+
+        setMidiNotesList(absoluteNotes);
+        setMidiTimelineSlotsState(slots);
+        setMidiDuration(maxTime);
+        setMidiFileName(name);
+
+        setDefaultMidiBpm(Math.round(bpm));
+        const savedBpm = settings.midiTempoMap?.[name];
+        setLevelConfig((prev) => ({
+          ...prev,
+          bpm: savedBpm ?? Math.round(bpm),
+          ticksPerBeat: ppq,
+        }));
+
+        const trackState = {
+          name,
+          isPreset,
+          presetId,
+        };
+        onSaveActiveTrack?.(trackState);
+
+        audio.stopPlayback();
+        audio.resetStartFlags();
+        setActiveTab('practice');
+
+        return absoluteNotes;
+      } catch (err) {
+        console.error('Error parsing MIDI:', err);
+        alert('Failed to parse MIDI file. Ensure it is a valid format.');
+        return [];
       }
-      setChords(parsedChords);
+    },
+    [
+      levelConfig.tonic,
+      levelConfig.octave,
+      settings.midiTempoMap,
+      onSaveActiveTrack,
+      audio,
+      setActiveTab,
+    ],
+  );
 
-      setMidiNotesList(absoluteNotes);
-      setMidiTimelineSlotsState(slots);
-      setMidiDuration(maxTime);
-      setMidiFileName(name);
+  const loadMidiPreset = useCallback(
+    async (presetId: string) => {
+      log.info(`[loadMidiPreset] Loading preset: ${presetId}`);
+      const preset = MIDI_PRESETS.find((p) => p.id === presetId);
+      if (!preset) {
+        log.warn(`[loadMidiPreset] Preset id ${presetId} not found.`);
+        return [];
+      }
 
-      setDefaultMidiBpm(Math.round(bpm));
-      const savedBpm = settings.midiTempoMap?.[name];
-      setLevelConfig(prev => ({
-        ...prev,
-        bpm: savedBpm ?? Math.round(bpm),
-        ticksPerBeat: ppq,
-      }));
-
-      const trackState = {
-        name,
-        isPreset,
-        presetId
-      };
-      onSaveActiveTrack?.(trackState);
-
-      audio.stopPlayback();
-      audio.resetStartFlags();
-      setActiveTab('practice');
-
-      return absoluteNotes;
-
-    } catch (err) {
-      console.error("Error parsing MIDI:", err);
-      alert("Failed to parse MIDI file. Ensure it is a valid format.");
-      return [];
-    }
-  }, [levelConfig.tonic, levelConfig.octave, settings.midiTempoMap, onSaveActiveTrack, audio, setActiveTab]);
-
-  const loadMidiPreset = useCallback(async (presetId: string) => {
-    log.info(`[loadMidiPreset] Loading preset: ${presetId}`);
-    const preset = MIDI_PRESETS.find(p => p.id === presetId);
-    if (!preset) {
-      log.warn(`[loadMidiPreset] Preset id ${presetId} not found.`);
-      return [];
-    }
-
-    try {
-      log.info(`[loadMidiPreset] Fetching preset asset: ${preset.asset}`);
-      const res = await fetch(preset.asset);
-      const ab = await res.arrayBuffer();
-      const notes = await loadMidiFromBuffer(ab, preset.title, true, preset.id);
-      updateRecentTracks(preset.id, true, preset.title);
-      return notes;
-    } catch (err) {
-      log.error("[loadMidiPreset] Error loading preset:", err);
-      return [];
-    }
-  }, [loadMidiFromBuffer, updateRecentTracks]);
+      try {
+        log.info(`[loadMidiPreset] Fetching preset asset: ${preset.asset}`);
+        const res = await fetch(preset.asset);
+        const ab = await res.arrayBuffer();
+        const notes = await loadMidiFromBuffer(ab, preset.title, true, preset.id);
+        updateRecentTracks(preset.id, true, preset.title);
+        return notes;
+      } catch (err) {
+        log.error('[loadMidiPreset] Error loading preset:', err);
+        return [];
+      }
+    },
+    [loadMidiFromBuffer, updateRecentTracks],
+  );
 
   // Auto-load preset when presetId prop is present
   useEffect(() => {
     if (mode === 'midi_player' && presetId) {
-      const preset = MIDI_PRESETS.find(p => p.id === presetId);
+      const preset = MIDI_PRESETS.find((p) => p.id === presetId);
       if (preset && preset.title === midiFileName) {
         if (action === 'play' && midiNotesList.length > 0) {
           if (audio.startDirectMidiPlayback) {
@@ -365,7 +420,7 @@ export default function MidiPlayerDOM({
         }
         return;
       }
-      loadMidiPreset(presetId).then(notes => {
+      loadMidiPreset(presetId).then((notes) => {
         if (action === 'play' && notes && notes.length > 0) {
           if (audio.startDirectMidiPlayback) {
             audio.startDirectMidiPlayback(notes, playbackSpeed);
@@ -373,7 +428,18 @@ export default function MidiPlayerDOM({
         }
       });
     }
-  }, [presetId, action, mode, loadMidiPreset, audio, playbackSpeed, midiFileName, midiNotesList, levelConfig.bpm, defaultMidiBpm]);
+  }, [
+    presetId,
+    action,
+    mode,
+    loadMidiPreset,
+    audio,
+    playbackSpeed,
+    midiFileName,
+    midiNotesList,
+    levelConfig.bpm,
+    defaultMidiBpm,
+  ]);
 
   // Restore active track state from props on mount
   useEffect(() => {
@@ -388,7 +454,7 @@ export default function MidiPlayerDOM({
             }
           }
         } catch (err) {
-          console.error("Failed to parse active track from props:", err);
+          console.error('Failed to parse active track from props:', err);
         }
       }
     }
@@ -422,13 +488,13 @@ export default function MidiPlayerDOM({
       if (midiFileName) {
         const customMidiBpm = settings.midiTempoMap?.[midiFileName];
         if (customMidiBpm !== undefined && customMidiBpm !== levelConfig.bpm) {
-          setLevelConfig(prev => ({ ...prev, bpm: customMidiBpm }));
+          setLevelConfig((prev) => ({ ...prev, bpm: customMidiBpm }));
         }
       }
     } else {
       const customBpm = settings.tempoMap[level];
       if (customBpm !== undefined && customBpm !== levelConfig.bpm) {
-        setLevelConfig(prev => ({ ...prev, bpm: customBpm }));
+        setLevelConfig((prev) => ({ ...prev, bpm: customBpm }));
       }
     }
   }, [settings.tempoMap, settings.midiTempoMap, level, mode, midiFileName, levelConfig.bpm]);
@@ -442,7 +508,8 @@ export default function MidiPlayerDOM({
 
     const isQueued = mode === 'trainer' && isQueuedLevel(level);
     const persistedBpm = settings.tempoMap[level];
-    const buildMode = mode === 'settings' ? 'trainer' : (mode as 'trainer' | 'midi_player' | 'progress');
+    const buildMode =
+      mode === 'settings' ? 'trainer' : (mode as 'trainer' | 'midi_player' | 'progress');
 
     if (isQueued) {
       // Generate a queue of 10 random sets (each generated dynamically via buildLevel)
@@ -462,7 +529,7 @@ export default function MidiPlayerDOM({
         bpm: persistedBpm ?? first.bpm,
         tonic: first.tonicPitchClass,
         octave: first.baseOctave,
-        ticksPerBeat: first.ticksPerBeat
+        ticksPerBeat: first.ticksPerBeat,
       });
     } else {
       // Single song/fixed progression level
@@ -477,7 +544,7 @@ export default function MidiPlayerDOM({
         bpm: persistedBpm ?? setup.bpm,
         tonic: setup.tonicPitchClass,
         octave: setup.baseOctave,
-        ticksPerBeat: setup.ticksPerBeat
+        ticksPerBeat: setup.ticksPerBeat,
       });
     }
   };
@@ -516,7 +583,13 @@ export default function MidiPlayerDOM({
 
       // Map bass note to Roman Numeral
       const romanMap: Record<number, string> = {
-        0: 'I', 2: 'II', 4: 'III', 5: 'IV', 7: 'V', 9: 'VI', 11: 'VII'
+        0: 'I',
+        2: 'II',
+        4: 'III',
+        5: 'IV',
+        7: 'V',
+        9: 'VI',
+        11: 'VII',
       };
 
       const rootStr = romanMap[bass.degree] || romanMap[bass.degree - 1] || 'I';
@@ -526,7 +599,7 @@ export default function MidiPlayerDOM({
       let hasMajorThird = false;
       const bassSemi = bass.offset * 12 + bass.degree;
 
-      notes.forEach(n => {
+      notes.forEach((n) => {
         const nSemi = n.offset * 12 + n.degree;
         const diff = (nSemi - bassSemi) % 12;
         if (diff === 3) hasMinorThird = true;
@@ -540,20 +613,25 @@ export default function MidiPlayerDOM({
     const slots: TimelineSlot[] = [];
 
     if (displayLayer === 'both' || displayLayer === 'melody') {
-      melodyNotes.forEach(m => {
+      melodyNotes.forEach((m) => {
         const internalLabel = getRelativeNoteLabel(m.note);
         slots.push({
           note: m.note,
           beat: m.beat,
           answer: internalLabel,
           correct: true,
-          label: displayLabel(internalLabel, settings.melodyLabelSystem, settings.chordLabelSystem, converter.tonicPitchClass),
+          label: displayLabel(
+            internalLabel,
+            settings.melodyLabelSystem,
+            settings.chordLabelSystem,
+            converter.tonicPitchClass,
+          ),
         });
       });
     }
 
     if (displayLayer === 'both' || displayLayer === 'chords') {
-      chords.forEach(c => {
+      chords.forEach((c) => {
         const internalLabel = analyzeChord(c.notes);
         const repNote = c.notes.length > 0 ? c.notes[0] : { degree: 0, offset: 0 };
         slots.push({
@@ -561,7 +639,12 @@ export default function MidiPlayerDOM({
           beat: c.beat,
           answer: internalLabel,
           correct: true,
-          label: displayLabel(internalLabel, settings.melodyLabelSystem, settings.chordLabelSystem, converter.tonicPitchClass),
+          label: displayLabel(
+            internalLabel,
+            settings.melodyLabelSystem,
+            settings.chordLabelSystem,
+            converter.tonicPitchClass,
+          ),
         });
       });
     }
@@ -573,7 +656,16 @@ export default function MidiPlayerDOM({
 
     // Sort slots by time
     return slots.sort((a, b) => a.beat - b.beat);
-  }, [mode, settings.midiDisplayLayer, melodyNotes, chords, settings.melodyLabelSystem, settings.chordLabelSystem, converter.tonicPitchClass, midiTimelineSlotsState]);
+  }, [
+    mode,
+    settings.midiDisplayLayer,
+    melodyNotes,
+    chords,
+    settings.melodyLabelSystem,
+    settings.chordLabelSystem,
+    converter.tonicPitchClass,
+    midiTimelineSlotsState,
+  ]);
   // ─── Progress persistence ───────────────────────────────────────────────────
 
   const saveProgressStats = (scoreRate: number) => {
@@ -675,7 +767,7 @@ export default function MidiPlayerDOM({
   }, [exerciseQueue]);
 
   const isCurrentExerciseComplete = useMemo(() => {
-    return timelineSlots.length > 0 && timelineSlots.every(s => s.answer !== null);
+    return timelineSlots.length > 0 && timelineSlots.every((s) => s.answer !== null);
   }, [timelineSlots]);
 
   const slotStates = useMemo(() => {
@@ -683,7 +775,7 @@ export default function MidiPlayerDOM({
       melody: new Map<number, boolean>(),
       chord: new Map<number, boolean>(),
     };
-    timelineSlots.forEach(s => {
+    timelineSlots.forEach((s) => {
       if (s.chord) {
         states.chord.set(s.beat, s.answer !== null);
       } else {
@@ -728,13 +820,18 @@ export default function MidiPlayerDOM({
 
       // Stop running audio and immediately start the next queued exercise (skipping cadence)
       audio.stopPlayback();
-      audio.startPlayback(nextEx.melody, nextEx.chords, converter, true, { melody: new Map(), chord: new Map() });
+      audio.startPlayback(nextEx.melody, nextEx.chords, converter, true, {
+        melody: new Map(),
+        chord: new Map(),
+      });
     } else {
       // Completed the entire level/queue!
       // 1. Calculate and save progress stats to props
       const totalSlots = exerciseQueue.reduce((acc, ex) => acc + ex.slots.length, 0);
-      const answeredSlots = exerciseQueue.flatMap(ex => ex.slots).filter(s => s.answer !== null);
-      const totalCorrect = answeredSlots.filter(s => s.correct).length;
+      const answeredSlots = exerciseQueue
+        .flatMap((ex) => ex.slots)
+        .filter((s) => s.answer !== null);
+      const totalCorrect = answeredSlots.filter((s) => s.correct).length;
       const scoreRate = Math.round((totalCorrect / (totalSlots || 1)) * 100);
       saveProgressStats(scoreRate);
 
@@ -785,13 +882,17 @@ export default function MidiPlayerDOM({
 
   // Start exercise handler
   const handleStartClick = () => {
-    log.info(`[handleStartClick] Clicked. Mode: ${mode}, midiNotesList count: ${midiNotesList.length}`);
+    log.info(
+      `[handleStartClick] Clicked. Mode: ${mode}, midiNotesList count: ${midiNotesList.length}`,
+    );
     setTonicScrollTrigger((prev) => prev + 1);
     if (mode === 'midi_player') {
       audio.stopPlayback();
       if (audio.startDirectMidiPlayback) {
         const speedFactor = levelConfig.bpm / (defaultMidiBpm || 120);
-        log.info(`[handleStartClick] Calling startDirectMidiPlayback. speedFactor: ${speedFactor}, levelConfig.bpm: ${levelConfig.bpm}, defaultMidiBpm: ${defaultMidiBpm}`);
+        log.info(
+          `[handleStartClick] Calling startDirectMidiPlayback. speedFactor: ${speedFactor}, levelConfig.bpm: ${levelConfig.bpm}, defaultMidiBpm: ${defaultMidiBpm}`,
+        );
         audio.startDirectMidiPlayback(midiNotesList, speedFactor);
       } else {
         log.error(`[handleStartClick] startDirectMidiPlayback is undefined!`);
@@ -808,7 +909,9 @@ export default function MidiPlayerDOM({
     if (mode === 'midi_player') {
       if (audio.startDirectMidiPlayback) {
         const speedFactor = levelConfig.bpm / (defaultMidiBpm || 120);
-        log.info(`[handleRestartClick] Calling startDirectMidiPlayback to restart. speedFactor: ${speedFactor}`);
+        log.info(
+          `[handleRestartClick] Calling startDirectMidiPlayback to restart. speedFactor: ${speedFactor}`,
+        );
         audio.startDirectMidiPlayback(midiNotesList, speedFactor);
       } else {
         log.error(`[handleRestartClick] startDirectMidiPlayback is undefined!`);
@@ -824,7 +927,11 @@ export default function MidiPlayerDOM({
 
   // ─── Dynamic Tab Row Component Helper ──────────────────────────────────────────
 
-  const renderTabButton = (tab: 'practice' | 'theory' | 'settings' | 'loader', icon: React.ReactNode, title: string) => {
+  const renderTabButton = (
+    tab: 'practice' | 'theory' | 'settings' | 'loader',
+    icon: React.ReactNode,
+    title: string,
+  ) => {
     const isActive = activeTab === tab;
     return (
       <button
@@ -852,7 +959,7 @@ export default function MidiPlayerDOM({
 
   /**
    * TrackControls explicitly handles the playback interaction for the user.
-   * 
+   *
    * BEHAVIOR SPECIFICATION:
    * 1. Start / Restart Exercise Button:
    *    - Initial State: "Start Exercise" (Play icon).
@@ -872,7 +979,18 @@ export default function MidiPlayerDOM({
   const renderTrackControls = (landscapeMode: boolean = false) => {
     const startBtn = (
       <div
-        onMouseEnter={(e) => showTooltip(mode === 'midi_player' ? (audio.hasStarted ? 'Restart Track' : 'Play Track') : (audio.hasStarted ? 'Restart Level' : 'Start Exercise'), e)}
+        onMouseEnter={(e) =>
+          showTooltip(
+            mode === 'midi_player'
+              ? audio.hasStarted
+                ? 'Restart Track'
+                : 'Play Track'
+              : audio.hasStarted
+                ? 'Restart Level'
+                : 'Start Exercise',
+            e,
+          )
+        }
         onMouseLeave={hideTooltip}
         style={domStyles.practiceControlBtnWrapper}
       >
@@ -883,11 +1001,7 @@ export default function MidiPlayerDOM({
           }}
           onClick={audio.hasStarted ? handleRestartClick : handleStartClick}
         >
-          {audio.hasStarted ? (
-            <IconRestart />
-          ) : (
-            <IconPlay size={16} color="currentColor" />
-          )}
+          {audio.hasStarted ? <IconRestart /> : <IconPlay size={16} color="currentColor" />}
         </button>
       </div>
     );
@@ -921,9 +1035,11 @@ export default function MidiPlayerDOM({
         <button
           disabled={!isInteractable || chords.length === 0}
           style={{
-            ...((!isInteractable || chords.length === 0) ? domStyles.disabledBtn : domStyles.primaryBtn),
+            ...(!isInteractable || chords.length === 0
+              ? domStyles.disabledBtn
+              : domStyles.primaryBtn),
             ...domStyles.practiceControlBtn,
-            pointerEvents: (!isInteractable || chords.length === 0) ? 'none' : 'auto',
+            pointerEvents: !isInteractable || chords.length === 0 ? 'none' : 'auto',
           }}
           onClick={() => audio.playBackingChordsOnly(chords, converter, slotStates.chord)}
         >
@@ -941,9 +1057,11 @@ export default function MidiPlayerDOM({
         <button
           disabled={!isInteractable || melodyNotes.length === 0}
           style={{
-            ...((!isInteractable || melodyNotes.length === 0) ? domStyles.disabledBtn : domStyles.primaryBtn),
+            ...(!isInteractable || melodyNotes.length === 0
+              ? domStyles.disabledBtn
+              : domStyles.primaryBtn),
             ...domStyles.practiceControlBtn,
-            pointerEvents: (!isInteractable || melodyNotes.length === 0) ? 'none' : 'auto',
+            pointerEvents: !isInteractable || melodyNotes.length === 0 ? 'none' : 'auto',
           }}
           onClick={() => audio.playMelodyOnly(melodyNotes, converter, slotStates.melody)}
         >
@@ -951,8 +1069,6 @@ export default function MidiPlayerDOM({
         </button>
       </div>
     );
-
-
 
     if (landscapeMode) {
       return (
@@ -987,7 +1103,8 @@ export default function MidiPlayerDOM({
         <div style={domStyles.card}>
           <p style={{ ...domStyles.metaLabel, color: '#A8C7FA' }}>Sandbox Freeplay Mode</p>
           <p style={{ fontSize: '11px', color: '#8A92A6', lineHeight: '16px', margin: 0 }}>
-            Tap keycaps on the virtual piano visualizer or play MIDI notes to trigger live sound and trace their relative positions.
+            Tap keycaps on the virtual piano visualizer or play MIDI notes to trigger live sound and
+            trace their relative positions.
           </p>
         </div>
       );
@@ -1001,7 +1118,8 @@ export default function MidiPlayerDOM({
           {choiceChunks.map((chunk, rowIdx) => (
             <div key={rowIdx} style={domStyles.answerRow}>
               {chunk.map((choice) => {
-                const isSolved = focusedSlotIndex !== null && timelineSlots[focusedSlotIndex]?.answer !== null;
+                const isSolved =
+                  focusedSlotIndex !== null && timelineSlots[focusedSlotIndex]?.answer !== null;
                 const isButtonDisabled = !isInteractable || isSolved || isCurrentExerciseComplete;
 
                 return (
@@ -1015,7 +1133,12 @@ export default function MidiPlayerDOM({
                     }}
                     onClick={() => handleChoice(choice)}
                   >
-                    {displayLabel(choice, settings.melodyLabelSystem, settings.chordLabelSystem, levelConfig.tonic)}
+                    {displayLabel(
+                      choice,
+                      settings.melodyLabelSystem,
+                      settings.chordLabelSystem,
+                      levelConfig.tonic,
+                    )}
                   </button>
                 );
               })}
@@ -1032,10 +1155,14 @@ export default function MidiPlayerDOM({
     if (mode !== 'trainer') return null;
 
     return (
-      <div style={{
-        ...domStyles.progressCard,
-        borderColor: isCurrentExerciseComplete ? 'rgba(168, 199, 250, 0.15)' : 'rgba(255,255,255,0.04)',
-      }}>
+      <div
+        style={{
+          ...domStyles.progressCard,
+          borderColor: isCurrentExerciseComplete
+            ? 'rgba(168, 199, 250, 0.15)'
+            : 'rgba(255,255,255,0.04)',
+        }}
+      >
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{ fontSize: '13px', color: '#E2E2E6', fontWeight: '800' }}>
             Exercise {currentExerciseIndex + 1} of 10
@@ -1045,22 +1172,30 @@ export default function MidiPlayerDOM({
         <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '13px', fontWeight: '800', color: themeColors.correct }}>{correctCount}</span>
+              <span style={{ fontSize: '13px', fontWeight: '800', color: themeColors.correct }}>
+                {correctCount}
+              </span>
               <IconCheck size={12} color={themeColors.correct} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '13px', fontWeight: '800', color: themeColors.wrong }}>{wrongCount}</span>
+              <span style={{ fontSize: '13px', fontWeight: '800', color: themeColors.wrong }}>
+                {wrongCount}
+              </span>
               <IconClose size={12} color={themeColors.wrong} />
             </div>
           </div>
 
           <div
-            onMouseEnter={(e) => showTooltip(
-              isCurrentExerciseComplete
-                ? (currentExerciseIndex < 9 ? 'Next Set' : 'Finish Level')
-                : 'Identify all slots to continue',
-              e
-            )}
+            onMouseEnter={(e) =>
+              showTooltip(
+                isCurrentExerciseComplete
+                  ? currentExerciseIndex < 9
+                    ? 'Next Set'
+                    : 'Finish Level'
+                  : 'Identify all slots to continue',
+                e,
+              )
+            }
             onMouseLeave={hideTooltip}
             style={{ display: 'flex' }}
           >
@@ -1085,7 +1220,14 @@ export default function MidiPlayerDOM({
           </div>
 
           <div
-            onMouseEnter={(e) => showTooltip(skipButtonEnabled ? 'Skip Exercise (Fast Forward)' : 'Requires >80% accuracy after Ex 3', e)}
+            onMouseEnter={(e) =>
+              showTooltip(
+                skipButtonEnabled
+                  ? 'Skip Exercise (Fast Forward)'
+                  : 'Requires >80% accuracy after Ex 3',
+                e,
+              )
+            }
             onMouseLeave={hideTooltip}
             style={{ display: 'flex' }}
           >
@@ -1106,7 +1248,7 @@ export default function MidiPlayerDOM({
               }}
               onClick={handleFastForwardClick}
             >
-              <IconFastForward size={16} color={skipButtonEnabled ? "currentColor" : "#4A4D54"} />
+              <IconFastForward size={16} color={skipButtonEnabled ? 'currentColor' : '#4A4D54'} />
             </button>
           </div>
         </div>
@@ -1118,12 +1260,14 @@ export default function MidiPlayerDOM({
 
   const renderSettingsView = () => {
     return (
-      <div style={{
-        width: '100%',
-        maxWidth: '520px',
-        margin: '0 auto',
-        boxSizing: 'border-box' as const,
-      }}>
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '520px',
+          margin: '0 auto',
+          boxSizing: 'border-box' as const,
+        }}
+      >
         <div style={domStyles.card}>
           <SettingsTab
             settings={settings}
@@ -1156,55 +1300,69 @@ export default function MidiPlayerDOM({
           await loadMidiFromBuffer(bytes.buffer, name);
           updateRecentTracks(name, false, name);
         } catch (e) {
-          console.error("Error loading custom MIDI base64:", e);
+          console.error('Error loading custom MIDI base64:', e);
         }
       });
     };
 
     const genres: ('Classical' | 'Traditional' | 'Custom & Recent')[] = [
-      'Classical', 'Traditional', 'Custom & Recent'
+      'Classical',
+      'Traditional',
+      'Custom & Recent',
     ];
 
-    const currentPresets = MIDI_PRESETS.filter(p => p.genre === selectedGenreTab);
+    const currentPresets = MIDI_PRESETS.filter((p) => p.genre === selectedGenreTab);
 
     return (
-      <div style={{
-        width: '100%',
-        maxWidth: '700px',
-        margin: '0 auto',
-        boxSizing: 'border-box' as const,
-        display: 'flex',
-        flexDirection: 'column' as const,
-        gap: '20px',
-        padding: '0 10px',
-      }}>
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '700px',
+          margin: '0 auto',
+          boxSizing: 'border-box' as const,
+          display: 'flex',
+          flexDirection: 'column' as const,
+          gap: '20px',
+          padding: '0 10px',
+        }}
+      >
         {/* Upload card */}
-        <div style={{
-          ...domStyles.card,
-          background: 'linear-gradient(135deg, rgba(29, 32, 36, 0.95) 0%, rgba(20, 22, 25, 0.95) 100%)',
-          border: '1px solid rgba(255, 255, 255, 0.05)',
-          padding: '24px',
-          textAlign: 'center',
-          borderRadius: '16px',
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: '28px',
-              backgroundColor: 'rgba(168, 199, 250, 0.08)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#A8C7FA',
-            }}>
+        <div
+          style={{
+            ...domStyles.card,
+            background:
+              'linear-gradient(135deg, rgba(29, 32, 36, 0.95) 0%, rgba(20, 22, 25, 0.95) 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.05)',
+            padding: '24px',
+            textAlign: 'center',
+            borderRadius: '16px',
+          }}
+        >
+          <div
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}
+          >
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '28px',
+                backgroundColor: 'rgba(168, 199, 250, 0.08)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#A8C7FA',
+              }}
+            >
               <IconUpload size={28} />
             </div>
-            <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#E2E2E6', margin: 0 }}>Import MIDI File</h3>
+            <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#E2E2E6', margin: 0 }}>
+              Import MIDI File
+            </h3>
             <p style={{ fontSize: '14px', color: '#8A92A6', margin: 0, maxWidth: '400px' }}>
-              Upload any standard MIDI track. It will be converted completely offline into interactive scale degrees.
+              Upload any standard MIDI track. It will be converted completely offline into
+              interactive scale degrees.
             </p>
-            <button 
+            <button
               onClick={handleNativeFileSelect}
               style={{
                 marginTop: '12px',
@@ -1221,7 +1379,8 @@ export default function MidiPlayerDOM({
                 border: 'none',
                 boxShadow: '0 4px 12px rgba(168, 199, 250, 0.15)',
                 transition: 'all 0.2s',
-            }}>
+              }}
+            >
               <IconFolder size={18} />
               Browse Local Files
             </button>
@@ -1229,23 +1388,27 @@ export default function MidiPlayerDOM({
         </div>
 
         {/* Preset / Recent Browser Card */}
-        <div style={{
-          ...domStyles.card,
-          background: '#1D2024',
-          borderRadius: '16px',
-          padding: '20px',
-          border: '1px solid rgba(255, 255, 255, 0.03)',
-        }}>
+        <div
+          style={{
+            ...domStyles.card,
+            background: '#1D2024',
+            borderRadius: '16px',
+            padding: '20px',
+            border: '1px solid rgba(255, 255, 255, 0.03)',
+          }}
+        >
           {/* Genre Tabs */}
-          <div style={{
-            display: 'flex',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-            marginBottom: '16px',
-            overflowX: 'auto',
-            gap: '4px',
-            paddingBottom: '4px',
-          }}>
-            {genres.map(genre => (
+          <div
+            style={{
+              display: 'flex',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+              marginBottom: '16px',
+              overflowX: 'auto',
+              gap: '4px',
+              paddingBottom: '4px',
+            }}
+          >
+            {genres.map((genre) => (
               <button
                 key={genre}
                 onClick={() => setSelectedGenreTab(genre)}
@@ -1257,7 +1420,8 @@ export default function MidiPlayerDOM({
                   fontSize: '14px',
                   fontWeight: '700',
                   cursor: 'pointer',
-                  borderBottom: selectedGenreTab === genre ? '2px solid #A8C7FA' : '2px solid transparent',
+                  borderBottom:
+                    selectedGenreTab === genre ? '2px solid #A8C7FA' : '2px solid transparent',
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -1267,18 +1431,43 @@ export default function MidiPlayerDOM({
           </div>
 
           {/* List of items */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '350px', overflowY: 'auto' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+              maxHeight: '350px',
+              overflowY: 'auto',
+            }}
+          >
             {selectedGenreTab === 'Custom & Recent' ? (
               recentTracks.length === 0 ? (
-                <div style={{ padding: '30px 10px', textAlign: 'center', color: '#8A92A6', fontSize: '14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                <div
+                  style={{
+                    padding: '30px 10px',
+                    textAlign: 'center',
+                    color: '#8A92A6',
+                    fontSize: '14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
                   <IconHistory size={24} style={{ opacity: 0.5 }} />
                   <span>No recent tracks yet. Presets or uploads will appear here.</span>
                 </div>
               ) : (
-                recentTracks.map(track => (
+                recentTracks.map((track) => (
                   <button
                     key={track.id}
-                    onClick={() => track.isPreset ? loadMidiPreset(track.id) : alert("Custom files are processed dynamically. Please browse the file again to play.")}
+                    onClick={() =>
+                      track.isPreset
+                        ? loadMidiPreset(track.id)
+                        : alert(
+                            'Custom files are processed dynamically. Please browse the file again to play.',
+                          )
+                    }
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -1306,7 +1495,7 @@ export default function MidiPlayerDOM({
                 ))
               )
             ) : (
-              currentPresets.map(preset => (
+              currentPresets.map((preset) => (
                 <button
                   key={preset.id}
                   onClick={() => loadMidiPreset(preset.id)}
@@ -1345,19 +1534,23 @@ export default function MidiPlayerDOM({
   const renderMidiPlayerView = () => {
     if (!midiFileName) {
       return (
-        <div style={{
-          ...domStyles.card,
-          padding: '40px',
-          textAlign: 'center',
-          maxWidth: '500px',
-          margin: '40px auto',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '16px',
-        }}>
+        <div
+          style={{
+            ...domStyles.card,
+            padding: '40px',
+            textAlign: 'center',
+            maxWidth: '500px',
+            margin: '40px auto',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '16px',
+          }}
+        >
           <IconMusic size={40} color="#8A92A6" />
-          <h3 style={{ margin: 0, color: '#E2E2E6', fontSize: '18px', fontWeight: '800' }}>No Track Loaded</h3>
+          <h3 style={{ margin: 0, color: '#E2E2E6', fontSize: '18px', fontWeight: '800' }}>
+            No Track Loaded
+          </h3>
           <p style={{ margin: 0, color: '#8A92A6', fontSize: '14px', lineHeight: '1.5' }}>
             Please select a preset track or upload a custom MIDI file to start training.
           </p>
@@ -1382,31 +1575,41 @@ export default function MidiPlayerDOM({
     const remainingSeconds = Math.max(0, durationSeconds - currentSeconds);
 
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column' as const,
-        gap: '24px',
-        width: '100%',
-        maxWidth: '850px',
-        margin: '0 auto',
-        padding: '0 10px',
-        boxSizing: 'border-box' as const,
-      }}>
-        {/* Track Title banner */}
-        <div style={{
+      <div
+        style={{
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          backgroundColor: '#1D2024',
-          padding: '14px 20px',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.03)',
-        }}>
+          flexDirection: 'column' as const,
+          gap: '24px',
+          width: '100%',
+          maxWidth: '850px',
+          margin: '0 auto',
+          padding: '0 10px',
+          boxSizing: 'border-box' as const,
+        }}
+      >
+        {/* Track Title banner */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            backgroundColor: '#1D2024',
+            padding: '14px 20px',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.03)',
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <IconMusic size={20} color="#A8C7FA" />
             <div>
-              <div style={{ fontSize: '12px', color: '#8A92A6', fontWeight: '500' }}>Active Track</div>
-              <div style={{ fontSize: '16px', fontWeight: '800', color: '#E2E2E6', marginTop: '2px' }}>{midiFileName}</div>
+              <div style={{ fontSize: '12px', color: '#8A92A6', fontWeight: '500' }}>
+                Active Track
+              </div>
+              <div
+                style={{ fontSize: '16px', fontWeight: '800', color: '#E2E2E6', marginTop: '2px' }}
+              >
+                {midiFileName}
+              </div>
             </div>
           </div>
 
@@ -1423,7 +1626,10 @@ export default function MidiPlayerDOM({
               fontWeight: '700',
             }}
           >
-            {showRemainingTime ? `-${formatMidiTime(remainingSeconds)}` : formatMidiTime(currentSeconds)} / {formatMidiTime(durationSeconds)}
+            {showRemainingTime
+              ? `-${formatMidiTime(remainingSeconds)}`
+              : formatMidiTime(currentSeconds)}{' '}
+            / {formatMidiTime(durationSeconds)}
           </div>
         </div>
 
@@ -1479,27 +1685,37 @@ export default function MidiPlayerDOM({
     const remainingSeconds = Math.max(0, durationSeconds - currentSeconds);
 
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column' as const,
-        gap: '16px',
-        width: '100%',
-      }}>
-        {/* Track Title banner */}
-        <div style={{
+      <div
+        style={{
           display: 'flex',
           flexDirection: 'column' as const,
-          gap: '12px',
-          backgroundColor: '#1D2024',
-          padding: '16px 20px',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.03)',
-        }}>
+          gap: '16px',
+          width: '100%',
+        }}
+      >
+        {/* Track Title banner */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column' as const,
+            gap: '12px',
+            backgroundColor: '#1D2024',
+            padding: '16px 20px',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.03)',
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <IconMusic size={20} color="#A8C7FA" />
             <div>
-              <div style={{ fontSize: '11px', color: '#8A92A6', fontWeight: '500' }}>Active Track</div>
-              <div style={{ fontSize: '15px', fontWeight: '800', color: '#E2E2E6', marginTop: '2px' }}>{midiFileName}</div>
+              <div style={{ fontSize: '11px', color: '#8A92A6', fontWeight: '500' }}>
+                Active Track
+              </div>
+              <div
+                style={{ fontSize: '15px', fontWeight: '800', color: '#E2E2E6', marginTop: '2px' }}
+              >
+                {midiFileName}
+              </div>
             </div>
           </div>
 
@@ -1518,7 +1734,10 @@ export default function MidiPlayerDOM({
               marginTop: '4px',
             }}
           >
-            {showRemainingTime ? `-${formatMidiTime(remainingSeconds)}` : formatMidiTime(currentSeconds)} / {formatMidiTime(durationSeconds)}
+            {showRemainingTime
+              ? `-${formatMidiTime(remainingSeconds)}`
+              : formatMidiTime(currentSeconds)}{' '}
+            / {formatMidiTime(durationSeconds)}
           </div>
         </div>
 
@@ -1544,8 +1763,9 @@ export default function MidiPlayerDOM({
 
   return (
     <div style={domStyles.body}>
-      <style dangerouslySetInnerHTML={{
-        __html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .piano-scroll-frame::-webkit-scrollbar {
           height: 6px !important;
           width: 6px !important;
@@ -1567,33 +1787,46 @@ export default function MidiPlayerDOM({
           scrollbar-width: thin !important;
           scrollbar-color: rgba(255, 255, 255, 0.16) transparent !important;
         }
-      `}} />
+      `,
+        }}
+      />
 
       {/* 
         Add bottom padding to protect space for the truly fixed bottom navigation bar (72px high) in portrait.
         This guarantees that no scrolled page contents are ever hidden behind it.
       */}
-      <div style={{
-        ...(isLandscape ? domStyles.wrapperLandscape : domStyles.wrapper),
-        paddingBottom: isLandscape ? '8px' : '88px',
-      }}>
-
+      <div
+        style={{
+          ...(isLandscape ? domStyles.wrapperLandscape : domStyles.wrapper),
+          paddingBottom: isLandscape ? '8px' : '88px',
+        }}
+      >
         {/* Full-Screen Tabbed Presentation area */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', width: '100%', gap: '12px', overflowY: 'auto', minHeight: 0 }}>
-
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            width: '100%',
+            gap: '12px',
+            overflowY: 'auto',
+            minHeight: 0,
+          }}
+        >
           {/* Tab A: Full-Page Practice */}
-          {activeTab === 'practice' && (
-            isLandscape ? (
+          {activeTab === 'practice' &&
+            (isLandscape ? (
               // Two-column side-by-side landscape layout, vertically centered
-              <div style={{
-                ...domStyles.landscapeLayoutGrid,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '100%',
-                flex: 1,
-              }}>
-
+              <div
+                style={{
+                  ...domStyles.landscapeLayoutGrid,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '100%',
+                  flex: 1,
+                }}
+              >
                 {/* Left Column: Timeline and Keyboard */}
                 <div style={domStyles.leftColumn}>
                   {mode === 'midi_player' ? (
@@ -1624,7 +1857,14 @@ export default function MidiPlayerDOM({
                         />
                       </div>
                     ) : (
-                      <div style={{ ...domStyles.card, padding: '20px', textAlign: 'center', color: '#8A92A6' }}>
+                      <div
+                        style={{
+                          ...domStyles.card,
+                          padding: '20px',
+                          textAlign: 'center',
+                          color: '#8A92A6',
+                        }}
+                      >
                         No Track Loaded. Go to Loader.
                       </div>
                     )
@@ -1638,7 +1878,18 @@ export default function MidiPlayerDOM({
                       hasStarted={audio.hasStarted}
                       converter={converter}
                       onSlotClick={handleSlotClick}
-                      onPlayPause={audio.isPlaying ? audio.pausePlayback : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence, slotStates)}
+                      onPlayPause={
+                        audio.isPlaying
+                          ? audio.pausePlayback
+                          : () =>
+                              audio.startPlayback(
+                                melodyNotes,
+                                chords,
+                                converter,
+                                skipCadence,
+                                slotStates,
+                              )
+                      }
                       melodyLabelSystem={settings.melodyLabelSystem}
                       chordLabelSystem={settings.chordLabelSystem}
                     />
@@ -1649,14 +1900,25 @@ export default function MidiPlayerDOM({
                       activeNotes={audio.activeNotes}
                       onNoteClick={audio.triggerLiveNote}
                       firstNoteMidi={firstPlayedNoteMidi}
-                      baseOctaveMidi={mode === 'midi_player' ? (levelConfig.octave * 12 + levelConfig.tonic + 12) : baseOctaveMidi}
+                      baseOctaveMidi={
+                        mode === 'midi_player'
+                          ? levelConfig.octave * 12 + levelConfig.tonic + 12
+                          : baseOctaveMidi
+                      }
                       tonicScrollTrigger={tonicScrollTrigger}
                     />
                   )}
                 </div>
 
                 {/* Right Column: Controls, Answers & Progress card */}
-                <div style={{ ...domStyles.rightColumn, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div
+                  style={{
+                    ...domStyles.rightColumn,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                  }}
+                >
                   {mode === 'midi_player' ? (
                     renderMidiControlsCard()
                   ) : (
@@ -1667,20 +1929,21 @@ export default function MidiPlayerDOM({
                     </>
                   )}
                 </div>
-
               </div>
             ) : (
               // Portrait layout elements rendered cleanly in fullscreen practice, vertically centered
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-                width: '100%',
-                flex: 1,
-                justifyContent: 'center',
-                minHeight: '100%',
-                boxSizing: 'border-box',
-              }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  width: '100%',
+                  flex: 1,
+                  justifyContent: 'center',
+                  minHeight: '100%',
+                  boxSizing: 'border-box',
+                }}
+              >
                 {mode === 'midi_player' ? (
                   renderMidiPlayerView()
                 ) : (
@@ -1694,7 +1957,18 @@ export default function MidiPlayerDOM({
                       hasStarted={audio.hasStarted}
                       converter={converter}
                       onSlotClick={handleSlotClick}
-                      onPlayPause={audio.isPlaying ? audio.pausePlayback : () => audio.startPlayback(melodyNotes, chords, converter, skipCadence, slotStates)}
+                      onPlayPause={
+                        audio.isPlaying
+                          ? audio.pausePlayback
+                          : () =>
+                              audio.startPlayback(
+                                melodyNotes,
+                                chords,
+                                converter,
+                                skipCadence,
+                                slotStates,
+                              )
+                      }
                       melodyLabelSystem={settings.melodyLabelSystem}
                       chordLabelSystem={settings.chordLabelSystem}
                     />
@@ -1715,8 +1989,7 @@ export default function MidiPlayerDOM({
                   </>
                 )}
               </div>
-            )
-          )}
+            ))}
 
           {/* Tab D: Loader */}
           {activeTab === 'loader' && renderMidiLoaderView()}
@@ -1735,7 +2008,6 @@ export default function MidiPlayerDOM({
 
           {/* Tab C: Full-Page Settings */}
           {activeTab === 'settings' && renderSettingsView()}
-
         </div>
 
         {/* 
@@ -1743,22 +2015,24 @@ export default function MidiPlayerDOM({
           Styled with position: fixed, bottom: 0, left/right: 0 to guarantee it is ALWAYS visible,
           floating at the absolute bottom of the screen, completely independent of page scrolling.
         */}
-        <div style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '72px',
-          display: isLandscape ? 'none' : 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '8px 16px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-          backgroundColor: '#111318',
-          zIndex: 9999,
-          boxSizing: 'border-box',
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '72px',
+            display: isLandscape ? 'none' : 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px 16px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+            backgroundColor: '#111318',
+            zIndex: 9999,
+            boxSizing: 'border-box',
+          }}
+        >
           {mode === 'midi_player' ? (
             <>
               {renderTabButton('loader', <IconFolder size={22} color="currentColor" />, 'Loader')}
@@ -1767,25 +2041,39 @@ export default function MidiPlayerDOM({
             </>
           ) : (
             <>
-              {renderTabButton('practice', <IconPiano size={22} color="currentColor" />, 'Practice')}
+              {renderTabButton(
+                'practice',
+                <IconPiano size={22} color="currentColor" />,
+                'Practice',
+              )}
               {renderTabButton('theory', <IconBookOpen size={22} color="currentColor" />, 'Theory')}
               {renderTabButton('settings', <IconCog size={22} color="currentColor" />, 'Settings')}
             </>
           )}
         </div>
-
       </div>
 
       {/* Tooltip Render */}
       {tooltipText && (
-        <div style={{
-          position: 'fixed', left: tooltipPos.x, top: tooltipPos.y,
-          transform: 'translate(-50%, -100%)', backgroundColor: '#2A2D34',
-          color: '#E2E2E6', fontSize: '12px', fontWeight: 500,
-          padding: '5px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)',
-          pointerEvents: 'none', zIndex: 99999, whiteSpace: 'nowrap',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            left: tooltipPos.x,
+            top: tooltipPos.y,
+            transform: 'translate(-50%, -100%)',
+            backgroundColor: '#2A2D34',
+            color: '#E2E2E6',
+            fontSize: '12px',
+            fontWeight: 500,
+            padding: '5px 10px',
+            borderRadius: '8px',
+            border: '1px solid rgba(255,255,255,0.08)',
+            pointerEvents: 'none',
+            zIndex: 99999,
+            whiteSpace: 'nowrap',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+          }}
+        >
           {tooltipText}
         </div>
       )}
@@ -1801,7 +2089,9 @@ export default function MidiPlayerDOM({
 
             {/* Title & Desc */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#E2E2E6', margin: 0 }}>Restart Level?</h3>
+              <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#E2E2E6', margin: 0 }}>
+                Restart Level?
+              </h3>
               <p style={{ fontSize: '13px', color: '#9AA0A6', margin: 0, lineHeight: '1.5' }}>
                 This will restart the level, not just the current set. Are you sure?
               </p>
