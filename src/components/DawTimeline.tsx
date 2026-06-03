@@ -7,6 +7,7 @@ import { TimelineSlot } from '../types/levels';
 import { NoteConverter } from '../utils/note_converter';
 import { setupHorizontalWheelScroll } from '../utils/scroll_helper';
 import { domStyles } from './styles/domStyles';
+import { log } from '../utils/logger';
 
 import { isQueuedLevel } from '../levels';
 
@@ -146,7 +147,7 @@ export default function DawTimeline({
   React.useEffect(() => {
     const renderEnd = performance.now();
     if (renderEnd - renderStart > 2) {
-      console.warn(`[PROFILE DawTimeline] Render took ${(renderEnd - renderStart).toFixed(2)}ms (Slots: ${timelineSlots.length}, playhead: ${playheadTime.toFixed(2)})`);
+      log.debug(`[PROFILE DawTimeline] Render took ${(renderEnd - renderStart).toFixed(2)}ms (Slots: ${timelineSlots.length}, playhead: ${playheadTime.toFixed(2)})`);
     }
   });
 

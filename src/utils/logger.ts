@@ -3,6 +3,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { Platform } from 'react-native';
 
 const config = {
+  severity: 'info',
   // Directs output simultaneously to console and local disk file on Android/iOS
   transport: (props: any) => {
     consoleTransport(props);

@@ -7,6 +7,7 @@ import { PlayedChord, PlayedNote } from '../types/music';
 import { NoteConverter } from '../utils/note_converter';
 
 import { AudioEngine, AudioEngineOptions } from '../types/audio';
+import { log } from '../utils/logger';
 
 export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): AudioEngine {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -33,6 +34,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
   // ─── Audio Context ─────────────────────────────────────────────────────────
 
   const initAudio = useCallback(async () => {
+    log.info(`[initAudio] Initiating AudioContext. Current state: ${audioCtxRef.current?.state}`);
     if (!audioCtxRef.current) {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       const ctx = new AudioContextClass();
@@ -42,14 +44,21 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
       audioCtxRef.current = ctx;
       mainGainRef.current = gain;
 
+      log.info(`[initAudio] Created new AudioContext class. State: ${ctx.state}`);
       preloadMidi.forEach(preloadSample);
       setTimeout(() => {
         Object.keys(pianoSamples).forEach(k => preloadSample(Number(k)));
       }, 1500);
 
-      if (ctx.state === 'suspended') await ctx.resume();
+      if (ctx.state === 'suspended') {
+        log.info(`[initAudio] New context state is suspended, attempting to resume...`);
+        await ctx.resume();
+        log.info(`[initAudio] Context resumed. State: ${ctx.state}`);
+      }
     } else if (audioCtxRef.current.state === 'suspended') {
+      log.info(`[initAudio] Existing AudioContext was suspended, attempting to resume...`);
       await audioCtxRef.current.resume();
+      log.info(`[initAudio] AudioContext resumed. State: ${audioCtxRef.current.state}`);
     }
   }, [preloadMidi]);
 
@@ -122,7 +131,10 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
   const runScheduler = useCallback(() => {
     const tStart = performance.now();
     const ctx = audioCtxRef.current;
-    if (!ctx) return;
+    if (!ctx) {
+      log.warn(`[runScheduler] Stopped because AudioContext is null.`);
+      return;
+    }
 
     const lookahead = 0.15;
     const now = ctx.currentTime;
@@ -135,8 +147,10 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
     const notes = scheduledNotesRef.current;
     const lastNoteEnd = notes.length > 0 ? Math.max(...notes.map(n => n.time + n.duration)) + 0.5 : 3.0;
 
-    if (newPlayhead >= lastNoteEnd) {
+    log.debug(`[runScheduler] tick. now: ${now.toFixed(3)}, elapsed: ${elapsed.toFixed(3)}, newPlayhead: ${newPlayhead.toFixed(3)}, lastNoteEnd: ${lastNoteEnd.toFixed(3)}`);
 
+    if (newPlayhead >= lastNoteEnd) {
+      log.info(`[runScheduler] Finished playback because newPlayhead (${newPlayhead.toFixed(3)}) >= lastNoteEnd (${lastNoteEnd.toFixed(3)})`);
       stopPlayback();
       return;
     }
@@ -159,14 +173,14 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
 
     const tEnd = performance.now();
     if (tEnd - tStart > 2) {
-      console.warn(`[PROFILE runScheduler] took ${(tEnd - tStart).toFixed(2)}ms to schedule ${scheduledCount} notes. Playhead: ${newPlayhead.toFixed(2)}`);
+      log.debug(`[PROFILE runScheduler] took ${(tEnd - tStart).toFixed(2)}ms to schedule ${scheduledCount} notes. Playhead: ${newPlayhead.toFixed(2)}`);
     }
   }, [playSynthNote]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Playback Control ──────────────────────────────────────────────────────
 
   const pausePlayback = useCallback(() => {
-
+    log.info(`[pausePlayback] Pausing. isPlayingRef: ${isPlayingRef.current}`);
     if (startTimeoutRef.current) { clearTimeout(startTimeoutRef.current); startTimeoutRef.current = null; }
     if (schedulerTimerRef.current) { clearInterval(schedulerTimerRef.current); schedulerTimerRef.current = null; }
     setIsPlaying(false);
@@ -174,7 +188,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
   }, []);
 
   const stopPlayback = useCallback(() => {
-
+    log.info(`[stopPlayback] Stopping. Resetting playhead to 0.`);
     pausePlayback();
     setPlayheadTime(0);
     playheadRef.current = 0;
@@ -345,7 +359,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
   }, []);
 
   const startDirectMidiPlayback = useCallback((notes: { midi: number; time: number; duration: number; velocity: number }[], speed = 1.0) => {
-
+    log.info(`[startDirectMidiPlayback] Received ${notes.length} notes. Speed: ${speed}, current playheadTime: ${playheadRef.current}`);
     initAudio().then(() => {
       if (startTimeoutRef.current) { clearTimeout(startTimeoutRef.current); startTimeoutRef.current = null; }
       if (schedulerTimerRef.current) { clearInterval(schedulerTimerRef.current); schedulerTimerRef.current = null; }
@@ -357,11 +371,13 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
         velocity: n.velocity,
         showHighlight: true,
       })).sort((a, b) => a.time - b.time);
+      log.info(`[startDirectMidiPlayback] Scheduled ${scheduledNotesRef.current.length} notes. First note time: ${scheduledNotesRef.current[0]?.time}, Last note: ${scheduledNotesRef.current[scheduledNotesRef.current.length - 1]?.time}`);
   
       nextNoteIndexRef.current = scheduledNotesRef.current.findIndex(n => n.time >= playheadRef.current);
       if (nextNoteIndexRef.current === -1) {
         nextNoteIndexRef.current = scheduledNotesRef.current.length;
       }
+      log.info(`[startDirectMidiPlayback] Starting scheduler at nextNoteIndex: ${nextNoteIndexRef.current} (time >= ${playheadRef.current})`);
   
       setIsPlaying(true);
       isPlayingRef.current = true;
@@ -370,7 +386,9 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
       const ctx = audioCtxRef.current!;
       lastTickTimeRef.current = ctx.currentTime;
       schedulerTimerRef.current = setInterval(runScheduler, 25);
-  
+      log.info(`[startDirectMidiPlayback] Scheduler interval started. ctx.currentTime: ${ctx.currentTime}`);
+    }).catch(err => {
+      log.error(`[startDirectMidiPlayback] initAudio failed with error:`, err);
     });
   }, [initAudio, runScheduler]);
 
