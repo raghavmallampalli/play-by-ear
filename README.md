@@ -27,7 +27,7 @@ src/
 ## 🚀 Development Instructions
 
 ### 1. Prerequisites
-- **Node.js**: Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
+- **Node.js**: Ensure you have [Node.js](https://nodejs.org/) (version 22.x is recommended) installed on your machine.
 - **ImageMagick**: The local asset generation script uses `convert` (ImageMagick) to render the high-fidelity SVG assets into PNG. Ensure ImageMagick is installed on your system if you plan to regenerate assets:
   - *Ubuntu/Debian*: `sudo apt-get install imagemagick`
   - *macOS*: `brew install imagemagick`
