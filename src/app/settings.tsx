@@ -2,11 +2,10 @@ import MidiPlayerDOM from '@/components/MidiPlayerDOM';
 import { IconArrowLeft } from '@/components/icons/NativeIcons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View , ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppData } from '@/hooks/useAppData';
 import { NativeHandlers } from '@/utils/nativeHandlers';
-import { ActivityIndicator } from 'react-native';
 
 export default function SettingsScreen() {
   const router = useRouter();

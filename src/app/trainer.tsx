@@ -2,11 +2,10 @@ import MidiPlayerDOM from '@/components/MidiPlayerDOM';
 import { IconArrowLeft, IconBookOpen, IconCog, IconPiano } from '@/components/icons/NativeIcons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions , ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppData } from '@/hooks/useAppData';
 import { NativeHandlers } from '@/utils/nativeHandlers';
-import { ActivityIndicator } from 'react-native';
 
 export default function TrainerScreen() {
   const router = useRouter();

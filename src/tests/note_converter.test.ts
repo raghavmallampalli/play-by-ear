@@ -1,3 +1,4 @@
+import { BaseLevel } from '../levels/base_level';
 import { NoteConverter } from '../utils/note_converter';
 
 describe('NoteConverter', () => {
@@ -35,7 +36,7 @@ describe('NoteConverter', () => {
 });
 
 describe('BaseLevel Scale Degree Labeling', () => {
-  class TestScaleLevel extends (require('../levels/base_level').BaseLevel) {
+  class TestScaleLevel extends BaseLevel {
     public readonly isChordLevel = false;
     constructor() {
       super({

@@ -1,9 +1,9 @@
+import * as DOMIcons from '../components/icons/DOMIcons';
+import * as NativeIcons from '../components/icons/NativeIcons';
+
 jest.mock('@expo/vector-icons', () => ({
   MaterialCommunityIcons: () => null,
 }));
-
-import * as DOMIcons from '../components/icons/DOMIcons';
-import * as NativeIcons from '../components/icons/NativeIcons';
 
 describe('Icon Inventories', () => {
   test('DOMIcons exports exactly the expected components', () => {

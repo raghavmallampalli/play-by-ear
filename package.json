@@ -53,7 +53,7 @@
     "ios": "ELECTRON_DISABLE_SANDBOX=1 expo start --ios",
     "web": "ELECTRON_DISABLE_SANDBOX=1 expo start --web",
     "test": "jest",
-    "lint": "tsc --noEmit && expo lint",
+    "lint": "tsc --noEmit && expo lint --fix && expo lint",
     "android": "expo run:android",
     "build": "eas build --platform android --profile preview"
   },

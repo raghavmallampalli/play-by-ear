@@ -21,6 +21,10 @@ import { LevelSetup } from '../types/levels';
 import { NoteConverter } from '../utils/note_converter';
 import { CHORD_DICTIONARY, MELODY_DICTIONARY } from './labels';
 
+
+
+import { EXERCISE_HASHES } from '../constants/exercises';
+
 export * from '../types/levels';
 
 /**
@@ -30,10 +34,6 @@ export * from '../types/levels';
 export function isQueuedLevel(level: number): boolean {
   return level % 3 !== 0;
 }
-
-
-
-import { EXERCISE_HASHES } from '../constants/exercises';
 export { EXERCISE_HASHES };
 
 const ANSWER_CHOICES_MAP: Record<number, string[]> = {
