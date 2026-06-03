@@ -21,8 +21,6 @@ import { LevelSetup } from '../types/levels';
 import { NoteConverter } from '../utils/note_converter';
 import { CHORD_DICTIONARY, MELODY_DICTIONARY } from './labels';
 
-
-
 import { EXERCISE_HASHES } from '../constants/exercises';
 
 export * from '../types/levels';
@@ -63,27 +61,35 @@ export function getAnswerChoices(level: number): string[] {
 }
 
 /** All MIDI notes that should be warm-cached for the given mode/level. */
-export function getPreloadMidi(mode: 'trainer' | 'midi_player' | 'progress', level: number): number[] {
+export function getPreloadMidi(
+  mode: 'trainer' | 'midi_player' | 'progress',
+  level: number,
+): number[] {
   if (mode === 'midi_player') return MIDI_PLAYER_PRELOAD_MIDI;
   try {
     const setup = buildLevel(mode, level);
-    const converter = new NoteConverter(setup.tonicPitchClass, setup.baseOctave, setup.bpm, setup.ticksPerBeat);
-    
+    const converter = new NoteConverter(
+      setup.tonicPitchClass,
+      setup.baseOctave,
+      setup.bpm,
+      setup.ticksPerBeat,
+    );
+
     const midiSet = new Set<number>();
-    
+
     // 1. Add melody notes
-    setup.melody.forEach(n => midiSet.add(converter.toMidi(n.note)));
-    
+    setup.melody.forEach((n) => midiSet.add(converter.toMidi(n.note)));
+
     // 2. Add chord notes
-    setup.chords.forEach(c => c.notes.forEach(n => midiSet.add(converter.toMidi(n))));
-    
+    setup.chords.forEach((c) => c.notes.forEach((n) => midiSet.add(converter.toMidi(n))));
+
     // 3. Add choice audio notes so they are preloaded for gameplay feedback
     const choices = getAnswerChoices(level);
-    choices.forEach(choice => {
+    choices.forEach((choice) => {
       if (MELODY_DICTIONARY[choice]) {
         midiSet.add(converter.toMidi(MELODY_DICTIONARY[choice]));
       } else if (CHORD_DICTIONARY[choice]) {
-        CHORD_DICTIONARY[choice].forEach(n => midiSet.add(converter.toMidi(n)));
+        CHORD_DICTIONARY[choice].forEach((n) => midiSet.add(converter.toMidi(n)));
       }
     });
 
@@ -96,9 +102,9 @@ export function getPreloadMidi(mode: 'trainer' | 'midi_player' | 'progress', lev
       { degree: 9, offset: 0 },
       { degree: 11, offset: -1 },
       { degree: 2, offset: 0 },
-      { degree: 7, offset: 0 }
+      { degree: 7, offset: 0 },
     ];
-    cadenceRelNotes.forEach(n => midiSet.add(converter.toMidi(n)));
+    cadenceRelNotes.forEach((n) => midiSet.add(converter.toMidi(n)));
 
     return Array.from(midiSet).sort((a, b) => a - b);
   } catch {
@@ -121,28 +127,46 @@ export function buildLevel(
       ticksPerBeat: 480,
       tonicPitchClass: 0,
       baseOctave: 4,
-      preloadMidi: MIDI_PLAYER_PRELOAD_MIDI
+      preloadMidi: MIDI_PLAYER_PRELOAD_MIDI,
     };
   }
   switch (level) {
-    case 1: return buildLevel1();
-    case 2: return buildLevel2();
-    case 3: return buildLevel3();
-    case 4: return buildLevel4();
-    case 5: return buildLevel5();
-    case 6: return buildLevel6();
-    case 7: return buildLevel7();
-    case 8: return buildLevel8();
-    case 9: return buildLevel9();
-    case 10: return buildLevel10();
-    case 11: return buildLevel11();
-    case 12: return buildLevel12();
-    case 13: return buildLevel13();
-    case 14: return buildLevel14();
-    case 15: return buildLevel15();
-    case 16: return buildLevel16();
-    case 17: return buildLevel17();
-    case 18: return buildLevel18();
+    case 1:
+      return buildLevel1();
+    case 2:
+      return buildLevel2();
+    case 3:
+      return buildLevel3();
+    case 4:
+      return buildLevel4();
+    case 5:
+      return buildLevel5();
+    case 6:
+      return buildLevel6();
+    case 7:
+      return buildLevel7();
+    case 8:
+      return buildLevel8();
+    case 9:
+      return buildLevel9();
+    case 10:
+      return buildLevel10();
+    case 11:
+      return buildLevel11();
+    case 12:
+      return buildLevel12();
+    case 13:
+      return buildLevel13();
+    case 14:
+      return buildLevel14();
+    case 15:
+      return buildLevel15();
+    case 16:
+      return buildLevel16();
+    case 17:
+      return buildLevel17();
+    case 18:
+      return buildLevel18();
     default:
       return {
         melody: [],
@@ -152,7 +176,7 @@ export function buildLevel(
         ticksPerBeat: 480,
         tonicPitchClass: 0,
         baseOctave: 4,
-        preloadMidi: []
+        preloadMidi: [],
       };
   }
 }

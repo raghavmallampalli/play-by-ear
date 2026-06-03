@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { StorageService } from '../services/storage';
-import { AppDataBundle , ActiveTrackState, RecentTrack } from '../types/storage';
+import { AppDataBundle, ActiveTrackState, RecentTrack } from '../types/storage';
 import { AppSettings } from '../types/settings';
 import { EXERCISE_HASHES } from '../constants/exercises';
 
@@ -11,18 +11,18 @@ export function useAppData() {
 
   useEffect(() => {
     setLoading(true);
-    StorageService.loadAllData().then(data => {
+    StorageService.loadAllData().then((data) => {
       setAppData(data);
       setLoading(false);
     });
   }, [reloadKey]);
 
   const reloadData = () => {
-    setReloadKey(prev => prev + 1);
+    setReloadKey((prev) => prev + 1);
   };
 
   const handleSaveSettings = async (newSettings: AppSettings) => {
-    setAppData(prev => prev ? { ...prev, settings: newSettings } : null);
+    setAppData((prev) => (prev ? { ...prev, settings: newSettings } : null));
     await StorageService.saveSettings(newSettings);
   };
 
@@ -35,10 +35,10 @@ export function useAppData() {
 
     const updatedProgress = {
       ...appData.progress,
-      [hash]: { timesTried: tried, averageSuccess: average, bestSuccess: best }
+      [hash]: { timesTried: tried, averageSuccess: average, bestSuccess: best },
     };
-    
-    setAppData(prev => prev ? { ...prev, progress: updatedProgress } : null);
+
+    setAppData((prev) => (prev ? { ...prev, progress: updatedProgress } : null));
     await StorageService.saveProgress(updatedProgress);
   };
 
@@ -46,19 +46,19 @@ export function useAppData() {
     if (!appData) return;
     const hash = EXERCISE_HASHES[level] || String(level);
     const updatedNotes = { ...appData.notes, [hash]: notes };
-    setAppData(prev => prev ? { ...prev, notes: updatedNotes } : null);
+    setAppData((prev) => (prev ? { ...prev, notes: updatedNotes } : null));
     await StorageService.saveUserNotes(updatedNotes);
   };
 
   const handleSaveRecentTracks = async (tracks: RecentTrack[]) => {
     if (!appData) return;
-    setAppData(prev => prev ? { ...prev, recentMidis: tracks } : null);
+    setAppData((prev) => (prev ? { ...prev, recentMidis: tracks } : null));
     await StorageService.saveRecentMidis(tracks);
   };
 
   const handleSaveActiveTrack = async (track: ActiveTrackState | null) => {
     if (!appData) return;
-    setAppData(prev => prev ? { ...prev, activeTrack: track } : null);
+    setAppData((prev) => (prev ? { ...prev, activeTrack: track } : null));
     await StorageService.saveActiveTrack(track);
   };
 

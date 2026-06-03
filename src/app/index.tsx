@@ -2,7 +2,15 @@ import { IconCog, IconPiano, IconMusic } from '@/components/icons/NativeIcons';
 import { log } from '@/utils/logger';
 import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import {
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { REPO_BASE_URL } from '../constants/links';
 
@@ -12,7 +20,7 @@ export default function DashboardScreen() {
   const isLandscape = width > height;
 
   useEffect(() => {
-    log.debug("Play-by-ear App Launched! Dashboard Screen Mounted successfully.");
+    log.debug('Play-by-ear App Launched! Dashboard Screen Mounted successfully.');
   }, []);
 
   return (
@@ -22,38 +30,34 @@ export default function DashboardScreen() {
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,
-            isLandscape && styles.scrollContentLandscape
+            isLandscape && styles.scrollContentLandscape,
           ]}
           showsVerticalScrollIndicator={false}
         >
-
           {/* Header Section */}
           <View style={[styles.headerContainer, isLandscape && styles.headerContainerLandscape]}>
             <View style={[styles.header, isLandscape && styles.headerLandscape]}>
-              <Text style={[styles.appTitle, isLandscape && styles.appTitleLandscape]}>Play by Ear</Text>
+              <Text style={[styles.appTitle, isLandscape && styles.appTitleLandscape]}>
+                Play by Ear
+              </Text>
               <Text style={styles.appSubtitle}>Relative Pitch Chord Trainer</Text>
             </View>
           </View>
 
           {/* Cards Grid/Stack */}
-          <View style={[
-            styles.grid,
-            isLandscape && styles.gridLandscape
-          ]}>
-
+          <View style={[styles.grid, isLandscape && styles.gridLandscape]}>
             {/* Primary Action Card: Trainer */}
             <Pressable
               style={({ pressed }) => [
                 styles.primaryCard,
                 isLandscape && styles.cardLandscape,
-                pressed && styles.cardPressed
+                pressed && styles.cardPressed,
               ]}
               onPress={() => {
-                log.info("Dashboard: Navigating to Trainer Difficulty selector screen.");
+                log.info('Dashboard: Navigating to Trainer Difficulty selector screen.');
                 router.push('/difficulty');
               }}
             >
-
               <View style={styles.iconContainerPrimary}>
                 <IconPiano size={36} color="#0A305F" />
               </View>
@@ -66,10 +70,10 @@ export default function DashboardScreen() {
               style={({ pressed }) => [
                 styles.smallPrimaryCard,
                 isLandscape && styles.cardLandscape,
-                pressed && styles.cardPressed
+                pressed && styles.cardPressed,
               ]}
               onPress={() => {
-                log.info("Dashboard: Navigating to MIDI Player screen.");
+                log.info('Dashboard: Navigating to MIDI Player screen.');
                 router.push('/midi_player');
               }}
             >
@@ -86,10 +90,10 @@ export default function DashboardScreen() {
               style={({ pressed }) => [
                 styles.smallPrimaryCard,
                 isLandscape && styles.cardLandscape,
-                pressed && styles.cardPressed
+                pressed && styles.cardPressed,
               ]}
               onPress={() => {
-                log.info("Dashboard: Navigating to Settings & Preferences screen.");
+                log.info('Dashboard: Navigating to Settings & Preferences screen.');
                 router.push('/settings');
               }}
             >
@@ -100,7 +104,6 @@ export default function DashboardScreen() {
               </View>
               <Text style={styles.smallCardTitle}>Settings & Preferences</Text>
             </Pressable>
-
           </View>
 
           {/* Footer branding */}
@@ -110,7 +113,6 @@ export default function DashboardScreen() {
               <Text style={styles.footerLink}>GitHub</Text>
             </Pressable>
           </View>
-
         </ScrollView>
       </SafeAreaView>
     </View>

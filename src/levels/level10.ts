@@ -34,10 +34,15 @@ export class Level10 extends BaseLevel {
         duration: this.converter.secondsToTicks(1.1),
       });
       chordLabels.push(chordLabel);
-      
     }
 
-    const preloadMidi = [...new Set(Object.values(CHORD_DICTIONARY).flat().map(n => this.converter.toMidi(n)))];
+    const preloadMidi = [
+      ...new Set(
+        Object.values(CHORD_DICTIONARY)
+          .flat()
+          .map((n) => this.converter.toMidi(n)),
+      ),
+    ];
     return {
       melody,
       chords,

@@ -4,12 +4,12 @@ import { PlayedNote, PlayedChord } from '../types/music';
 
 // Happy Birthday melody defined directly as standard PlayedNotes (times in ticks at 100 BPM, 480 PPQ)
 const BIRTHDAY_MELODY: PlayedNote[] = [
-  { note: { degree: 0, offset: 0 }, beat: 0,     duration: 200 }, // C4
-  { note: { degree: 0, offset: 0 }, beat: 320,   duration: 120 }, // C4
-  { note: { degree: 2, offset: 0 }, beat: 480,   duration: 360 }, // D4
-  { note: { degree: 0, offset: 0 }, beat: 960,   duration: 360 }, // C4
-  { note: { degree: 5, offset: 0 }, beat: 1440,  duration: 360 }, // F4
-  { note: { degree: 4, offset: 0 }, beat: 1920,  duration: 720 }, // E4
+  { note: { degree: 0, offset: 0 }, beat: 0, duration: 200 }, // C4
+  { note: { degree: 0, offset: 0 }, beat: 320, duration: 120 }, // C4
+  { note: { degree: 2, offset: 0 }, beat: 480, duration: 360 }, // D4
+  { note: { degree: 0, offset: 0 }, beat: 960, duration: 360 }, // C4
+  { note: { degree: 5, offset: 0 }, beat: 1440, duration: 360 }, // F4
+  { note: { degree: 4, offset: 0 }, beat: 1920, duration: 720 }, // E4
 ];
 
 export class Level3 extends BaseLevel {

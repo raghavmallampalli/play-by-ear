@@ -90,7 +90,10 @@ export abstract class BaseLevel {
   }
 
   /** Standard helper to populate default metadata properties of LevelSetup. */
-  protected getCommonSetup(): Pick<LevelSetup, 'bpm' | 'ticksPerBeat' | 'tonicPitchClass' | 'baseOctave'> {
+  protected getCommonSetup(): Pick<
+    LevelSetup,
+    'bpm' | 'ticksPerBeat' | 'tonicPitchClass' | 'baseOctave'
+  > {
     return {
       bpm: this.bpm,
       ticksPerBeat: this.ticksPerBeat,

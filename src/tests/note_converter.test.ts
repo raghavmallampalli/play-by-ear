@@ -16,7 +16,7 @@ describe('NoteConverter', () => {
     const ticks = 960; // 2 beats
     const seconds = converter.ticksToSeconds(ticks);
     expect(seconds).toBe(1.0); // 120 BPM -> 2 beats = 1 second
-    
+
     const backToTicks = converter.secondsToTicks(seconds);
     expect(backToTicks).toBe(ticks);
   });
@@ -25,12 +25,12 @@ describe('NoteConverter', () => {
     const gSharpConverter = new NoteConverter(8, 3, 100, 480); // G#, Octave 3
     const midi = 60; // Middle C
     const relative = gSharpConverter.fromMidi(midi);
-    
+
     // Base G#3 is (3+1)*12 + 8 = 48 + 8 = 56.
     // 60 - 56 = 4. 4 is degree 4 (Major 3rd above G# is C, wait G# A A# B C... 4 semitones)
     expect(relative.degree).toBe(4);
     expect(relative.offset).toBe(0);
-    
+
     expect(gSharpConverter.toMidi(relative)).toBe(midi);
   });
 });
@@ -56,7 +56,7 @@ describe('BaseLevel Scale Degree Labeling', () => {
         ticksPerBeat: 480,
         tonicPitchClass: 0,
         baseOctave: 4,
-        preloadMidi: []
+        preloadMidi: [],
       };
     }
   }
@@ -66,15 +66,14 @@ describe('BaseLevel Scale Degree Labeling', () => {
   test('correctly infers scale degrees, including the octave note as "8"', () => {
     // 1st degree / Tonic (offset 0) -> '1'
     expect(level.inferLabel({ degree: 0, offset: 0 })).toBe('1');
-    
+
     // 2nd degree -> '2'
     expect(level.inferLabel({ degree: 2, offset: 0 })).toBe('2');
-    
+
     // 5th degree -> '5'
     expect(level.inferLabel({ degree: 7, offset: 0 })).toBe('5');
-    
+
     // Octave note (degree 0, offset 1) -> '8'
     expect(level.inferLabel({ degree: 0, offset: 1 })).toBe('8');
   });
 });
-

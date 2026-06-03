@@ -11,7 +11,7 @@ export const NativeHandlers = {
       Alert.alert('Error', 'Failed to compile settings backup.');
       return;
     }
-    
+
     if (await Sharing.isAvailableAsync()) {
       await Sharing.shareAsync(backupPath, {
         mimeType: Platform.OS === 'android' ? 'text/plain' : 'application/json',
@@ -24,12 +24,14 @@ export const NativeHandlers = {
           if (typeof window !== 'undefined' && 'showSaveFilePicker' in window) {
             const handle = await (window as any).showSaveFilePicker({
               suggestedName: 'play_by_ear_backup.txt',
-              types: [{
-                description: 'Text Files',
-                accept: {
-                  'text/plain': ['.txt'],
+              types: [
+                {
+                  description: 'Text Files',
+                  accept: {
+                    'text/plain': ['.txt'],
+                  },
                 },
-              }],
+              ],
             });
             const writable = await handle.createWritable();
             await writable.write(backupPath);
@@ -50,11 +52,14 @@ export const NativeHandlers = {
           if (e.name === 'AbortError') return;
 
           // Fallback to clipboard if anything fails
-          navigator.clipboard.writeText(backupPath).then(() => {
-            alert('Fallback: Backup copied to clipboard!');
-          }).catch(() => {
-            alert('Failed to copy. Here is your backup:\n\n' + backupPath);
-          });
+          navigator.clipboard
+            .writeText(backupPath)
+            .then(() => {
+              alert('Fallback: Backup copied to clipboard!');
+            })
+            .catch(() => {
+              alert('Failed to copy. Here is your backup:\n\n' + backupPath);
+            });
         }
       } else {
         Alert.alert('Backup compiled!', 'Backup generated successfully.');
@@ -72,23 +77,23 @@ export const NativeHandlers = {
       if (result.canceled || !result.assets || result.assets.length === 0) return;
 
       const fileUri = result.assets[0].uri;
-      
+
       let jsonStr = '';
       if (fileUri.startsWith('data:') || fileUri.startsWith('blob:')) {
-         // Web handling: DocumentPicker on web returns a File object in result.assets[0].file
-         const file = result.assets[0].file;
-         if (file) {
-           jsonStr = await file.text();
-         }
+        // Web handling: DocumentPicker on web returns a File object in result.assets[0].file
+        const file = result.assets[0].file;
+        if (file) {
+          jsonStr = await file.text();
+        }
       } else {
-         jsonStr = await FileSystem.readAsStringAsync(fileUri);
+        jsonStr = await FileSystem.readAsStringAsync(fileUri);
       }
-      
+
       const success = await StorageService.importProgressBackup(jsonStr);
 
       if (success) {
         Alert.alert('Success', 'Progress and settings imported successfully!', [
-          { text: 'Reload App', onPress: onReloadData }
+          { text: 'Reload App', onPress: onReloadData },
         ]);
         if (typeof window !== 'undefined' && window.alert) {
           // Web fallback alert
@@ -118,21 +123,23 @@ export const NativeHandlers = {
 
       let base64Str = '';
       if (fileUri.startsWith('data:') || fileUri.startsWith('blob:')) {
-         const file = result.assets[0].file;
-         if (file) {
-           const buffer = await file.arrayBuffer();
-           base64Str = btoa(
-             new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-           );
-         }
+        const file = result.assets[0].file;
+        if (file) {
+          const buffer = await file.arrayBuffer();
+          base64Str = btoa(
+            new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), ''),
+          );
+        }
       } else {
-         base64Str = await FileSystem.readAsStringAsync(fileUri, { encoding: FileSystem.EncodingType.Base64 });
+        base64Str = await FileSystem.readAsStringAsync(fileUri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
       }
-      
+
       onMidiLoaded(name, base64Str);
     } catch (err) {
       console.error(err);
       Alert.alert('Error', 'Failed to read the MIDI file.');
     }
-  }
+  },
 };

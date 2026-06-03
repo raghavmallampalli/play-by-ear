@@ -1,7 +1,13 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { Platform } from 'react-native';
 import { AppSettings } from '../types/settings';
-import { AppDataBundle, UserProgressData, UserNotesData, RecentTrack, ActiveTrackState } from '../types/storage';
+import {
+  AppDataBundle,
+  UserProgressData,
+  UserNotesData,
+  RecentTrack,
+  ActiveTrackState,
+} from '../types/storage';
 import { DEFAULT_MELODY_LABELS, DEFAULT_CHORD_LABELS } from '../levels/labels';
 import { EXERCISE_HASHES } from '../constants/exercises';
 
@@ -143,7 +149,7 @@ export const StorageService = {
       const bundle = await this.loadAllData();
       const jsonStr = JSON.stringify(bundle, null, 2);
       if (isWeb) return jsonStr;
-      
+
       const ext = Platform.OS === 'android' ? 'txt' : 'json';
       const tempPath = `${FileSystem.cacheDirectory}play_by_ear_backup.${ext}`;
       await FileSystem.writeAsStringAsync(tempPath, jsonStr);
@@ -173,5 +179,5 @@ export const StorageService = {
       console.error('[Storage] Backup import failed:', err);
       return false;
     }
-  }
+  },
 };

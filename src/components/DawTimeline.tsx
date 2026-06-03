@@ -32,7 +32,7 @@ const MemoizedSlotsInner = ({
   melodyLabelSystem,
   chordLabelSystem,
   pixelsPerSecond,
-  onSlotClick
+  onSlotClick,
 }: MemoizedSlotsProps) => {
   return (
     <>
@@ -41,16 +41,24 @@ const MemoizedSlotsInner = ({
         const isFocused = focusedSlotIndex === index && !isSolved && !revealAllLabels;
         const slotTime = converter.ticksToSeconds(slot.beat);
 
-        const slotStyle = (!hasStarted && !revealAllLabels)
-          ? domStyles.disabledBtn
-          : (isFocused
-            ? domStyles.primaryBtn
-            : (isSolved
-              ? (slot.correct ? domStyles.correctBtn : domStyles.wrongBtn)
-              : domStyles.secondaryBtn));
+        const slotStyle =
+          !hasStarted && !revealAllLabels
+            ? domStyles.disabledBtn
+            : isFocused
+              ? domStyles.primaryBtn
+              : isSolved
+                ? slot.correct
+                  ? domStyles.correctBtn
+                  : domStyles.wrongBtn
+                : domStyles.secondaryBtn;
 
         const displayVal = isSolved
-          ? displayLabel(slot.answer || '', melodyLabelSystem, chordLabelSystem, converter.tonicPitchClass)
+          ? displayLabel(
+              slot.answer || '',
+              melodyLabelSystem,
+              chordLabelSystem,
+              converter.tonicPitchClass,
+            )
           : '';
 
         return (
@@ -67,8 +75,8 @@ const MemoizedSlotsInner = ({
               padding: '0 8px',
               borderRadius: '10px',
               zIndex: isFocused ? 110 : 100,
-              cursor: (!hasStarted && !revealAllLabels) ? 'default' : 'pointer',
-              pointerEvents: (!hasStarted && !revealAllLabels) ? 'none' : 'auto',
+              cursor: !hasStarted && !revealAllLabels ? 'default' : 'pointer',
+              pointerEvents: !hasStarted && !revealAllLabels ? 'none' : 'auto',
             }}
             onClick={() => (hasStarted || revealAllLabels) && onSlotClick(index, slot)}
           >
@@ -115,12 +123,16 @@ interface DawTimelineProps {
 const dawStyles = {
   gridOverlay: {
     position: 'absolute' as const,
-    top: 0, left: 0, width: '100%', height: '100%',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
     pointerEvents: 'none' as const,
   },
   gridLine: {
     position: 'absolute' as const,
-    top: 0, height: '100%',
+    top: 0,
+    height: '100%',
   },
 };
 
@@ -144,22 +156,27 @@ export default function DawTimeline({
   React.useEffect(() => {
     const renderEnd = performance.now();
     if (renderEnd - renderStart > 2) {
-      log.debug(`[PROFILE DawTimeline] Render took ${(renderEnd - renderStart).toFixed(2)}ms (Slots: ${timelineSlots.length}, playhead: ${playheadTime.toFixed(2)})`);
+      log.debug(
+        `[PROFILE DawTimeline] Render took ${(renderEnd - renderStart).toFixed(2)}ms (Slots: ${timelineSlots.length}, playhead: ${playheadTime.toFixed(2)})`,
+      );
     }
   });
 
   // Memoize all timeline width and scale calculations
   const { maxDuration, barCount, pixelsPerSecond, tickGridSpacing } = React.useMemo(() => {
     const isQueued = isQueuedLevel(level);
-    const lastSlotTime = timelineSlots.length > 0
-      ? Math.max(...timelineSlots.map(s => converter.ticksToSeconds(s.beat))) + 2.5
-      : 3.0;
+    const lastSlotTime =
+      timelineSlots.length > 0
+        ? Math.max(...timelineSlots.map((s) => converter.ticksToSeconds(s.beat))) + 2.5
+        : 3.0;
     const maxDur = isQueued
       ? lastSlotTime
-      : Math.max(lastSlotTime, level === 3 ? 18.0 : (level >= 6 ? 20.0 : (level >= 4 ? 15.0 : 3.0)));
+      : Math.max(lastSlotTime, level === 3 ? 18.0 : level >= 6 ? 20.0 : level >= 4 ? 15.0 : 3.0);
     const bCount = Math.ceil(maxDur);
 
-    const uniqueTimes = Array.from(new Set(timelineSlots.map(s => converter.ticksToSeconds(s.beat)))).sort((a, b) => a - b);
+    const uniqueTimes = Array.from(
+      new Set(timelineSlots.map((s) => converter.ticksToSeconds(s.beat))),
+    ).sort((a, b) => a - b);
     const diffs: number[] = [];
     for (let i = 1; i < uniqueTimes.length; i++) {
       const diff = uniqueTimes[i] - uniqueTimes[i - 1];
@@ -182,9 +199,13 @@ export default function DawTimeline({
     const beatWidth = oneBeatSecs * pPerSecond;
     const tGridSpacing = beatWidth / 4;
 
-    return { maxDuration: maxDur, barCount: bCount, pixelsPerSecond: pPerSecond, tickGridSpacing: tGridSpacing };
+    return {
+      maxDuration: maxDur,
+      barCount: bCount,
+      pixelsPerSecond: pPerSecond,
+      tickGridSpacing: tGridSpacing,
+    };
   }, [level, timelineSlots, converter]);
-
 
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
@@ -203,7 +224,12 @@ export default function DawTimeline({
   }, [playheadTime, isPlaying, pixelsPerSecond]);
 
   React.useEffect(() => {
-    if (!isPlaying && scrollContainerRef.current && focusedSlotIndex !== null && timelineSlots[focusedSlotIndex]) {
+    if (
+      !isPlaying &&
+      scrollContainerRef.current &&
+      focusedSlotIndex !== null &&
+      timelineSlots[focusedSlotIndex]
+    ) {
       const slot = timelineSlots[focusedSlotIndex];
       const slotTime = converter.ticksToSeconds(slot.beat);
       const slotX = 54 + slotTime * pixelsPerSecond;
@@ -245,11 +271,18 @@ export default function DawTimeline({
       <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
         {/* Left fade */}
         {hasOverflow && (
-          <div style={{
-            position: 'absolute', left: 0, top: 0, bottom: 0, width: '24px',
-            background: 'linear-gradient(to right, #1D2024 15%, transparent)',
-            pointerEvents: 'none', zIndex: 106,
-          }} />
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: '24px',
+              background: 'linear-gradient(to right, #1D2024 15%, transparent)',
+              pointerEvents: 'none',
+              zIndex: 106,
+            }}
+          />
         )}
 
         <div
@@ -260,9 +293,12 @@ export default function DawTimeline({
             height: '66px',
             overflowX: hasOverflow ? 'auto' : 'hidden',
             overflowY: 'hidden',
-            backgroundColor: '#111318', borderRadius: '12px',
+            backgroundColor: '#111318',
+            borderRadius: '12px',
             border: '1px solid rgba(255,255,255,0.03)',
-            padding: '7px 0', boxSizing: 'border-box', userSelect: 'none',
+            padding: '7px 0',
+            boxSizing: 'border-box',
+            userSelect: 'none',
             cursor: onSeek ? 'pointer' : 'default',
           }}
           onClick={(e) => {
@@ -273,37 +309,51 @@ export default function DawTimeline({
             onSeek(Math.max(0, Math.min(maxDuration, targetSeconds)));
           }}
         >
-          <div style={{
-            height: '52px',
-            width: `${108 + barCount * pixelsPerSecond}px`,
-            position: 'relative', display: 'flex', alignItems: 'center',
-          }}>
+          <div
+            style={{
+              height: '52px',
+              width: `${108 + barCount * pixelsPerSecond}px`,
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
             {/* Beat grid lines */}
-            {React.useMemo(() => (
-              <div style={dawStyles.gridOverlay}>
-                {Array.from({ length: barCount * 4 + 1 }).map((_, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      ...dawStyles.gridLine,
-                      borderLeft: i % 4 === 0
-                        ? '1px dashed rgba(255,255,255,0.12)'
-                        : '1px dotted rgba(255,255,255,0.04)',
-                      left: `${54 + i * tickGridSpacing}px`,
-                    }}
-                  />
-                ))}
-              </div>
-            ), [barCount, tickGridSpacing])}
+            {React.useMemo(
+              () => (
+                <div style={dawStyles.gridOverlay}>
+                  {Array.from({ length: barCount * 4 + 1 }).map((_, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        ...dawStyles.gridLine,
+                        borderLeft:
+                          i % 4 === 0
+                            ? '1px dashed rgba(255,255,255,0.12)'
+                            : '1px dotted rgba(255,255,255,0.04)',
+                        left: `${54 + i * tickGridSpacing}px`,
+                      }}
+                    />
+                  ))}
+                </div>
+              ),
+              [barCount, tickGridSpacing],
+            )}
 
             {/* Playhead */}
             {playheadTime > 0 && (
-              <div style={{
-                position: 'absolute', top: 0, bottom: 0, width: '1.5px',
-                backgroundColor: '#A8C7FA', zIndex: 105,
-                boxShadow: '0 0 8px rgba(168, 199, 250, 0.4)',
-                left: `${54 + playheadTime * pixelsPerSecond}px`,
-              }} />
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  bottom: 0,
+                  width: '1.5px',
+                  backgroundColor: '#A8C7FA',
+                  zIndex: 105,
+                  boxShadow: '0 0 8px rgba(168, 199, 250, 0.4)',
+                  left: `${54 + playheadTime * pixelsPerSecond}px`,
+                }}
+              />
             )}
 
             {/* Interactive Slots */}
@@ -323,37 +373,73 @@ export default function DawTimeline({
 
         {/* Right fade */}
         {hasOverflow && (
-          <div style={{
-            position: 'absolute', right: 0, top: 0, bottom: 0, width: '24px',
-            background: 'linear-gradient(to left, #1D2024 15%, transparent)',
-            pointerEvents: 'none', zIndex: 106,
-          }} />
+          <div
+            style={{
+              position: 'absolute',
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: '24px',
+              background: 'linear-gradient(to left, #1D2024 15%, transparent)',
+              pointerEvents: 'none',
+              zIndex: 106,
+            }}
+          />
         )}
       </div>
 
-      <div style={{ width: '56px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div
+        style={{
+          width: '56px',
+          height: '48px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <button
           disabled={!hasStarted}
           onClick={onPlayPause}
           style={{
-            ...(!hasStarted ? domStyles.disabledBtn : (isPlaying ? domStyles.secondaryBtn : domStyles.primaryBtn)),
+            ...(!hasStarted
+              ? domStyles.disabledBtn
+              : isPlaying
+                ? domStyles.secondaryBtn
+                : domStyles.primaryBtn),
             width: '100%',
             height: '100%',
           }}
         >
           {isPlaying ? (
             <div style={{ display: 'flex', gap: '4px' }}>
-              <div style={{ width: '4px', height: '14px', backgroundColor: '#E2E2E6', borderRadius: '1px' }} />
-              <div style={{ width: '4px', height: '14px', backgroundColor: '#E2E2E6', borderRadius: '1px' }} />
+              <div
+                style={{
+                  width: '4px',
+                  height: '14px',
+                  backgroundColor: '#E2E2E6',
+                  borderRadius: '1px',
+                }}
+              />
+              <div
+                style={{
+                  width: '4px',
+                  height: '14px',
+                  backgroundColor: '#E2E2E6',
+                  borderRadius: '1px',
+                }}
+              />
             </div>
           ) : (
-            <div style={{
-              borderLeft: `16px solid ${!hasStarted ? '#8E919A' : '#0A305F'}`,
-              borderTop: '10px solid transparent',
-              borderBottom: '10px solid transparent',
-              width: 0, height: 0,
-              opacity: !hasStarted ? 0.6 : 1,
-            }} />
+            <div
+              style={{
+                borderLeft: `16px solid ${!hasStarted ? '#8E919A' : '#0A305F'}`,
+                borderTop: '10px solid transparent',
+                borderBottom: '10px solid transparent',
+                width: 0,
+                height: 0,
+                opacity: !hasStarted ? 0.6 : 1,
+              }}
+            />
           )}
         </button>
       </div>

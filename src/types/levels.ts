@@ -19,11 +19,11 @@ export interface LevelSetup {
   chords: PlayedChord[];
   /** Interative slots on the timeline the user must solve. */
   slots: TimelineSlot[];
-  
+
   bpm: number;
   /** Resolution for the tick-based timing system. */
   ticksPerBeat: number;
-  
+
   /** Pitch class of the tonic (0 = C, 1 = C#, … 11 = B). */
   tonicPitchClass: number;
   /** Base octave for the exercise (e.g., 4 for Middle C). */

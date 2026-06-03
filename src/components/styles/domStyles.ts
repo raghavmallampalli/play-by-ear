@@ -22,7 +22,8 @@ const baseButton = {
 
 export const domStyles = {
   body: {
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
     backgroundColor: '#111318',
     width: '100%',
     height: '100vh',
@@ -107,9 +108,9 @@ export const domStyles = {
     cursor: 'pointer',
     fontSize: '13px',
   },
-  
+
   // ─── Shared Universal Button Styles (Squircles) ───────────────────────────
-  
+
   primaryBtn: {
     ...baseButton,
     backgroundColor: '#A8C7FA',
@@ -117,14 +118,14 @@ export const domStyles = {
     fontWeight: '900' as const,
     boxShadow: '0 2px 6px rgba(168, 199, 250, 0.25)',
   },
-  
+
   secondaryBtn: {
     ...baseButton,
     backgroundColor: '#25282F',
     borderColor: 'rgba(255, 255, 255, 0.05)',
     color: '#E2E2E6',
   },
-  
+
   disabledBtn: {
     ...baseButton,
     backgroundColor: '#25282F',
@@ -158,7 +159,7 @@ export const domStyles = {
   },
 
   // ─── Layout Elements ──────────────────────────────────────────────────────
-  
+
   card: {
     backgroundColor: '#1D2024',
     borderWidth: '1px',

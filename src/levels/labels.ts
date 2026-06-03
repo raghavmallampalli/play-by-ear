@@ -33,17 +33,17 @@ export const CHORD_DICTIONARY: Record<string, RelativeNote[]> = {
   IV: [
     { degree: 5, offset: -1 }, // F3 (Root)
     { degree: 9, offset: -1 }, // A3 (Third)
-    { degree: 0, offset: 0 },  // C4 (Fifth)
+    { degree: 0, offset: 0 }, // C4 (Fifth)
   ],
   V: [
     { degree: 7, offset: -1 }, // G3 (Root)
-    { degree: 11, offset: -1 },// B3 (Third)
-    { degree: 2, offset: 0 },  // D4 (Fifth)
+    { degree: 11, offset: -1 }, // B3 (Third)
+    { degree: 2, offset: 0 }, // D4 (Fifth)
   ],
   vi: [
     { degree: 9, offset: -1 }, // A3
-    { degree: 0, offset: 0 },  // C4
-    { degree: 4, offset: 0 },  // E4
+    { degree: 0, offset: 0 }, // C4
+    { degree: 4, offset: 0 }, // E4
   ],
   I_aug: [
     { degree: 0, offset: -1 }, // C3
@@ -69,25 +69,25 @@ export const CHORD_DICTIONARY: Record<string, RelativeNote[]> = {
     { degree: 0, offset: -1 }, // C3
     { degree: 4, offset: -1 }, // E3
     { degree: 7, offset: -1 }, // G3
-    { degree: 11, offset: -1 },// B3
+    { degree: 11, offset: -1 }, // B3
   ],
   V7: [
     { degree: 7, offset: -1 }, // G3
-    { degree: 11, offset: -1 },// B3
-    { degree: 2, offset: 0 },  // D4
-    { degree: 5, offset: 0 },  // F4
+    { degree: 11, offset: -1 }, // B3
+    { degree: 2, offset: 0 }, // D4
+    { degree: 5, offset: 0 }, // F4
   ],
   ii_m7: [
     { degree: 2, offset: -1 }, // D3
     { degree: 5, offset: -1 }, // F3
     { degree: 9, offset: -1 }, // A3
-    { degree: 0, offset: 0 },  // C4
+    { degree: 0, offset: 0 }, // C4
   ],
   vi_m7: [
     { degree: 9, offset: -1 }, // A3
-    { degree: 0, offset: 0 },  // C4
-    { degree: 4, offset: 0 },  // E4
-    { degree: 7, offset: 0 },  // G4
+    { degree: 0, offset: 0 }, // C4
+    { degree: 4, offset: 0 }, // E4
+    { degree: 7, offset: 0 }, // G4
   ],
 };
 
@@ -100,7 +100,7 @@ export const MELODY_DICTIONARY: Record<string, RelativeNote> = {
   '6': { degree: 9, offset: 0 },
   '7': { degree: 11, offset: 0 },
   '8': { degree: 0, offset: 1 },
-  
+
   // High Octave
   '1_high': { degree: 0, offset: 1 },
   '2_high': { degree: 2, offset: 1 },
@@ -109,7 +109,7 @@ export const MELODY_DICTIONARY: Record<string, RelativeNote> = {
   '5_high': { degree: 7, offset: 1 },
   '6_high': { degree: 9, offset: 1 },
   '7_high': { degree: 11, offset: 1 },
-  
+
   // Low Octave
   '1_low': { degree: 0, offset: -1 },
   '2_low': { degree: 2, offset: -1 },
@@ -122,47 +122,84 @@ export const MELODY_DICTIONARY: Record<string, RelativeNote> = {
 
 // ── Melody maps (relative — tonicPitchClass not needed) ──────────────────────
 
-const MELODY_CARNATIC:  Record<string, string> = {
+const MELODY_CARNATIC: Record<string, string> = {
   '1': 'S',
-  'b2': 'R₁',
+  b2: 'R₁',
   '2': 'R₂',
   '#2': 'R₃',
-  'b3': 'G₂',
+  b3: 'G₂',
   '3': 'G₃',
   '4': 'M₁',
   '#4': 'M₂',
   '5': 'P',
-  'b6': 'D₁',
+  b6: 'D₁',
   '6': 'D₂',
   '#6': 'D₃',
-  'b7': 'N₂',
+  b7: 'N₂',
   '7': 'N₃',
 };
-const MELODY_NUMERICAL: Record<string, string> = { '1':'1', '2':'2', '3':'3', '4':'4', '5':'5', '6':'6',  '7':'7', '8':'8' };
-const MELODY_SOLFEGE:   Record<string, string> = { '1':'Do','2':'Re','3':'Mi','4':'Fa','5':'Sol','6':'La','7':'Ti','8':'Do' };
+const MELODY_NUMERICAL: Record<string, string> = {
+  '1': '1',
+  '2': '2',
+  '3': '3',
+  '4': '4',
+  '5': '5',
+  '6': '6',
+  '7': '7',
+  '8': '8',
+};
+const MELODY_SOLFEGE: Record<string, string> = {
+  '1': 'Do',
+  '2': 'Re',
+  '3': 'Mi',
+  '4': 'Fa',
+  '5': 'Sol',
+  '6': 'La',
+  '7': 'Ti',
+  '8': 'Do',
+};
 
 // ── Absolute maps (require tonicPitchClass) ───────────────────────────────────
 
 /** Semitone offset from tonic for each scale degree in the major scale. */
 const DEGREE_SEMITONES: Record<string, number> = {
-  '1': 0, '2': 2, '3': 4, '4': 5, '5': 7, '6': 9, '7': 11, '8': 12,
+  '1': 0,
+  '2': 2,
+  '3': 4,
+  '4': 5,
+  '5': 7,
+  '6': 9,
+  '7': 11,
+  '8': 12,
 };
 
 /** Semitone offset from tonic for chord roots in the major scale. */
 const CHORD_ROOT_SEMITONES: Record<string, number> = {
-  'I': 0, 'II': 2, 'III': 4, 'IV': 5, 'V': 7, 'VI': 9, 'VII': 11,
+  I: 0,
+  II: 2,
+  III: 4,
+  IV: 5,
+  V: 7,
+  VI: 9,
+  VII: 11,
 };
 
 const CHORD_QUALITY: Record<string, string> = {
-  'I': '', 'II': 'm', 'III': 'm', 'IV': '', 'V': '', 'VI': 'm', 'VII': '°',
+  I: '',
+  II: 'm',
+  III: 'm',
+  IV: '',
+  V: '',
+  VI: 'm',
+  VII: '°',
 };
 
-const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'] as const;
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const;
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
 const DEGREE_RE = /^[b#]?[1-8](_high|_low)?$/;
-const CHORD_RE  = /^[a-zA-Z0-9_]+$/; // Relaxed to allow our new identifiers like I_aug, IMaj7, vi_m7
+const CHORD_RE = /^[a-zA-Z0-9_]+$/; // Relaxed to allow our new identifiers like I_aug, IMaj7, vi_m7
 
 /**
  * Convert an internal label to its display string.
@@ -189,7 +226,7 @@ export function displayLabel(
       if (MELODY_DICTIONARY[internal]) {
         const rel = MELODY_DICTIONARY[internal];
         const baseKey = Object.keys(MELODY_DICTIONARY).find(
-          k => MELODY_DICTIONARY[k].degree === rel.degree && MELODY_DICTIONARY[k].offset === 0
+          (k) => MELODY_DICTIONARY[k].degree === rel.degree && MELODY_DICTIONARY[k].offset === 0,
         );
         if (baseKey) {
           baseInternal = baseKey;
@@ -201,14 +238,14 @@ export function displayLabel(
 
       const firstChar = baseStr.charAt(0);
       const rest = baseStr.slice(1);
-      
+
       if (offset > 0) {
         return firstChar + '\u0307'.repeat(offset) + rest;
       } else {
         return firstChar + '\u0323'.repeat(Math.abs(offset)) + rest;
       }
     }
-    if (melody === 'solfege')   return MELODY_SOLFEGE[internal]   ?? internal;
+    if (melody === 'solfege') return MELODY_SOLFEGE[internal] ?? internal;
     if (melody === 'numerical') return MELODY_NUMERICAL[internal] ?? internal;
   }
 
@@ -226,4 +263,4 @@ export function displayLabel(
 
 /** App-wide defaults. A future Settings screen will expose these. */
 export const DEFAULT_MELODY_LABELS: MelodyLabelSystem = 'carnatic';
-export const DEFAULT_CHORD_LABELS:  ChordLabelSystem  = 'roman';
+export const DEFAULT_CHORD_LABELS: ChordLabelSystem = 'roman';

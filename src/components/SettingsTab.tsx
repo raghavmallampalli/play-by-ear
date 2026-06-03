@@ -33,19 +33,26 @@ export default function SettingsTab({
   onExportProgress,
   onImportProgress,
 }: SettingsTabProps) {
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* BPM controls only if from trainer */}
       {isFromTrainer && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}>
-          <h4 style={domStyles.settingTitle}>{midiFileName ? 'Song Tempo (BPM)' : 'Trainer Tempo (BPM)'}</h4>
+          <h4 style={domStyles.settingTitle}>
+            {midiFileName ? 'Song Tempo (BPM)' : 'Trainer Tempo (BPM)'}
+          </h4>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
-              style={{ ...domStyles.secondaryBtn, width: '40px', height: '40px', padding: 0, minWidth: '40px' }}
+              style={{
+                ...domStyles.secondaryBtn,
+                width: '40px',
+                height: '40px',
+                padding: 0,
+                minWidth: '40px',
+              }}
               onClick={() => {
                 const nextBpm = Math.max(40, levelConfig.bpm - 5);
-                setLevelConfig(prev => ({ ...prev, bpm: nextBpm }));
+                setLevelConfig((prev) => ({ ...prev, bpm: nextBpm }));
                 if (midiFileName) {
                   const nextMidiMap = { ...(settings.midiTempoMap || {}), [midiFileName]: nextBpm };
                   saveSettings({ ...settings, midiTempoMap: nextMidiMap });
@@ -57,14 +64,28 @@ export default function SettingsTab({
             >
               -
             </button>
-            <span style={{ fontSize: '16px', fontWeight: '800', color: '#E2E2E6', minWidth: '70px', textAlign: 'center' }}>
+            <span
+              style={{
+                fontSize: '16px',
+                fontWeight: '800',
+                color: '#E2E2E6',
+                minWidth: '70px',
+                textAlign: 'center',
+              }}
+            >
               {levelConfig.bpm} BPM
             </span>
             <button
-              style={{ ...domStyles.secondaryBtn, width: '40px', height: '40px', padding: 0, minWidth: '40px' }}
+              style={{
+                ...domStyles.secondaryBtn,
+                width: '40px',
+                height: '40px',
+                padding: 0,
+                minWidth: '40px',
+              }}
               onClick={() => {
                 const nextBpm = Math.min(240, levelConfig.bpm + 5);
-                setLevelConfig(prev => ({ ...prev, bpm: nextBpm }));
+                setLevelConfig((prev) => ({ ...prev, bpm: nextBpm }));
                 if (midiFileName) {
                   const nextMidiMap = { ...(settings.midiTempoMap || {}), [midiFileName]: nextBpm };
                   saveSettings({ ...settings, midiTempoMap: nextMidiMap });
@@ -77,19 +98,27 @@ export default function SettingsTab({
               +
             </button>
             <button
-              style={{ ...domStyles.dashedBtn, height: '36px', minWidth: '80px', padding: '0 10px', fontSize: '11px', marginLeft: 'auto' }}
+              style={{
+                ...domStyles.dashedBtn,
+                height: '36px',
+                minWidth: '80px',
+                padding: '0 10px',
+                fontSize: '11px',
+                marginLeft: 'auto',
+              }}
               onClick={() => {
                 if (midiFileName) {
                   const defaultBpm = defaultMidiBpm ?? 120;
-                  setLevelConfig(prev => ({ ...prev, bpm: defaultBpm }));
+                  setLevelConfig((prev) => ({ ...prev, bpm: defaultBpm }));
                   const nextMidiMap = { ...(settings.midiTempoMap || {}) };
                   delete nextMidiMap[midiFileName];
                   saveSettings({ ...settings, midiTempoMap: nextMidiMap });
                 } else {
-                  const buildMode = (mode === 'settings' || mode === 'midi_player') ? 'trainer' as const : mode;
+                  const buildMode =
+                    mode === 'settings' || mode === 'midi_player' ? ('trainer' as const) : mode;
                   const defaultSetup = buildLevel(buildMode, level);
                   const defaultBpm = defaultSetup.bpm;
-                  setLevelConfig(prev => ({ ...prev, bpm: defaultBpm }));
+                  setLevelConfig((prev) => ({ ...prev, bpm: defaultBpm }));
                   const nextMap = { ...settings.tempoMap };
                   delete nextMap[level];
                   saveSettings({ ...settings, tempoMap: nextMap });
@@ -106,7 +135,7 @@ export default function SettingsTab({
             value={levelConfig.bpm}
             onChange={(e) => {
               const nextBpm = Number(e.target.value);
-              setLevelConfig(prev => ({ ...prev, bpm: nextBpm }));
+              setLevelConfig((prev) => ({ ...prev, bpm: nextBpm }));
               if (midiFileName) {
                 const nextMidiMap = { ...(settings.midiTempoMap || {}), [midiFileName]: nextBpm };
                 saveSettings({ ...settings, midiTempoMap: nextMidiMap });
@@ -132,7 +161,9 @@ export default function SettingsTab({
           <button
             style={{
               flex: 1,
-              ...(settings.instrumentMode === 'piano' ? domStyles.activeTabBtn : domStyles.secondaryBtn),
+              ...(settings.instrumentMode === 'piano'
+                ? domStyles.activeTabBtn
+                : domStyles.secondaryBtn),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -166,25 +197,39 @@ export default function SettingsTab({
         <h4 style={domStyles.settingTitle}>Melody Note Labels</h4>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
           <button
-            style={settings.melodyLabelSystem === 'carnatic' ? domStyles.activeTabBtn : domStyles.secondaryBtn}
+            style={
+              settings.melodyLabelSystem === 'carnatic'
+                ? domStyles.activeTabBtn
+                : domStyles.secondaryBtn
+            }
             onClick={() => saveSettings({ ...settings, melodyLabelSystem: 'carnatic' })}
           >
             Carnatic (Sa, Re...)
           </button>
           <button
-            style={settings.melodyLabelSystem === 'solfege' ? domStyles.activeTabBtn : domStyles.secondaryBtn}
+            style={
+              settings.melodyLabelSystem === 'solfege'
+                ? domStyles.activeTabBtn
+                : domStyles.secondaryBtn
+            }
             onClick={() => saveSettings({ ...settings, melodyLabelSystem: 'solfege' })}
           >
             Solfege (Do, Re...)
           </button>
           <button
-            style={settings.melodyLabelSystem === 'numerical' ? domStyles.activeTabBtn : domStyles.secondaryBtn}
+            style={
+              settings.melodyLabelSystem === 'numerical'
+                ? domStyles.activeTabBtn
+                : domStyles.secondaryBtn
+            }
             onClick={() => saveSettings({ ...settings, melodyLabelSystem: 'numerical' })}
           >
             Numbers (1, 2...)
           </button>
           <button
-            style={settings.melodyLabelSystem === 'abc' ? domStyles.activeTabBtn : domStyles.secondaryBtn}
+            style={
+              settings.melodyLabelSystem === 'abc' ? domStyles.activeTabBtn : domStyles.secondaryBtn
+            }
             onClick={() => saveSettings({ ...settings, melodyLabelSystem: 'abc' })}
           >
             Absolute (C, D...)
@@ -197,13 +242,23 @@ export default function SettingsTab({
         <h4 style={domStyles.settingTitle}>Chord Labels</h4>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
-            style={{ flex: 1, ...(settings.chordLabelSystem === 'roman' ? domStyles.activeTabBtn : domStyles.secondaryBtn) }}
+            style={{
+              flex: 1,
+              ...(settings.chordLabelSystem === 'roman'
+                ? domStyles.activeTabBtn
+                : domStyles.secondaryBtn),
+            }}
             onClick={() => saveSettings({ ...settings, chordLabelSystem: 'roman' })}
           >
             Roman (I, IV, V)
           </button>
           <button
-            style={{ flex: 1, ...(settings.chordLabelSystem === 'abc' ? domStyles.activeTabBtn : domStyles.secondaryBtn) }}
+            style={{
+              flex: 1,
+              ...(settings.chordLabelSystem === 'abc'
+                ? domStyles.activeTabBtn
+                : domStyles.secondaryBtn),
+            }}
             onClick={() => saveSettings({ ...settings, chordLabelSystem: 'abc' })}
           >
             Absolute (C, F, G)
@@ -217,19 +272,34 @@ export default function SettingsTab({
           <h4 style={domStyles.settingTitle}>Timeline Display Layer</h4>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
-              style={{ flex: 1, ...(settings.midiDisplayLayer === 'chords' ? domStyles.activeTabBtn : domStyles.secondaryBtn) }}
+              style={{
+                flex: 1,
+                ...(settings.midiDisplayLayer === 'chords'
+                  ? domStyles.activeTabBtn
+                  : domStyles.secondaryBtn),
+              }}
               onClick={() => saveSettings({ ...settings, midiDisplayLayer: 'chords' })}
             >
               Chords
             </button>
             <button
-              style={{ flex: 1, ...(settings.midiDisplayLayer === 'melody' ? domStyles.activeTabBtn : domStyles.secondaryBtn) }}
+              style={{
+                flex: 1,
+                ...(settings.midiDisplayLayer === 'melody'
+                  ? domStyles.activeTabBtn
+                  : domStyles.secondaryBtn),
+              }}
               onClick={() => saveSettings({ ...settings, midiDisplayLayer: 'melody' })}
             >
               Melody
             </button>
             <button
-              style={{ flex: 1, ...(settings.midiDisplayLayer === 'both' ? domStyles.activeTabBtn : domStyles.secondaryBtn) }}
+              style={{
+                flex: 1,
+                ...(settings.midiDisplayLayer === 'both'
+                  ? domStyles.activeTabBtn
+                  : domStyles.secondaryBtn),
+              }}
               onClick={() => saveSettings({ ...settings, midiDisplayLayer: 'both' })}
             >
               Both
@@ -245,23 +315,27 @@ export default function SettingsTab({
         </div>
 
         <div
-          onClick={() => saveSettings({ ...settings, visualizerEnabled: !settings.visualizerEnabled })}
+          onClick={() =>
+            saveSettings({ ...settings, visualizerEnabled: !settings.visualizerEnabled })
+          }
           style={{
             ...domStyles.toggleContainer,
             backgroundColor: settings.visualizerEnabled ? '#A8C7FA' : 'rgba(255, 255, 255, 0.12)',
             border: settings.visualizerEnabled ? 'none' : '1.5px solid rgba(255, 255, 255, 0.24)',
           }}
         >
-          <div style={{
-            width: '14px',
-            height: '14px',
-            borderRadius: '50%',
-            backgroundColor: settings.visualizerEnabled ? '#111318' : '#8A92A6',
-            position: 'absolute',
-            top: settings.visualizerEnabled ? '5px' : '3.5px',
-            left: settings.visualizerEnabled ? '24px' : '3.5px',
-            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-          }} />
+          <div
+            style={{
+              width: '14px',
+              height: '14px',
+              borderRadius: '50%',
+              backgroundColor: settings.visualizerEnabled ? '#111318' : '#8A92A6',
+              position: 'absolute',
+              top: settings.visualizerEnabled ? '5px' : '3.5px',
+              left: settings.visualizerEnabled ? '24px' : '3.5px',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          />
         </div>
       </div>
 
@@ -273,28 +347,38 @@ export default function SettingsTab({
         </div>
 
         <div
-          onClick={() => saveSettings({ ...settings, confirmRestartLevel: !settings.confirmRestartLevel })}
+          onClick={() =>
+            saveSettings({ ...settings, confirmRestartLevel: !settings.confirmRestartLevel })
+          }
           style={{
             ...domStyles.toggleContainer,
             backgroundColor: settings.confirmRestartLevel ? '#A8C7FA' : 'rgba(255, 255, 255, 0.12)',
             border: settings.confirmRestartLevel ? 'none' : '1.5px solid rgba(255, 255, 255, 0.24)',
           }}
         >
-          <div style={{
-            width: '14px',
-            height: '14px',
-            borderRadius: '50%',
-            backgroundColor: settings.confirmRestartLevel ? '#111318' : '#8A92A6',
-            position: 'absolute',
-            top: settings.confirmRestartLevel ? '5px' : '3.5px',
-            left: settings.confirmRestartLevel ? '24px' : '3.5px',
-            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-          }} />
+          <div
+            style={{
+              width: '14px',
+              height: '14px',
+              borderRadius: '50%',
+              backgroundColor: settings.confirmRestartLevel ? '#111318' : '#8A92A6',
+              position: 'absolute',
+              top: settings.confirmRestartLevel ? '5px' : '3.5px',
+              left: settings.confirmRestartLevel ? '24px' : '3.5px',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          />
         </div>
       </div>
 
       {/* Progress Export & Import Actions */}
-      <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
+      <div
+        style={{
+          marginTop: '12px',
+          borderTop: '1px solid rgba(255,255,255,0.05)',
+          paddingTop: '16px',
+        }}
+      >
         <h4 style={domStyles.settingTitle}>Progress & Backups</h4>
 
         <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>

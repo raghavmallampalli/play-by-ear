@@ -26,7 +26,7 @@ for (let m = 21; m <= 108; m++) {
 }
 
 /**
- * Calculates the scrollLeft position required to place the target MIDI note 
+ * Calculates the scrollLeft position required to place the target MIDI note
  * one white key after the leftmost visible key.
  */
 export function calculateMidiCenteringScroll(midi: number, whiteKeyWidth: number): number {

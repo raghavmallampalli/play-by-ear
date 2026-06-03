@@ -8,15 +8,15 @@ const OCTAVE = 4;
 const converter = new NoteConverter(TONIC, OCTAVE, BPM, TICKS_PER_BEAT);
 
 /** Full midi_player demo: chord + melody layers across 4 bars. */
-export function buildMidiPlayerDemoNotes(): { melody: PlayedNote[], chords: PlayedChord[] } {
+export function buildMidiPlayerDemoNotes(): { melody: PlayedNote[]; chords: PlayedChord[] } {
   const melody: PlayedNote[] = [];
   const chords: PlayedChord[] = [];
 
   const addBar = (time: number, chordMidis: number[], melodyMidis: number[], duration: number) => {
     const baseTick = converter.secondsToTicks(time);
     const durationTicks = converter.secondsToTicks(duration);
-    
-    const relChordNotes = chordMidis.map(m => converter.fromMidi(m));
+
+    const relChordNotes = chordMidis.map((m) => converter.fromMidi(m));
     chords.push({
       notes: relChordNotes,
       beat: baseTick,
@@ -24,7 +24,7 @@ export function buildMidiPlayerDemoNotes(): { melody: PlayedNote[], chords: Play
     });
 
     // Add chord notes to melody for visualization/scheduling too
-    relChordNotes.forEach(note => {
+    relChordNotes.forEach((note) => {
       melody.push({
         note,
         beat: baseTick,
@@ -51,8 +51,6 @@ export function buildMidiPlayerDemoNotes(): { melody: PlayedNote[], chords: Play
 }
 
 export const MIDI_PLAYER_PRELOAD_MIDI = [
-  48, 55, 60, 64, 67, 71, 72, 76, 79, 83,
-  45, 52, 57, 81,
-  41, 48, 53, 69, 77, 84, 88,
-  43, 50, 59, 62, 65, 74,
+  48, 55, 60, 64, 67, 71, 72, 76, 79, 83, 45, 52, 57, 81, 41, 48, 53, 69, 77, 84, 88, 43, 50, 59,
+  62, 65, 74,
 ];

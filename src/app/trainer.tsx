@@ -2,7 +2,14 @@ import MidiPlayerDOM from '@/components/MidiPlayerDOM';
 import { IconArrowLeft, IconBookOpen, IconCog, IconPiano } from '@/components/icons/NativeIcons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions , ActivityIndicator } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppData } from '@/hooks/useAppData';
 import { NativeHandlers } from '@/utils/nativeHandlers';
@@ -47,24 +54,20 @@ export default function TrainerScreen() {
     return <IconCog size={16} color={color} />;
   };
 
-  const renderHeaderTab = (tab: 'practice' | 'theory' | 'settings', iconName: any, label: string) => {
+  const renderHeaderTab = (
+    tab: 'practice' | 'theory' | 'settings',
+    iconName: any,
+    label: string,
+  ) => {
     const isActive = activeTab === tab;
     const iconColor = isActive ? '#E2E2E6' : '#8A92A6';
     return (
       <Pressable
         onPress={() => setActiveTab(tab)}
-        style={[
-          styles.segTab,
-          isActive && styles.segTabActive
-        ]}
+        style={[styles.segTab, isActive && styles.segTabActive]}
       >
         {renderTabIcon(iconName, iconColor)}
-        <Text style={[
-          styles.segTabText,
-          isActive && styles.segTabTextActive
-        ]}>
-          {label}
-        </Text>
+        <Text style={[styles.segTabText, isActive && styles.segTabTextActive]}>{label}</Text>
       </Pressable>
     );
   };
@@ -72,7 +75,6 @@ export default function TrainerScreen() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-
         {/* Header navigation bar */}
         <View style={styles.headerBar}>
           <View style={styles.headerLeft}>
@@ -104,7 +106,7 @@ export default function TrainerScreen() {
               if (levelNum < 27) {
                 router.replace({
                   pathname: '/trainer',
-                  params: { level: levelNum + 1 }
+                  params: { level: levelNum + 1 },
                 });
               } else {
                 router.replace('/difficulty');
@@ -125,7 +127,6 @@ export default function TrainerScreen() {
             onLoadCustomMidi={NativeHandlers.handleLoadCustomMidi}
           />
         </View>
-
       </SafeAreaView>
     </View>
   );
