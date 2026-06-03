@@ -199,6 +199,12 @@ export default function MidiPlayerDOM({
     }
   }, [recentTracksProp]);
 
+  useEffect(() => {
+    if (notesProp) {
+      setUserNotes(notesProp[level] || '');
+    }
+  }, [notesProp, level]);
+
   const loadMidiFromBuffer = async (buffer: ArrayBuffer, name: string, isPreset = false, presetId?: string) => {
     try {
       const { Midi } = await import('@tonejs/midi');
