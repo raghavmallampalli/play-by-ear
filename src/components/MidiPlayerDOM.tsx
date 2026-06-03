@@ -1,6 +1,6 @@
 'use dom';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MIDI_PRESETS } from '../constants/midi_presets';
 import { Colors } from '../constants/theme';
 import { useAudioEngine } from '../hooks/useAudioEngine';
@@ -134,7 +134,7 @@ export default function MidiPlayerDOM({
   const [selectedGenreTab, setSelectedGenreTab] = useState<'Classical' | 'Traditional' | 'Custom & Recent'>('Classical');
   const [recentTracks, setRecentTracks] = useState<{ id: string; name: string; isPreset: boolean }[]>([]);
   const [showRemainingTime, setShowRemainingTime] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
+  const playbackSpeed = 1.0;
   const [defaultMidiBpm, setDefaultMidiBpm] = useState<number>(120);
 
   // 10-in-a-row queue state
@@ -169,14 +169,14 @@ export default function MidiPlayerDOM({
 
   // ─── MIDI Player Functions ──────────────────────────────────────────────────
 
-  const updateRecentTracks = (id: string, isPreset: boolean, name: string) => {
+  const updateRecentTracks = useCallback((id: string, isPreset: boolean, name: string) => {
     setRecentTracks(prev => {
       const filtered = prev.filter(t => t.id !== id);
       const updated = [{ id, name, isPreset }, ...filtered].slice(0, 10);
       onSaveRecentTracks?.(updated);
       return updated;
     });
-  };
+  }, [onSaveRecentTracks]);
   const formatMidiTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -207,7 +207,7 @@ export default function MidiPlayerDOM({
     }
   }, [notesProp, level]);
 
-  const loadMidiFromBuffer = async (buffer: ArrayBuffer, name: string, isPreset = false, presetId?: string) => {
+  const loadMidiFromBuffer = useCallback(async (buffer: ArrayBuffer, name: string, isPreset = false, presetId?: string) => {
     try {
       const { Midi } = await import('@tonejs/midi');
       const midi = new Midi(buffer);
@@ -238,13 +238,18 @@ export default function MidiPlayerDOM({
       const bpm = midi.header.tempos[0]?.bpm || 120;
       log.info(`[loadMidiFromBuffer] Started parsing MIDI for: ${name}. Tracks: ${midi.tracks.length}, Total Notes parsed: ${absoluteNotes.length}, Max Time: ${maxTime}, PPQ: ${ppq}, BPM: ${bpm}`);
 
-
+      const tempConverter = new NoteConverter(
+        levelConfig.tonic,
+        levelConfig.octave,
+        bpm,
+        ppq
+      );
 
       // Convert absolute MIDI notes back to PlayedNote[] for melody guide
       const parsedMelody: PlayedNote[] = absoluteNotes.map(note => {
         const beatTicks = Math.round(note.time * ppq * (bpm / 60));
         const durationTicks = Math.round(note.duration * ppq * (bpm / 60));
-        const relative = converter.fromMidi(note.midi);
+        const relative = tempConverter.fromMidi(note.midi);
         return {
           note: relative,
           beat: beatTicks,
@@ -272,7 +277,7 @@ export default function MidiPlayerDOM({
             const beatTicks = Math.round(firstTime * ppq * (bpm / 60));
             const durationTicks = Math.round(Math.max(...currentChordNotes.map(n => n.duration)) * ppq * (bpm / 60));
             parsedChords.push({
-              notes: currentChordNotes.map(n => converter.fromMidi(n.midi)),
+              notes: currentChordNotes.map(n => tempConverter.fromMidi(n.midi)),
               beat: beatTicks,
               duration: durationTicks,
             });
@@ -286,7 +291,7 @@ export default function MidiPlayerDOM({
         const beatTicks = Math.round(firstTime * ppq * (bpm / 60));
         const durationTicks = Math.round(Math.max(...currentChordNotes.map(n => n.duration)) * ppq * (bpm / 60));
         parsedChords.push({
-          notes: currentChordNotes.map(n => converter.fromMidi(n.midi)),
+          notes: currentChordNotes.map(n => tempConverter.fromMidi(n.midi)),
           beat: beatTicks,
           duration: durationTicks,
         });
@@ -324,9 +329,9 @@ export default function MidiPlayerDOM({
       alert("Failed to parse MIDI file. Ensure it is a valid format.");
       return [];
     }
-  };
+  }, [levelConfig.tonic, levelConfig.octave, settings.midiTempoMap, onSaveActiveTrack, audio, setActiveTab]);
 
-  const loadMidiPreset = async (presetId: string) => {
+  const loadMidiPreset = useCallback(async (presetId: string) => {
     log.info(`[loadMidiPreset] Loading preset: ${presetId}`);
     const preset = MIDI_PRESETS.find(p => p.id === presetId);
     if (!preset) {
@@ -345,11 +350,21 @@ export default function MidiPlayerDOM({
       log.error("[loadMidiPreset] Error loading preset:", err);
       return [];
     }
-  };
+  }, [loadMidiFromBuffer, updateRecentTracks]);
 
   // Auto-load preset when presetId prop is present
   useEffect(() => {
     if (mode === 'midi_player' && presetId) {
+      const preset = MIDI_PRESETS.find(p => p.id === presetId);
+      if (preset && preset.title === midiFileName) {
+        if (action === 'play' && midiNotesList.length > 0) {
+          if (audio.startDirectMidiPlayback) {
+            const speedFactor = levelConfig.bpm / (defaultMidiBpm || 120);
+            audio.startDirectMidiPlayback(midiNotesList, speedFactor);
+          }
+        }
+        return;
+      }
       loadMidiPreset(presetId).then(notes => {
         if (action === 'play' && notes && notes.length > 0) {
           if (audio.startDirectMidiPlayback) {
@@ -358,7 +373,7 @@ export default function MidiPlayerDOM({
         }
       });
     }
-  }, [presetId, action, mode]);
+  }, [presetId, action, mode, loadMidiPreset, audio, playbackSpeed, midiFileName, midiNotesList, levelConfig.bpm, defaultMidiBpm]);
 
   // Restore active track state from props on mount
   useEffect(() => {
@@ -377,7 +392,7 @@ export default function MidiPlayerDOM({
         }
       }
     }
-  }, [mode, activeTrackProp, midiFileName]);
+  }, [mode, activeTrackProp, midiFileName, loadMidiPreset]);
 
   // Keep a ref to stopPlayback so the unmount cleanup always calls the latest version
   const stopPlaybackRef = useRef(audio.stopPlayback);
@@ -416,7 +431,7 @@ export default function MidiPlayerDOM({
         setLevelConfig(prev => ({ ...prev, bpm: customBpm }));
       }
     }
-  }, [settings.tempoMap, settings.midiTempoMap, level, mode, midiFileName]);
+  }, [settings.tempoMap, settings.midiTempoMap, level, mode, midiFileName, levelConfig.bpm]);
 
   // ─── Setup ─────────────────────────────────────────────────────────────────
 
@@ -1806,7 +1821,7 @@ export default function MidiPlayerDOM({
                 }}
               />
               <span style={{ fontSize: '12px', fontWeight: 600, color: '#C4C7C5' }}>
-                Don't show this warning again
+                Don&apos;t show this warning again
               </span>
             </label>
 
