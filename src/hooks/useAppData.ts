@@ -3,6 +3,7 @@ import { StorageService } from '../services/storage';
 import { AppDataBundle } from '../types/storage';
 import { AppSettings } from '../types/settings';
 import { ActiveTrackState, RecentTrack } from '../types/storage';
+import { EXERCISE_HASHES } from '../constants/exercises';
 
 export function useAppData() {
   const [appData, setAppData] = useState<AppDataBundle | null>(null);
@@ -44,7 +45,8 @@ export function useAppData() {
 
   const handleSaveNotes = async (level: number, notes: string) => {
     if (!appData) return;
-    const updatedNotes = { ...appData.notes, [level]: notes };
+    const hash = EXERCISE_HASHES[level] || String(level);
+    const updatedNotes = { ...appData.notes, [hash]: notes };
     setAppData(prev => prev ? { ...prev, notes: updatedNotes } : null);
     await StorageService.saveUserNotes(updatedNotes);
   };

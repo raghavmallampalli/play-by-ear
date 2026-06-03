@@ -127,8 +127,8 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
 - [x] Remember recent midis - cache the midi files so user can reload the midis automatically
 - [x] Pre-save ~~30-40~~ **8** midis of different genres in the app (we can't keep orchestral midis)
 - [ ] Fur elise is still weird
-- [ ] MIDI player stopped playing again
-- [ ] Where did the play melody guide and play chord guide buttons go in midi player?
+- [x] MIDI player stopped playing again
+- [x] Where did the play melody guide and play chord guide buttons go in midi player?
 
 ## Working export and import
 - [x] Do a true invariant slug for each experiment for export
@@ -141,8 +141,9 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
 - [x] More useful notes for chord recognition
 - [x] Difficult selection page should include best performance
 - [x] Lock later levels until earlier levels are passed (with a "pass" threshold, i.e 80%)
+- [x] Notes aren't being mapped correctly to hashes anymore
 
-### V2026.6.1 release
+### V2026.6.2 release
 - [ ] Build the app, check apk size and verify it works on phone without wifi, has correct icon, name etc.
 - [x] Tag commit, set up semantic versioning system
 - [ ] Exports logs written by app as a debug packet - persist error logs in a separate file with rotation, info logs for current session (dump at end), debug log if setting is turned on for current session
@@ -152,7 +153,7 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
 - [ ] Add a demo of UI that auto launches the first launch, wire it up behind a help button on the trainer screen.
 - [ ] Ask user about their level and accordingly unlock levels.
 
-## V2026.6.2
+## V2026.6.3
 - [ ] Keyboard shortcuts for web player
 - [ ] **Feature**: Add a high-fidelity guitar synthesizer voice for audio synthesis.
   - [ ] **Timeline Display Style**: Toggle between **DAW** vs. standard **Staff** vs. **Guitar Tabs** timeline modes. 

@@ -13,7 +13,7 @@ export interface UserProgressData {
 
 /** Level-specific custom study notes. */
 export interface UserNotesData {
-  [level: number]: string;
+  [key: string]: string;
 }
 
 /** Recent tracks state in MIDI Player. */

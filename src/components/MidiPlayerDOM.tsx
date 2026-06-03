@@ -12,6 +12,7 @@ import { AppSettings } from '../types/settings';
 import { UserProgressData, UserNotesData, RecentTrack, ActiveTrackState } from '../types/storage';
 import { NoteConverter } from '../utils/note_converter';
 import DawTimeline from './DawTimeline';
+import { log } from '../utils/logger';
 import { IconAlert, IconArrowRight, IconBookOpen, IconCheck, IconClose, IconCog, IconFastForward, IconFolder, IconHistory, IconKeyboard, IconMelody, IconMusic, IconPiano, IconPlay, IconRestart, IconTuningFork, IconUpload } from './icons/DOMIcons';
 import KeyboardVisualizer from './KeyboardVisualizer';
 import SettingsTab from './SettingsTab';
@@ -201,7 +202,8 @@ export default function MidiPlayerDOM({
 
   useEffect(() => {
     if (notesProp) {
-      setUserNotes(notesProp[level] || '');
+      const hash = EXERCISE_HASHES[level];
+      setUserNotes((hash ? notesProp[hash] : '') || notesProp[level] || '');
     }
   }, [notesProp, level]);
 
@@ -234,6 +236,7 @@ export default function MidiPlayerDOM({
 
       const ppq = midi.header.ppq || 480;
       const bpm = midi.header.tempos[0]?.bpm || 120;
+      log.info(`[loadMidiFromBuffer] Started parsing MIDI for: ${name}. Tracks: ${midi.tracks.length}, Total Notes parsed: ${absoluteNotes.length}, Max Time: ${maxTime}, PPQ: ${ppq}, BPM: ${bpm}`);
 
 
 
@@ -311,6 +314,7 @@ export default function MidiPlayerDOM({
       onSaveActiveTrack?.(trackState);
 
       audio.stopPlayback();
+      audio.resetStartFlags();
       setActiveTab('practice');
 
       return absoluteNotes;
@@ -323,17 +327,22 @@ export default function MidiPlayerDOM({
   };
 
   const loadMidiPreset = async (presetId: string) => {
+    log.info(`[loadMidiPreset] Loading preset: ${presetId}`);
     const preset = MIDI_PRESETS.find(p => p.id === presetId);
-    if (!preset) return [];
+    if (!preset) {
+      log.warn(`[loadMidiPreset] Preset id ${presetId} not found.`);
+      return [];
+    }
 
     try {
+      log.info(`[loadMidiPreset] Fetching preset asset: ${preset.asset}`);
       const res = await fetch(preset.asset);
       const ab = await res.arrayBuffer();
       const notes = await loadMidiFromBuffer(ab, preset.title, true, preset.id);
       updateRecentTracks(preset.id, true, preset.title);
       return notes;
     } catch (err) {
-      console.error("Error loading preset:", err);
+      log.error("[loadMidiPreset] Error loading preset:", err);
       return [];
     }
   };
@@ -357,7 +366,7 @@ export default function MidiPlayerDOM({
       if (activeTrackProp) {
         try {
           const t = activeTrackProp;
-          if (t.name) {
+          if (t.name && t.name !== midiFileName) {
             setMidiFileName(t.name);
             if (t.isPreset && t.presetId) {
               loadMidiPreset(t.presetId);
@@ -368,7 +377,7 @@ export default function MidiPlayerDOM({
         }
       }
     }
-  }, [mode, activeTrackProp]);
+  }, [mode, activeTrackProp, midiFileName]);
 
   // Keep a ref to stopPlayback so the unmount cleanup always calls the latest version
   const stopPlaybackRef = useRef(audio.stopPlayback);
@@ -761,16 +770,16 @@ export default function MidiPlayerDOM({
 
   // Start exercise handler
   const handleStartClick = () => {
-
+    log.info(`[handleStartClick] Clicked. Mode: ${mode}, midiNotesList count: ${midiNotesList.length}`);
     setTonicScrollTrigger((prev) => prev + 1);
     if (mode === 'midi_player') {
       audio.stopPlayback();
       if (audio.startDirectMidiPlayback) {
         const speedFactor = levelConfig.bpm / (defaultMidiBpm || 120);
-
+        log.info(`[handleStartClick] Calling startDirectMidiPlayback. speedFactor: ${speedFactor}, levelConfig.bpm: ${levelConfig.bpm}, defaultMidiBpm: ${defaultMidiBpm}`);
         audio.startDirectMidiPlayback(midiNotesList, speedFactor);
       } else {
-
+        log.error(`[handleStartClick] startDirectMidiPlayback is undefined!`);
       }
     } else {
       audio.stopPlayback();
@@ -779,9 +788,16 @@ export default function MidiPlayerDOM({
   };
 
   const handleRestartClick = () => {
+    log.info(`[handleRestartClick] Clicked. Mode: ${mode}`);
     audio.stopPlayback();
     if (mode === 'midi_player') {
-      audio.resetStartFlags();
+      if (audio.startDirectMidiPlayback) {
+        const speedFactor = levelConfig.bpm / (defaultMidiBpm || 120);
+        log.info(`[handleRestartClick] Calling startDirectMidiPlayback to restart. speedFactor: ${speedFactor}`);
+        audio.startDirectMidiPlayback(midiNotesList, speedFactor);
+      } else {
+        log.error(`[handleRestartClick] startDirectMidiPlayback is undefined!`);
+      }
     } else {
       if (settings.confirmRestartLevel) {
         setShowRestartModal(true);
@@ -921,24 +937,7 @@ export default function MidiPlayerDOM({
       </div>
     );
 
-    if (mode === 'midi_player') {
-      if (landscapeMode) {
-        return (
-          <div style={domStyles.practiceControlRowLandscape}>
-            {startBtn}
-            {tonicBtn}
-          </div>
-        );
-      }
-      return (
-        <div style={domStyles.practiceControlRowPortrait}>
-          <div style={{ ...domStyles.practiceControlSubRow, justifyContent: 'center' }}>
-            {startBtn}
-            {tonicBtn}
-          </div>
-        </div>
-      );
-    }
+
 
     if (landscapeMode) {
       return (

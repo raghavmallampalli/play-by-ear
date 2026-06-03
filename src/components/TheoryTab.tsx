@@ -57,16 +57,16 @@ interface TheoryTabProps {
 const getGuideFilePath = (level: number): string => {
   const hash = EXERCISE_HASHES[level];
   switch (hash) {
-    case 'lvl1_do_re_mi_fa':
-    case 'lvl2_sol_la_ti_do':
+    case 'do_re_mi_fa':
+    case 'sol_la_ti_do':
       return 'src/theory/guides/guide_scale_degrees.md';
-    case 'lvl3_hb_melody':
+    case 'hb_melody':
       return 'src/theory/guides/guide_melody_dictation.md';
-    case 'lvl4_chord_i_iv_v':
+    case 'chord_i_iv_v':
       return 'src/theory/guides/guide_chords_i_iv_v.md';
-    case 'lvl5_chord_melody':
+    case 'chord_melody':
       return 'src/theory/guides/guide_chords_melody.md';
-    case 'lvl6_hb_chords':
+    case 'hb_chords':
       return 'src/theory/guides/guide_hb_chords.md';
     default:
       return 'src/theory/theory_registry.ts';

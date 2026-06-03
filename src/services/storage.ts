@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { AppSettings } from '../types/settings';
 import { AppDataBundle, UserProgressData, UserNotesData, RecentTrack, ActiveTrackState } from '../types/storage';
 import { DEFAULT_MELODY_LABELS, DEFAULT_CHORD_LABELS } from '../levels/labels';
+import { EXERCISE_HASHES } from '../constants/exercises';
 
 const SETTINGS_FILE = `${FileSystem.documentDirectory}pbe_settings.json`;
 const PROGRESS_FILE = `${FileSystem.documentDirectory}pbe_progress.json`;
@@ -84,7 +85,10 @@ export const StorageService = {
           } else if (key?.startsWith('@pbe_notes_lvl_')) {
             const lvl = Number(key.replace('@pbe_notes_lvl_', ''));
             const val = localStorage.getItem(key);
-            if (val && !isNaN(lvl)) migratedNotes[lvl] = val;
+            if (val && !isNaN(lvl)) {
+              const hash = EXERCISE_HASHES[lvl] || String(lvl);
+              migratedNotes[hash] = val;
+            }
           }
         }
         if (Object.keys(migratedProgress).length > 0) {
