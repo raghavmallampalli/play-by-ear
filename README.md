@@ -4,7 +4,7 @@ A modern, highly interactive, and beautiful MIDI-based ear training application 
 
 ---
 
-## 🏗️ Codebase Architecture
+## Codebase Architecture
 
 The codebase follows a highly modular, type-safe, and decoupled structure inside the `src` directory to ensure maximum maintainability and testability:
 
@@ -24,16 +24,13 @@ src/
 
 ---
 
-## 🚀 Development Instructions
+## Development Instructions
 
 ### 1. Prerequisites
 - **Node.js**: Ensure you have [Node.js](https://nodejs.org/) (version 22.x is recommended) installed on your machine.
-- **ImageMagick**: The local asset generation script uses `convert` (ImageMagick) to render the high-fidelity SVG assets into PNG. Ensure ImageMagick is installed on your system if you plan to regenerate assets:
-  - *Ubuntu/Debian*: `sudo apt-get install imagemagick`
-  - *macOS*: `brew install imagemagick`
-  - *Windows*: Download from the official website.
+- **ImageMagick**: The local asset generation script uses `convert` (ImageMagick) to render the high-fidelity SVG assets into PNG. Ensure ImageMagick is installed on your system if you plan to regenerate assets.
 
-This app is tested for Android and Web. Install Expo Go on your device to test on a mobile device. Ensure Supported SDK is 54 - if you see a newer version, raise an issue.
+This app is tested for Android and Web. Install Expo Go on your mobile device to test on it. Ensure Supported SDK is 54 - if you see a newer version, raise an issue.
 
 ### 2. Installation
 Clone the repository and install the dependencies:
@@ -41,7 +38,7 @@ Clone the repository and install the dependencies:
 npm install
 ```
 
-### 3. Run the Development Server
+### 3. Run the development server
 To start the Expo development server:
 ```bash
 npm start
@@ -59,11 +56,16 @@ To execute the comprehensive unit test suite in the `src/tests` directory:
 npm test
 ```
 
-### 5. Lint the Codebase
-To analyze the codebase for potential syntax or styling errors:
+### 5. Lint and Type Check the Codebase
+To verify static TypeScript type safety (via `tsc --noEmit`), check for syntax errors, and find styling issues (via ESLint/`expo lint`):
 ```bash
 npm run lint
 ```
+
+### 6. Discusing features
+Request features using the Issues tab. There is no Discord for discussion - use the Discussion tab if you wish to discuss anything.
+The roadmap and TODO list are maintained in [TODO.md](file:///home/raghav/src/play-by-ear/TODO.md).
+
 > [!IMPORTANT]
 > This repo will not accept pull requests of greater than 50 lines without prior communication with the maintainer. This has been done to reduce review burden.
 
@@ -73,17 +75,13 @@ npm run lint
 
 This repository includes a dedicated [AGENTS.md](file:///home/raghav/src/play-by-ear/AGENTS.md) file containing strict instructions, architectural requirements, and coding standards. 
 
-If you are pair-programming with AI assistants (such as **Claude** or **Cursor**), ensure they are prompted to read and adhere to [AGENTS.md](file:///home/raghav/src/play-by-ear/AGENTS.md) before writing any code.
+If you are pair-programming with AI assistants, ensure they are prompted to read and adhere to [AGENTS.md](file:///home/raghav/src/play-by-ear/AGENTS.md) before writing any code.
 
 ---
 
-## 📝 Roadmap & TODO List
-
-The roadmap and TODO list are maintained in [TODO.md](file:///home/raghav/src/play-by-ear/TODO.md).
----
-
-## 🎨 Asset Attributions & Licenses
+## Asset Attributions
 
 This project uses the following high-quality, open-source graphic assets:
 - **Treble Clef Vector Shape**: Pulled from [Wikimedia Commons - File:Treble clef.svg](https://commons.wikimedia.org/wiki/File:Treble_clef.svg). This asset was originally uploaded by user *Tlusťa* and has been released into the **Public Domain (CC0 / MIT compatible)**.
 - **Launcher Icons & Favicons**: Custom-rendered in high fidelity onto Material 3-inspired glowing gradients using our standard asset builder pipeline.
+- **Classical & Traditional MIDI Presets**: Public domain MIDI files (including works by J.S. Bach, L. van Beethoven, A. Vivaldi, and traditional/holiday arrangements) sourced from public domain archives (such as [Musopen](https://musopen.org/) and the [Mutopia Project](https://www.mutopiaproject.org/)) under CC0 / Public Domain Mark.

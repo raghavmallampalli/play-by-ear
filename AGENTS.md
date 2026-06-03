@@ -117,5 +117,5 @@ This project uses a calendar-based semantic versioning scheme of the form `YEAR.
 
 2. **Compiler and Warning Ignorance**:
    - Never finalize a task or commit changes without running static TypeScript analysis.
-   - Always run `npx tsc --noEmit` and check for implicit `any` type warnings, mapping checks, and export errors before presenting the finished task. Testing files do not catch all static type mismatch bugs!
+   - Always run `npm run lint` and check for lint/styling issues, implicit `any` type warnings, mapping checks, and export errors before presenting the finished task. Testing files do not catch all static type mismatch bugs!
    - Do not summarize your changes unless the user asks. Assume your edits were poor quality and ask the user to test the app.
