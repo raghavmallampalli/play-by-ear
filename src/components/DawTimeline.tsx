@@ -139,10 +139,7 @@ export default function DawTimeline({
   onSeek,
   revealAllLabels = false,
 }: DawTimelineProps) {
-  const renderStart = React.useMemo(() => performance.now(), [
-    level, timelineSlots, focusedSlotIndex, playheadTime, isPlaying,
-    hasStarted, converter, melodyLabelSystem, chordLabelSystem, onSeek, revealAllLabels
-  ]);
+  const renderStart = performance.now();
 
   React.useEffect(() => {
     const renderEnd = performance.now();

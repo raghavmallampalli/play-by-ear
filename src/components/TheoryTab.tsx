@@ -43,7 +43,7 @@ const renderMarkdown = (text: string) => {
         <div dangerouslySetInnerHTML={{ __html: rawHtml }} />
       </div>
     );
-  } catch (e) {
+  } catch {
     return <div style={{ whiteSpace: 'pre-wrap', fontSize: '12.5px', color: '#C2C7CF' }}>{text}</div>;
   }
 };

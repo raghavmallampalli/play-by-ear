@@ -1,6 +1,6 @@
 'use dom';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { IconPiano, IconGuitar } from './icons/DOMIcons';
 import { buildLevel } from '../levels';
 import { domStyles } from './styles/domStyles';

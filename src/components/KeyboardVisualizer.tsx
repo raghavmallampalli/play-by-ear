@@ -14,7 +14,7 @@ interface KeyboardVisualizerProps {
 const isNoteBlack = (midi: number) => [1, 3, 6, 8, 10].includes(midi % 12);
 
 const whiteKeys: number[] = [];
-const blackKeysData: Array<{ midi: number; rightOfIndex: number }> = [];
+const blackKeysData: { midi: number; rightOfIndex: number }[] = [];
 
 for (let m = 21; m <= 108; m++) {
   if (!isNoteBlack(m)) whiteKeys.push(m);
@@ -159,7 +159,7 @@ export default function KeyboardVisualizer({
 
 
 
-  const centerOnTonic = (smooth = false) => {
+  const centerOnTonic = useCallback((smooth = false) => {
     if (scrollRef.current && baseOctaveMidi && whiteKeyWidth > 0) {
       const isBlack = (m: number) => [1, 3, 6, 8, 10].includes(m % 12);
       let keyToScroll = baseOctaveMidi;
@@ -179,14 +179,14 @@ export default function KeyboardVisualizer({
         }
       }
     }
-  };
+  }, [baseOctaveMidi, whiteKeyWidth]);
 
   // 2. Fire centering logic smoothly on tonic or start/restart button clicks
   useEffect(() => {
     if (tonicScrollTrigger && tonicScrollTrigger > 0) {
       centerOnTonic(true);
     }
-  }, [tonicScrollTrigger]);
+  }, [tonicScrollTrigger, centerOnTonic]);
 
 
 

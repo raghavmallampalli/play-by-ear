@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, Pressable, useWindowDimensions, ActivityIndicator, Platform, Modal } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Pressable, useWindowDimensions, ActivityIndicator, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useNavigation } from 'expo-router';
 import { IconArrowLeft, IconPlay, IconLock, IconAlert, IconWrench } from '@/components/icons/NativeIcons';
@@ -89,14 +89,14 @@ export default function DifficultyScreen() {
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
 
-  const { appData, loading, reloadData, handleSaveProgress } = useAppData();
+  const { appData, loading, reloadData } = useAppData();
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       reloadData();
     });
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, reloadData]);
 
   const handleSelectLevel = (levelId: number) => {
     log.info(`Level Selected: Launching training level #${levelId}`);
@@ -163,7 +163,7 @@ export default function DifficultyScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Text style={styles.introText}>
-            Progress through the progressive training stages below. To begin, let's play the first levels!
+            Progress through the progressive training stages below. To begin, let&apos;s play the first levels!
           </Text>
 
           <View style={[styles.grid, isLandscape && styles.gridLandscape]}>
