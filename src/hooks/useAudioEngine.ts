@@ -1,5 +1,3 @@
-'use dom';
-
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { pianoSamples } from '../constants/piano_samples';
 import { CHORD_DICTIONARY, MELODY_DICTIONARY } from '../levels/labels';
@@ -33,6 +31,17 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
 
   // ─── Audio Context ─────────────────────────────────────────────────────────
 
+  const preloadSample = useCallback((midi: number) => {
+    if (audioBuffersRef.current.has(midi)) return;
+    const asset = pianoSamples[midi];
+    if (!asset) return;
+    fetch(asset)
+      .then(r => r.arrayBuffer())
+      .then(ab => audioCtxRef.current?.decodeAudioData(ab))
+      .then(buf => { if (buf) audioBuffersRef.current.set(midi, buf); })
+      .catch(() => { });
+  }, []);
+
   const initAudio = useCallback(async () => {
     log.info(`[initAudio] Initiating AudioContext. Current state: ${audioCtxRef.current?.state}`);
     if (!audioCtxRef.current) {
@@ -60,23 +69,12 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
       await audioCtxRef.current.resume();
       log.info(`[initAudio] AudioContext resumed. State: ${audioCtxRef.current.state}`);
     }
-  }, [preloadMidi]);
+  }, [preloadMidi, preloadSample]);
 
   useEffect(() => {
     initAudio();
     return () => { if (schedulerTimerRef.current) clearInterval(schedulerTimerRef.current); };
   }, [initAudio]);
-
-  const preloadSample = useCallback((midi: number) => {
-    if (audioBuffersRef.current.has(midi)) return;
-    const asset = pianoSamples[midi];
-    if (!asset) return;
-    fetch(asset)
-      .then(r => r.arrayBuffer())
-      .then(ab => audioCtxRef.current?.decodeAudioData(ab))
-      .then(buf => { if (buf) audioBuffersRef.current.set(midi, buf); })
-      .catch(() => { });
-  }, []);
 
   // ─── Synthesis ─────────────────────────────────────────────────────────────
 
@@ -341,7 +339,7 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
         chord(CHORD_DICTIONARY[choice]);
       }
     });
-  }, [initAudio, playSynthNote]);
+  }, [initAudio, playSynthNote, stopPlayback]);
 
   const playBackingChordsOnly = useCallback((chords: PlayedChord[], converter: NoteConverter, slotStates?: Map<number, boolean>) => {
     stopPlayback();

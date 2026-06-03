@@ -1,6 +1,6 @@
 import { Midi } from '@tonejs/midi';
 import { NoteConverter } from '../utils/note_converter';
-import { Song, RelativeNote, PlayedNote, PlayedChord } from '../types/music';
+import { Song, PlayedNote, PlayedChord } from '../types/music';
 
 /**
  * useMidiConverter
