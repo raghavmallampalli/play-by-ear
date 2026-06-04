@@ -6,6 +6,7 @@
     "@expo/vector-icons": "^15.1.1",
     "@tonejs/midi": "^2.0.28",
     "expo": "~54.0.35",
+    "expo-asset": "~12.0.13",
     "expo-constants": "~18.0.13",
     "expo-device": "~8.0.10",
     "expo-document-picker": "~14.0.8",
