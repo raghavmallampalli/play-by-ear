@@ -3,7 +3,6 @@
   "main": "expo-router/entry",
   "version": "2026.06.2",
   "dependencies": {
-    "@expo/metro-config": "~54.0.14",
     "@expo/ui": "~0.2.0-beta.9",
     "@expo/vector-icons": "^15.1.1",
     "@tonejs/midi": "^2.0.28",
@@ -56,9 +55,10 @@
     "ios": "ELECTRON_DISABLE_SANDBOX=1 expo start --ios",
     "web": "ELECTRON_DISABLE_SANDBOX=1 expo start --web",
     "test": "jest",
-    "lint": "tsc --noEmit && expo lint --fix && expo lint",
+    "lint": "npx expo-doctor && tsc --noEmit && expo lint --fix && expo lint",
     "android": "expo run:android",
-    "build": "eas build --platform android --profile preview"
+    "build": "npx eas-cli build --platform android --profile preview",
+    "eas-build-pre-install": "node scripts/download_assets.js"
   },
   "private": true
 }

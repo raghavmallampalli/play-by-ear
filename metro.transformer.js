@@ -1,4 +1,4 @@
-const metroBabelTransformer = require('@expo/metro-config/babel-transformer');
+const metroBabelTransformer = require(require.resolve('@expo/metro-config/babel-transformer', { paths: [require.resolve('expo')] }));
 
 module.exports.transform = async function ({ src, filename, options }) {
   if (filename.endsWith(".md")) {
