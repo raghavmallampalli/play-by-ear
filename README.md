@@ -2,6 +2,8 @@
 
 A modern, highly interactive, and beautiful MIDI-based ear training application built with **React Native**, **Expo**, and **ToneJS**. Designed to train your musical ear through structured levels, interactive keyboard visualizers, dynamic timelines, and comprehensive feedback modes.
 
+*Theory is a work in progress, please feel free to raise PRs to improve the quality of notes provided. The primary maintainer is self taught and may have made mistakes.*
+
 ---
 
 ## Codebase Architecture

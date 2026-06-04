@@ -82,7 +82,7 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
 - [ ] melody and chord guide buttons do nothing in midi player - are the bass and treble tracks not separated? eg. moonlight sonata
 - [ ] Fur elise is still weird
 
-## V2026.06.5
+## V2026.06.6
 - [ ] Hook up EAS build to tags and push to F-droid so app is available automatically on tagged commits
 - [ ] Keyboard shortcuts for web player
 - [ ] **Feature**: Add a high-fidelity guitar synthesizer voice for audio synthesis.
