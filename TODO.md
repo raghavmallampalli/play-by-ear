@@ -1,6 +1,6 @@
 ## 📝 Roadmap & TODO List
 
-Below is the planned features and bugfixes roadmap. Help us build a premium experience by picking up these tasks:
+Below are the planned features and bugfixes roadmap. Future issues should be directly added to the GitHub Issues tab. Contributions are welcome, but notify the maintainer before picking them up:
 
 ### ⏱️ Workout Flow & Timeline UI
 - [x] **Bugfix**: Restrict user interaction on the tonic, chords, and melody buttons until the exercise set has officially begun (i.e., 'Start' or 'Continue' has been pressed).
@@ -73,18 +73,28 @@ Below is the planned features and bugfixes roadmap. Help us build a premium expe
 - [ ] Exports logs written by app as a debug packet - persist error logs in a separate file with rotation, info logs for current session (dump at end), debug log if setting is turned on for current session
 - [ ] Add a demo of UI that auto launches the first launch, wire it up behind a help button on the trainer screen.
 - [ ] Ask user about their level and accordingly unlock levels.
+- [ ] Artifact written into releases page should include version number in filename.
 
 ## Styling
 - [ ] Create an svg icon for tonic guide
 - [ ] Add back splash screen for app
+- [ ] Next excercise button needs to be larger (Same size as the play/pause button)
+
+## Excercises
+- [ ] Curve is too steep. Include combination excercises (eg. major and minor, augmented and major etc.) Split the first stage into more levels - do re, re mi etc. Number levels w.r.t stage instead of globally.
+- [ ] B stage should be minor notes. C stage should be other scales (eg. F minor scale etc.)
 
 ## MIDI player issues
 - [ ] melody and chord guide buttons do nothing in midi player - are the bass and treble tracks not separated? eg. moonlight sonata
 - [ ] Fur elise is still weird
 
 ## V2026.06.6
-- [ ] Hook up EAS build to tags and push to F-droid so app is available automatically on tagged commits
+- [ ] Feature: Hook up EAS build CI to also push to F-droid so app is available automatically on new app versions
 - [ ] Keyboard shortcuts for web player
-- [ ] **Feature**: Add a high-fidelity guitar synthesizer voice for audio synthesis.
-  - [ ] **Timeline Display Style**: Toggle between **DAW** vs. standard **Staff** vs. **Guitar Tabs** timeline modes. 
+- [ ] Timeline Display Style: Toggle between **DAW** vs. standard **Staff** timeline modes. 
 
+## Long term:
+- [ ] Feature: Add a high-fidelity guitar synthesizer voice for audio synthesis.
+  - [ ] Add **Guitar Tabs** timeline mode.
+- [ ] Push to a github site
+- [ ] Optional online backup of progress - and account based sharing betewen desktop and mobile - how can you do this for free?
