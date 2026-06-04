@@ -1,0 +1,111 @@
+name: EAS Production Build & Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'package.json'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build and Release Android APK
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check_version.outputs.version }}
+      changed: ${{ steps.check_version.outputs.changed }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check if version changed in package.json
+        id: check_version
+        run: |
+          CURRENT_VERSION=$(node -e "console.log(require('./package.json').version)")
+          
+          # Retrieve previous version from the parent commit (if it exists)
+          PREV_VERSION=$(git show HEAD~1:package.json 2>/dev/null | node -e "
+            const fs = require('fs');
+            try {
+              const prev = JSON.parse(fs.readFileSync(0, 'utf-8'));
+              console.log(prev.version);
+            } catch (e) {
+              console.log('');
+            }
+          " || echo "")
+
+          if [ -n "$PREV_VERSION" ] && [ "$CURRENT_VERSION" != "$PREV_VERSION" ]; then
+            echo "Version changed from $PREV_VERSION to $CURRENT_VERSION"
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "No version change detected (current: $CURRENT_VERSION, previous: $PREV_VERSION)"
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Auto-create the Git tag after merge to main
+      - name: Create Git Tag
+        if: steps.check_version.outputs.changed == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag ${{ steps.check_version.outputs.version }}
+          git push origin ${{ steps.check_version.outputs.version }}
+
+      - name: Set up Node.js
+        if: steps.check_version.outputs.changed == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: steps.check_version.outputs.changed == 'true'
+        run: npm ci
+
+      - name: Setup Expo / EAS
+        if: steps.check_version.outputs.changed == 'true'
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      # Triggers the cloud build, waits for it, and outputs JSON details to a file
+      - name: Build Android APK on EAS
+        if: steps.check_version.outputs.changed == 'true'
+        run: |
+          eas build --platform android --profile preview --non-interactive --wait --json > build-output.json
+
+      # Parse the download URL from the JSON output file
+      - name: Parse APK Download URL
+        if: steps.check_version.outputs.changed == 'true'
+        id: parse_url
+        run: |
+          DOWNLOAD_URL=$(node -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('build-output.json', 'utf8'));
+            const build = Array.isArray(data) ? data[0] : data;
+            console.log(build.artifacts.buildUrl);
+          ")
+          echo "download_url=$DOWNLOAD_URL" >> $GITHUB_OUTPUT
+
+      - name: Download APK from Expo
+        if: steps.check_version.outputs.changed == 'true'
+        run: |
+          curl -L -o play-by-ear.apk "${{ steps.parse_url.outputs.download_url }}"
+
+      # Attaches the APK to the GitHub Release associated with the pushed tag
+      - name: Upload APK to GitHub Release
+        if: steps.check_version.outputs.changed == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.check_version.outputs.version }}
+          files: play-by-ear.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
