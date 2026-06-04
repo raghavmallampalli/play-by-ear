@@ -5,6 +5,7 @@ export interface AudioEngineOptions {
   mode: 'trainer' | 'progress' | 'midi_player';
   level: number;
   preloadMidi: number[];
+  onResolveAudioMidi?: (midi: number) => Promise<string | null>;
 }
 
 export interface AudioEngine {

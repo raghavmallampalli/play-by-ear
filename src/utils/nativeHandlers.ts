@@ -3,6 +3,9 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Alert, Platform } from 'react-native';
 import { StorageService } from '../services/storage';
+import { Asset } from 'expo-asset';
+import { pianoSamples } from '../constants/piano_samples';
+import { MIDI_PRESETS } from '../constants/midi_presets';
 
 export const NativeHandlers = {
   async handleExportBackup() {
@@ -141,5 +144,38 @@ export const NativeHandlers = {
       console.error(err);
       Alert.alert('Error', 'Failed to read the MIDI file.');
     }
+  },
+
+  async resolveLocalAsset(assetRequireId: any, mimeType: string): Promise<string | null> {
+    if (Platform.OS === 'web') return null;
+    try {
+      const asset = Asset.fromModule(assetRequireId);
+      await asset.downloadAsync();
+      const fileUri = asset.localUri || asset.uri;
+      if (fileUri.startsWith('http')) {
+        return fileUri;
+      }
+      const base64 = await FileSystem.readAsStringAsync(fileUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      return `data:${mimeType};base64,${base64}`;
+    } catch (error) {
+      console.error(`Error resolving local asset:`, error);
+      return null;
+    }
+  },
+
+  async resolveAudioMidi(midi: number): Promise<string | null> {
+    if (Platform.OS === 'web') return null;
+    const assetRequireId = pianoSamples[midi];
+    if (!assetRequireId) return null;
+    return NativeHandlers.resolveLocalAsset(assetRequireId, 'audio/mp3');
+  },
+
+  async resolveMidiPreset(presetId: string): Promise<string | null> {
+    if (Platform.OS === 'web') return null;
+    const preset = MIDI_PRESETS.find((p) => p.id === presetId);
+    if (!preset || !preset.asset) return null;
+    return NativeHandlers.resolveLocalAsset(preset.asset, 'audio/midi');
   },
 };
