@@ -1,4 +1,4 @@
-# 🎧 Play by Ear
+# <img src="./assets/images/favicon.png" width="32" align="center" /> Play by Ear
 
 A modern, highly interactive, and beautiful MIDI-based ear training application built with **React Native**, **Expo**, and **ToneJS**. Designed to train your musical ear through structured levels, interactive keyboard visualizers, dynamic timelines, and comprehensive feedback modes.
 
@@ -6,78 +6,42 @@ A modern, highly interactive, and beautiful MIDI-based ear training application 
 
 ---
 
-## Codebase Architecture
+## Screenshots
 
-The codebase follows a highly modular, type-safe, and decoupled structure inside the `src` directory to ensure maximum maintainability and testability:
+<p align="center">
+  <img src="assets/screenshots/landscape_phone.png" width="100%" alt="Landscape Android" />
+</p>
 
-```text
-src/
-├── app/          # Expo Router file-based screens and navigation pages (dashboard, trainer, sandbox, etc.)
-├── components/   # Reusable presentational components (Timeline, KeyboardVisualizer, Settings, etc.)
-├── constants/    # Fixed constants, default configs, and global definitions
-├── hooks/        # React hooks coordinating stateful systems (useAudioEngine, useTheme, etc.)
-├── levels/       # Level configurations, registries, relative intervals, and generator scripts
-├── services/     # Core services and background integration workers
-├── tests/        # Jest unit and integration test suites
-├── theory/       # Theoretical reference guides and educational material
-├── types/        # Consolidated TypeScript interface, enum, and type declarations
-└── utils/        # Pure utility functions, pitch converters, and mathematical music logic
-```
+<details>
+<summary>📷 View Other Views (Browser & Portrait)</summary>
+<br />
+
+### Landscape Browser
+![Landscape Browser](assets/screenshots/landscape_browser.png)
+
+### Portrait View
+![Portrait View](assets/screenshots/portrait.png)
+
+</details>
 
 ---
 
-## Development Instructions
-
-### 1. Prerequisites
-- **Node.js**: Ensure you have [Node.js](https://nodejs.org/) (version 22.x is recommended) installed on your machine.
-- **ImageMagick**: The local asset generation script uses `convert` (ImageMagick) to render the high-fidelity SVG assets into PNG. Ensure ImageMagick is installed on your system if you plan to regenerate assets.
-
-This app is tested for Android and Web. Install Expo Go on your mobile device to test on it. Ensure Supported SDK is 54 - if you see a newer version, raise an issue.
-
-### 2. Installation
-Clone the repository and install the dependencies:
-```bash
-npm install
-```
-
-### 3. Run the development server
-To start the Expo development server:
-```bash
-npm start
-```
-From the interactive terminal output, you can choose where to run your application:
-- Press `w` to run in the **Web Browser**
-- Press `a` to run on an **Android Emulator** or connected device
-- Press `i` to run on an **iOS Simulator**
-
-*Note: For direct platform runs, you can also use `npm run web`, `npm run android`, or `npm run ios`.*
-
-### 4. Run Jest Unit Tests
-To execute the comprehensive unit test suite in the `src/tests` directory:
-```bash
-npm test
-```
-
-### 5. Lint and Type Check the Codebase
-To verify static TypeScript type safety (via `tsc --noEmit`), check for syntax errors, and find styling issues (via ESLint/`expo lint`):
-```bash
-npm run lint
-```
-
-### 6. Discusing features
+## Discussing features
 Request features using the Issues tab. There is no Discord for discussion - use the Discussion tab if you wish to discuss anything.
-The roadmap and TODO list are maintained in [TODO.md](file:///home/raghav/src/play-by-ear/TODO.md).
+The roadmap and TODO list are maintained in [TODO.md](./TODO.md).
 
 > [!IMPORTANT]
 > This repo will not accept pull requests of greater than 50 lines without prior communication with the maintainer. This has been done to reduce review burden.
 
----
+
+Development instructions and codebase architecture are maintained in [DEVELOPMENT.md](./DEVELOPMENT.md).
+
 
 ## 🤖 AI Agent Guidelines
 
-This repository includes a dedicated [AGENTS.md](file:///home/raghav/src/play-by-ear/AGENTS.md) file containing strict instructions, architectural requirements, and coding standards. 
+This repository includes a dedicated [AGENTS.md](./AGENTS.md) file containing strict instructions, architectural requirements, and coding standards. 
 
-If you are pair-programming with AI assistants, ensure they are prompted to read and adhere to [AGENTS.md](file:///home/raghav/src/play-by-ear/AGENTS.md) before writing any code.
+If you are pair-programming with AI assistants, ensure they are prompted to read and adhere to [AGENTS.md](./AGENTS.md) before writing any code.
 
 ---
 

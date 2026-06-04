@@ -1,0 +1,56 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# --- Copied from .gitignore ---
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# example
+
+# generated native folders
+/ios
+/android
+
+
+# --- EAS-specific ignores ---
+
+# Ignore screenshots meant for GitHub README
+assets/screenshots/
+
+# Ignore root-level markdown and license files (keeps src/theory/guides/*.md)
+/*.md
+/LICENSE
+.github/workflows/
