@@ -2,7 +2,7 @@
   "expo": {
     "name": "Play by Ear",
     "slug": "play-by-ear",
-    "version": "2026.06.2",
+    "version": "2026.06.4",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "playbyear",
@@ -27,7 +27,8 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,

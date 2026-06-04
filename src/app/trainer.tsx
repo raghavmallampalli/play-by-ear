@@ -125,6 +125,8 @@ export default function TrainerScreen() {
             onExportProgress={NativeHandlers.handleExportBackup}
             onImportProgress={() => NativeHandlers.handleImportBackup(reloadData)}
             onLoadCustomMidi={NativeHandlers.handleLoadCustomMidi}
+            onResolveAudioMidi={NativeHandlers.resolveAudioMidi}
+            onResolveMidiPreset={NativeHandlers.resolveMidiPreset}
           />
         </View>
       </SafeAreaView>

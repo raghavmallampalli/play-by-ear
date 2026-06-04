@@ -78,6 +78,8 @@ interface MidiPlayerDOMProps {
   onExportProgress?: () => void;
   onImportProgress?: () => void;
   onLoadCustomMidi?: (onMidiLoaded: (name: string, base64: string) => void) => void;
+  onResolveAudioMidi?: (midi: number) => Promise<string | null>;
+  onResolveMidiPreset?: (presetId: string) => Promise<string | null>;
 }
 
 export default function MidiPlayerDOM({
@@ -101,6 +103,8 @@ export default function MidiPlayerDOM({
   onExportProgress,
   onImportProgress,
   onLoadCustomMidi,
+  onResolveAudioMidi,
+  onResolveMidiPreset,
 }: MidiPlayerDOMProps) {
   const [localActiveTab, setLocalActiveTab] = useState<
     'practice' | 'theory' | 'settings' | 'loader'
@@ -203,7 +207,7 @@ export default function MidiPlayerDOM({
 
   const audioMode = mode === 'settings' ? 'trainer' : mode;
   const preloadMidi = useMemo(() => getPreloadMidi(audioMode, level), [audioMode, level]);
-  const audio = useAudioEngine({ mode: audioMode, level, preloadMidi });
+  const audio = useAudioEngine({ mode: audioMode, level, preloadMidi, onResolveAudioMidi });
 
   // ─── MIDI Player Functions ──────────────────────────────────────────────────
 
@@ -394,8 +398,31 @@ export default function MidiPlayerDOM({
 
       try {
         log.info(`[loadMidiPreset] Fetching preset asset: ${preset.asset}`);
-        const res = await fetch(preset.asset);
-        const ab = await res.arrayBuffer();
+        let ab: ArrayBuffer;
+
+        const getAssetUri = (val: any) => {
+          if (typeof val === 'string') return val;
+          if (val && typeof val === 'object') {
+            if (typeof val.default === 'string') return val.default;
+            if (typeof val.uri === 'string') return val.uri;
+          }
+          return val;
+        };
+
+        if (onResolveMidiPreset) {
+          const dataUrl = await onResolveMidiPreset(presetId);
+          if (dataUrl) {
+            const res = await fetch(dataUrl);
+            ab = await res.arrayBuffer();
+          } else {
+            const res = await fetch(getAssetUri(preset.asset));
+            ab = await res.arrayBuffer();
+          }
+        } else {
+          const res = await fetch(getAssetUri(preset.asset));
+          ab = await res.arrayBuffer();
+        }
+
         const notes = await loadMidiFromBuffer(ab, preset.title, true, preset.id);
         updateRecentTracks(preset.id, true, preset.title);
         return notes;
@@ -404,7 +431,7 @@ export default function MidiPlayerDOM({
         return [];
       }
     },
-    [loadMidiFromBuffer, updateRecentTracks],
+    [loadMidiFromBuffer, updateRecentTracks, onResolveMidiPreset],
   );
 
   // Auto-load preset when presetId prop is present

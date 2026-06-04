@@ -7,7 +7,11 @@ import { NoteConverter } from '../utils/note_converter';
 import { AudioEngine, AudioEngineOptions } from '../types/audio';
 import { log } from '../utils/logger';
 
-export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): AudioEngine {
+export function useAudioEngine({
+  mode,
+  preloadMidi,
+  onResolveAudioMidi,
+}: AudioEngineOptions): AudioEngine {
   const [isPlaying, setIsPlaying] = useState(false);
   const isPlayingRef = useRef(false);
   const [playheadTime, setPlayheadTime] = useState(0);
@@ -35,18 +39,42 @@ export function useAudioEngine({ mode, preloadMidi }: AudioEngineOptions): Audio
 
   // ─── Audio Context ─────────────────────────────────────────────────────────
 
-  const preloadSample = useCallback((midi: number) => {
-    if (audioBuffersRef.current.has(midi)) return;
-    const asset = pianoSamples[midi];
-    if (!asset) return;
-    fetch(asset)
-      .then((r) => r.arrayBuffer())
-      .then((ab) => audioCtxRef.current?.decodeAudioData(ab))
-      .then((buf) => {
-        if (buf) audioBuffersRef.current.set(midi, buf);
-      })
-      .catch(() => {});
-  }, []);
+  const preloadSample = useCallback(
+    (midi: number) => {
+      if (audioBuffersRef.current.has(midi)) return;
+      const asset = pianoSamples[midi];
+      if (!asset) return;
+
+      const loadBuffer = (url: string) => {
+        fetch(url)
+          .then((r) => r.arrayBuffer())
+          .then((ab) => audioCtxRef.current?.decodeAudioData(ab))
+          .then((buf) => {
+            if (buf) audioBuffersRef.current.set(midi, buf);
+          })
+          .catch((err) => {
+            log.error(`Failed to load audio buffer for MIDI ${midi} from ${url}:`, err);
+          });
+      };
+
+      if (onResolveAudioMidi) {
+        onResolveAudioMidi(midi)
+          .then((url) => {
+            if (url) {
+              loadBuffer(url);
+            } else {
+              loadBuffer(asset);
+            }
+          })
+          .catch(() => {
+            loadBuffer(asset);
+          });
+      } else {
+        loadBuffer(asset);
+      }
+    },
+    [onResolveAudioMidi],
+  );
 
   const initAudio = useCallback(async () => {
     log.info(`[initAudio] Initiating AudioContext. Current state: ${audioCtxRef.current?.state}`);
